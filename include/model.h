@@ -12,6 +12,8 @@ class Model {
 
 		std::vector<double> bgrid;
 		std::vector<double> agrid;
+		std::vector<double> occgrid;
+		std::vector<double> occdist;
 		Parameters p;
 
 		void make_grids();

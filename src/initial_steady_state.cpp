@@ -23,7 +23,7 @@ void solve_initial_prices(const Model& model) {
 	double netprofit_R = varieties * grossprofit_R * (1.0 - model.p.drs_N);
 	double profit = netprofit_R + netprofit_W;
 
-	compute_ss_capital_output_ratio(model.p, price_W);
+	double K_totoutput_ratio = compute_ss_capital_output_ratio(model.p, price_W);
 }
 
 double compute_ss_capital_output_ratio(

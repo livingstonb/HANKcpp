@@ -10,7 +10,7 @@ std::vector<double> linspace(double x, double y, int n) {
 	return vec;
 }
 
-std::vector<double> PowerSpacedGrid(
+std::vector<double> powerSpacedGrid(
 	int n, double low, double high, double curv)
 {
 	auto vec = linspace(0.0, 1.0, n);

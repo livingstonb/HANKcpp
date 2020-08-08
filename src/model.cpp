@@ -6,6 +6,10 @@ Model::Model(Parameters params) {
 }
 
 void Model::make_grids() {
-	bgrid = PowerSpacedGrid(p.nb, p.bmin, p.bmax, p.bcurv);
-	agrid = PowerSpacedGrid(p.na, p.amin, p.amax, p.acurv);
+	bgrid = powerSpacedGrid(p.nb, p.bmin, p.bmax, p.bcurv);
+	agrid = powerSpacedGrid(p.na, p.amin, p.amax, p.acurv);
+
+	auto occgrids = occupationGrid(p);
+	occgrid = occgrids.first;
+	occdist = occgrids.second;
 }

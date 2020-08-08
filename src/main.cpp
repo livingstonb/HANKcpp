@@ -4,6 +4,8 @@
 #include <parameters.h>
 #include <model.h>
 #include <initial_steady_state.h>
+#include <mkl.h>
+// #include <cblas.h>
 
 class Grids {
 	public:
@@ -23,6 +25,13 @@ int main () {
 	Model model = Model(params);
 	
 	solve_initial_steady_state(model);
+
+	std::vector<double> vec1 {1.0, 2.0, 3.0};
+	std::vector<double> vec2 {1.0, -10.0, 1.0};
+
+	// double dot = ddot(3, vec1.data(), 1, vec2.data(), 1);
+	double dot = vdot(vec1, vec2);
+	std::cout << dot << '\n';
 }
 
 
