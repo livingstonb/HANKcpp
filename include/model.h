@@ -5,15 +5,17 @@
 
 #include <parameters.h>
 #include <procedures.h>
+#include <hank.h>
 
 class Model {
 	public:
 		Model(Parameters params);
 
-		std::vector<double> bgrid;
-		std::vector<double> agrid;
-		std::vector<double> occgrid;
-		std::vector<double> occdist;
+		vector bgrid;
+		vector agrid;
+		vector cgrid;
+		vector occgrid;
+		vector occdist;
 		Parameters p;
 
 		void make_grids();

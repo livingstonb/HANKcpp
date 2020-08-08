@@ -6,3 +6,4 @@ docs
 f90
 build
 exec
+*.sublime-*

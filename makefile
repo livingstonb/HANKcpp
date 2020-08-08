@@ -2,7 +2,7 @@
 CC=g++
 MKL=-DMKL_ILP64 -m64 -I/media/hdd/lib/intel/mkl/include
 CFLAGS=-O3 -c -W -Wall -g3  $(MKL) -I$(shell pwd) -I$(shell pwd)/include -I$(shell pwd)/src
-SOURCES=procedures.cpp parameters.cpp model.cpp initial_steady_state.cpp
+SOURCES=parameters.cpp model.cpp initial_steady_state.cpp
 MAIN=main.cpp
 SOURCEDIR=src
 OBJDIR=build
