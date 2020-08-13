@@ -10,10 +10,12 @@
 int main () {
 	std::string income_dir = "2point_3_5";
 
-	Parameters params = Parameters();
+	Parameters params;
 	Model model = Model(params, income_dir);
 	
+	SolverOptions options;
 	solve_initial_steady_state(model);
 
-	printvec(model.logprodgrid);
+	// printvec(model.prodgrid);
+	std::cout << model.prodmarkov;
 }

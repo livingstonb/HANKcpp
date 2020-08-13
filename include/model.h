@@ -12,7 +12,7 @@
 #include <procedures.h>
 #include <hank.h>
 
-void read_matrix(const std::string& file_loc, std::vector<double>& grid);
+std::vector<double> read_matrix(const std::string& file_loc);
 
 std::size_t find_multiple(const std::string& line, int pos);
 
@@ -21,16 +21,16 @@ class Model
 	public:
 		Model(Parameters params, const std::string& income_dir);
 
-		vector bgrid;
-		vector agrid;
-		vector cgrid;
-		vector occgrid;
-		vector occdist;
+		double_vector bgrid;
+		double_vector agrid;
+		double_vector cgrid;
+		double_vector occgrid;
+		double_vector occdist;
 
-		vector logprodgrid;
-		vector prodgrid;
-		vector proddist;
-		vector prodmarkov;
+		double_vector logprodgrid;
+		double_vector prodgrid;
+		double_vector proddist;
+		double_matrix prodmarkov;
 
 		Parameters p;
 

@@ -14,26 +14,21 @@
 #include <hank.h>
 
 template<typename T>
-T linspace(double x, double y, int n) {
-	T vec(n);
-
+void linspace(double x, double y, int n, T& cont) {
 	for (int i=0; i<n; ++i) {
-		vec[i] = x + i * (y - x) / (n - 1);
+		cont[i] = x + i * (y - x) / (n - 1);
 	}
-
-	return vec;
 }
 
 template<typename T>
-T powerSpacedGrid(
-	int n, double low, double high, double curv)
+void powerSpacedGrid(
+	int n, double low, double high, double curv, T& grid)
 {
-	auto vec = linspace<T>(0.0, 1.0, n);
+	linspace(0.0, 1.0, n, grid);
 
-	for (auto it = vec.begin(); it != vec.end(); ++it) {
-		*it = low + (high - low) * pow(*it, 1 / curv);
+	for (int i=0; i<n; ++i) {
+		grid[i] = low + (high - low) * pow(grid[i], 1.0 / curv);
 	}
-	return vec;
 }
 
 template <typename T, typename F>
@@ -43,8 +38,8 @@ void apply(T& vec, F func) {
 
 template<typename T>
 void printvec(const T& vec) {
-	for (auto it = vec.begin(); it != vec.end(); ++it) {
-		std::cout << *it << '\n';
+	for (auto x : vec) {
+		std::cout << x << '\n';
 	}
 }
 
@@ -54,11 +49,10 @@ double vdot(const T& vec1, const T& vec2) {
 	return cblas_ddot(vec1.size(), vec1.data(), 1, vec2.data(), 1);
 }
 
-template<typename T, typename V>
-std::pair<T,T> occupationGrid(const V& p)
+template<typename V>
+std::pair<std::vector<double>,std::vector<double>> occupationGrid(const V& p)
 {
-	T occgrid;
-	T occdist;
+	std::vector<double> occgrid, occdist;
 	if (p.nocc == 1) {
 		occgrid.push_back(0.0);
 		occdist.push_back(1.0);
@@ -102,17 +96,43 @@ std::pair<T,T> occupationGrid(const V& p)
 	return pair;
 }
 
-template<size_t N>
-array_type<N> new_array(const array_shape<N>& shape)
+template<typename T>
+double_vector vector2eigenv(const T& vec)
 {
-	array_type<N> arr(shape);
+	double_vector out(vec.size());
+
+	for (int i=0; i<vec.size(); ++i)
+		out[i] = vec[i];	
+
+	return out;
+}
+
+template<typename T>
+double_matrix vector2eigenm(const T& vec, int n, int m)
+{
+	double_matrix out(n, m);
+
+	assert(vec.size() == m * n);
+
+	for (int i=0; i<n; ++i)
+		for (int j=0; j<m; ++j)
+			out(i, j) = vec[i*m + j];	
+
+	return out;
+}
+
+
+template<typename T, size_t N>
+boost_array_type<T, N> new_array(const boost_array_shape<T, N>& shape)
+{
+	boost_array_type<T, N> arr(shape);
 	// array_type<N> arr(shape, boost::fortran_storage_order());
 
 	return arr;
 }
 
 template<typename T>
-map_type to_eigen(T& arr)
+map_type boost2eigen(T& arr)
 {
 	int n0 = 1;
 	int n1 = 1;
@@ -138,6 +158,5 @@ map_type to_eigen(T& arr)
 	map_type map(arr.data(), n0, n1);
 	return map;
 }
-
 
 #endif

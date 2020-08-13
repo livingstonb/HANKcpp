@@ -7,34 +7,38 @@ Model::Model(Parameters params, const std::string& income_dir) {
 }
 
 void Model::make_grids() {
-	bgrid = powerSpacedGrid<vector>(p.nb, p.bmin, p.bmax, p.bcurv);
-	agrid = powerSpacedGrid<vector>(p.na, p.amin, p.amax, p.acurv);
+	bgrid = double_vector(p.nb);
+	agrid = double_vector(p.na);
+	powerSpacedGrid(p.nb, p.bmin, p.bmax, p.bcurv, bgrid);
+	powerSpacedGrid(p.na, p.amin, p.amax, p.acurv, agrid);
 
-	auto occgrids = occupationGrid<vector>(p);
-	occgrid = occgrids.first;
-	occdist = occgrids.second;
+	auto occgrids = occupationGrid(p);
+	occgrid = vector2eigenv(occgrids.first);
+	occdist = vector2eigenv(occgrids.second);
 }
 
 void Model::create_income_process(const std::string& income_dir) {
 	std::string grid_loc = "input/" + income_dir + "/ygrid_combined.txt";
-	std::string dist_loc = "input/" + income_dir + "/ydist_combined.txt";
-	std::string markov_loc = "input/" + income_dir + "/ymarkov_combined.txt";
-	read_matrix(grid_loc, logprodgrid);
-	read_matrix(dist_loc, proddist);
-	read_matrix(markov_loc, prodmarkov);
+	logprodgrid = vector2eigenv(read_matrix(grid_loc));
 
-	for (auto x : logprodgrid)
-		prodgrid.push_back(exp(x));
+	std::string dist_loc = "input/" + income_dir + "/ydist_combined.txt";
+	proddist = vector2eigenv(read_matrix(dist_loc));
+
+	std::string markov_loc = "input/" + income_dir + "/ymarkov_combined.txt";
+	int k = proddist.size();
+	prodmarkov = vector2eigenm(read_matrix(markov_loc), k, k);
+
+	prodgrid = logprodgrid.array().exp();
 }
 
-void read_matrix(const std::string& file_loc, vector& grid)
+std::vector<double> read_matrix(const std::string& file_loc)
 {
 	std::string line, word;
 	std::ifstream yfile;
 	std::size_t current, previous;
 	yfile.open(file_loc.data(), std::ios::in);
 
-
+	std::vector<double> out;
 
 	while ( getline(yfile, line) ) {
 		previous = 0;
@@ -43,7 +47,7 @@ void read_matrix(const std::string& file_loc, vector& grid)
 	    	while (current != std::string::npos) {
 	    		if (current > 0) {
 		    		word = line.substr(previous, current - previous);
-		    		grid.push_back(std::stod(word));
+		    		out.push_back(std::stod(word));
 			    }
 
 			    previous = current + 1;
@@ -51,13 +55,15 @@ void read_matrix(const std::string& file_loc, vector& grid)
 		    }
 
 		    word = line.substr(previous, current - previous);
-		    grid.push_back(std::stod(word));
+		    out.push_back(std::stod(word));
 		}
 		else {
-			grid.push_back(std::stod(line));
+			out.push_back(std::stod(line));
 		}
 	}
 	yfile.close();
+
+	return out;
 }
 
 std::size_t find_multiple(const std::string& line, int pos)

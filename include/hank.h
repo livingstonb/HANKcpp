@@ -10,13 +10,15 @@ typedef std::vector<double> vector;
 // using smart_ptr = std::shared_ptr<T>;
 
 typedef Eigen::Map<Eigen::MatrixXd> map_type;
+typedef Eigen::VectorXd double_vector;
+typedef Eigen::MatrixXd double_matrix;
 
 // Boost
-template <size_t N>
-using array_type = boost::multi_array<double, N>;
+template <typename T, size_t N>
+using boost_array_type = boost::multi_array<T, N>;
 
-template <size_t N>
-using array_shape = boost::array<typename array_type<N>::index, N>;
+template <typename T, size_t N>
+using boost_array_shape = boost::array<typename boost_array_type<T, N>::index, N>;
 
 typedef boost::multi_array_types::index_range range;
 
