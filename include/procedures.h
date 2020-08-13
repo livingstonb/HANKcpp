@@ -31,6 +31,14 @@ void powerSpacedGrid(
 	}
 }
 
+template<typename T>
+void adjustPowerSpacedGrid(T& grid)
+{
+	if (grid.size() >= 10)
+		for (int i=0; i<9; ++i)
+			grid[i] = (i - 1) * grid[9] / (10.0 - 1.0);
+}
+
 template <typename T, typename F>
 void apply(T& vec, F func) {
 	std::for_each(vec.begin(), vec.end(), func);
@@ -58,14 +66,17 @@ std::pair<std::vector<double>,std::vector<double>> occupationGrid(const V& p)
 		occdist.push_back(1.0);
 	}
 	else {
+		// S_N / (S_N + S_Y)
 		double lshareNY = (1.0 - p.alpha_N) * p.drs_N
 			/ ((p.elast - 1.0) * (1.0 - p.alpha_Y) * p.drs_Y + (1.0 - p.alpha_N) * p.drs_N);
 
 		if (lshareNY == 0.0) {
+			// No labor income accrues to N-type
 			occgrid.push_back(0.0);
 			occdist.push_back(1.0 / p.nocc);
 		}
 		else if (lshareNY == 1.0) {
+			// All labor income accrues to N-type
 			occgrid.push_back(1.0);
 			occdist.push_back(1.0 / p.nocc);
 		}
@@ -85,9 +96,10 @@ std::pair<std::vector<double>,std::vector<double>> occupationGrid(const V& p)
 			double lWNtoWY = 1.5;
 			double lmeanocc = lshareNY / (lshareNY + (1.0 - lshareNY) * lWNtoWY);
 			double lpar = lmeanocc / (1.0 - lmeanocc);
+			occdist.resize(p.nocc);
 			for (int i=0; i<p.nocc; ++i) {
-				occdist[i] = pow((occgrid[i] + 0.5 * lwidth), lpar)
-					- pow((occgrid[i] - 0.5 * lwidth), lpar);
+				occdist[i] = pow(occgrid[i] + 0.5 * lwidth, lpar)
+					- pow(occgrid[i] - 0.5 * lwidth, lpar);
 			}
 		}
 	}

@@ -8,4 +8,6 @@ Parameters::Parameters() {
 	nab = na * nb;
 
 	profdistfracA = alpha_Y;
+
+	rborr = rb + borrwedge;
 };

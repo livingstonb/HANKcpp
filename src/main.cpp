@@ -16,6 +16,5 @@ int main () {
 	// SolverOptions options;
 	// solve_initial_steady_state(model);
 
-	// printvec(model.prodgrid);
-	std::cout << model.drs_Y;
+	std::cout << model.get_rb_effective();
 }

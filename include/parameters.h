@@ -47,11 +47,18 @@ class Parameters {
 		// --- OTHER FIRM-SIDE PARAMETERS --
 		// Fraction of profits to illiquid equity (set to alpha)
 		double profdistfracA;
+		double priceadjcost = 100.0;
 
 		// --- OTHER MODEL PARAMETERS ---
 		// Steady state output gap
 		double ssgap = 0.0;
-		double priceadjcost = 100.0;
+		double meanlabeff = 1.0;
+		double hourtarget = 1.0 / 3.0;
+		bool perfectAnnuityMarkets = true;
+		double deathrate = 1.0 / (4.0 * 45.0);
+		double rb = 0.02 / 4.0;
+		double borrwedge = 0.025;
+		double rborr = -1.0e5;
 
 		// --- OTHER SOLUTION PARAMETERS ---
 		double cmin = 1.0e-5;

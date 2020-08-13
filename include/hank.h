@@ -6,12 +6,14 @@
 
 typedef std::vector<double> vector;
 
-// template <typename T>
-// using smart_ptr = std::shared_ptr<T>;
-
+// Eigen
+using Eigen::all;
+using Eigen::last;
+using Eigen::seq;
 typedef Eigen::Map<Eigen::MatrixXd> map_type;
 typedef Eigen::VectorXd double_vector;
 typedef Eigen::MatrixXd double_matrix;
+typedef Eigen::Matrix<bool,Eigen::Dynamic,1> bool_vector;
 
 // Boost
 template <typename T, size_t N>

@@ -1,17 +1,28 @@
 #include <model.h>
 
 void ModelBase::make_grids(const Parameters& p) {
-	bgrid_ = double_vector(nb_);
-	agrid_ = double_vector(na_);
-	powerSpacedGrid(nb_, p.bmin, p.bmax, p.bcurv, bgrid_);
-	powerSpacedGrid(na_, p.amin, p.amax, p.acurv, agrid_);
+	// Liquid asset
+	bgrid_ = double_vector(p.nb);
+	powerSpacedGrid(p.nb, p.bmin, p.bmax, p.bcurv, bgrid_);
 
+	bdelta_ = compute_grid_deltas(bgrid_);
+
+	// Illiquid asset
+	agrid_ = double_vector(p.na);
+	powerSpacedGrid(p.na, p.amin, p.amax, p.acurv, agrid_);
+	adjustPowerSpacedGrid(agrid_);
+
+	adelta_ = compute_grid_deltas(agrid_);
+
+	// Occupations
 	auto occgrids = occupationGrid(p);
 	occgrid_ = vector2eigenv(occgrids.first);
 	occdist_ = vector2eigenv(occgrids.second);
 }
 
-void ModelBase::create_income_process(const std::string& income_dir) {
+void ModelBase::create_income_process(
+	const std::string& income_dir, const Parameters& p) {
+
 	std::string grid_loc = "input/" + income_dir + "/ygrid_combined.txt";
 	logprodgrid_ = vector2eigenv(read_matrix(grid_loc));
 
@@ -21,8 +32,50 @@ void ModelBase::create_income_process(const std::string& income_dir) {
 	std::string markov_loc = "input/" + income_dir + "/ymarkov_combined.txt";
 	int k = proddist_.size();
 	prodmarkov_ = vector2eigenm(read_matrix(markov_loc), k, k);
+	fix_rounding(prodmarkov_);
 
 	prodgrid_ = logprodgrid_.array().exp();
+
+	// Normalize mean productivity
+	double lmean = prodgrid_.dot(proddist_);
+	prodgrid_ = p.meanlabeff * prodgrid_ / lmean;
+}
+
+void ModelBase::create_combined_variables() {
+	int iy, io, ip, iy2, io2, ip2;
+	int nocc = occgrid_.size();
+	int nprod = prodgrid_.size();
+	int ny = nprod * nocc;
+
+	double_vector occfromy(ny);
+	double_vector prodfromy(ny);
+	double_matrix yfromoccprod(nocc, nprod);
+
+	iy = 0;
+	for (int io=0; io<nocc; ++io) {
+		for (int ip=0; ip<nprod; ++ip) {
+			occfromy(iy) = io;
+			prodfromy(iy) = ip;
+			yfromoccprod(io,ip) = iy;
+			++iy;
+		}
+	}
+
+	// for (int iy=0; i<ny; ++i) {
+	// 	io = 
+	// }
+}
+
+double_vector Model::get_rb_effective() const
+{
+	bool_vector mask = bgrid.array() >= 0.0;
+	double_vector rb_effective = bgrid;
+	rb_effective.unaryExpr([=, *this](double x) {
+			return (x >= 0.0) ? rb : rborr;
+		});
+	rb_effective = rb_effective.array() + perfectAnnuityMarkets * deathrate;
+
+	return rb_effective;
 }
 
 std::vector<double> read_matrix(const std::string& file_loc)
@@ -73,4 +126,23 @@ std::size_t find_multiple(const std::string& line, int pos)
 	else {
 		return t2;
 	}
+}
+
+void fix_rounding(double_matrix& mat)
+{
+	for (int i=0; i<mat.rows(); ++i)
+		mat(i,i) = mat(i,i) - mat.row(i).sum();
+}
+
+double_vector compute_grid_deltas(const double_vector& grid)
+{
+	int n = grid.size();
+	double_vector dgrid = grid(seq(1,last)) - grid(seq(0,last-1));
+	double_vector deltas(n);
+
+	deltas(0) = 0.5 * dgrid(0);
+	deltas(seq(1,n-2)) = 0.5 * (dgrid(seq(0,last-1)) + dgrid(seq(1,last)));
+	deltas(n-1) = 0.5 * dgrid(last);
+
+	return deltas;
 }
