@@ -15,4 +15,5 @@ int main () {
 	
 	solve_initial_steady_state(model);
 
+	printvec(model.logprodgrid);
 }

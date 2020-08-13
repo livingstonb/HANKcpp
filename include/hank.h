@@ -6,6 +6,9 @@
 
 typedef std::vector<double> vector;
 
+// template <typename T>
+// using smart_ptr = std::shared_ptr<T>;
+
 typedef Eigen::Map<Eigen::MatrixXd> map_type;
 
 // Boost

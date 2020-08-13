@@ -6,12 +6,15 @@
 #include <vector>
 #include <cmath>
 #include <fstream>
+#include <boost/algorithm/string.hpp>
 
 #include <parameters.h>
 #include <procedures.h>
 #include <hank.h>
 
-void read_vector(const std::string& file_loc, std::vector<double>& grid);
+void read_matrix(const std::string& file_loc, std::vector<double>& grid);
+
+std::size_t find_multiple(const std::string& line, int pos);
 
 class Model
 {
@@ -27,6 +30,7 @@ class Model
 		vector logprodgrid;
 		vector prodgrid;
 		vector proddist;
+		vector prodmarkov;
 
 		Parameters p;
 

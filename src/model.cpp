@@ -18,22 +18,59 @@ void Model::make_grids() {
 void Model::create_income_process(const std::string& income_dir) {
 	std::string grid_loc = "input/" + income_dir + "/ygrid_combined.txt";
 	std::string dist_loc = "input/" + income_dir + "/ydist_combined.txt";
-	read_vector(grid_loc, logprodgrid);
-	read_vector(dist_loc, proddist);
+	std::string markov_loc = "input/" + income_dir + "/ymarkov_combined.txt";
+	read_matrix(grid_loc, logprodgrid);
+	read_matrix(dist_loc, proddist);
+	read_matrix(markov_loc, prodmarkov);
 
 	for (auto x : logprodgrid)
 		prodgrid.push_back(exp(x));
 }
 
-void read_vector(const std::string& file_loc, vector& grid)
+void read_matrix(const std::string& file_loc, vector& grid)
 {
-	std::string line, whole_file = "";
+	std::string line, word;
 	std::ifstream yfile;
+	std::size_t current, previous;
 	yfile.open(file_loc.data(), std::ios::in);
 
-	while ( getline (yfile, line) ) {
-		grid.push_back( std::stod(line) );
-		whole_file += line + '\n';
+
+
+	while ( getline(yfile, line) ) {
+		previous = 0;
+    	current = find_multiple(line, 0);
+    	if (current != std::string::npos) {
+	    	while (current != std::string::npos) {
+	    		if (current > 0) {
+		    		word = line.substr(previous, current - previous);
+		    		grid.push_back(std::stod(word));
+			    }
+
+			    previous = current + 1;
+		    	current = find_multiple(line, previous);
+		    }
+
+		    word = line.substr(previous, current - previous);
+		    grid.push_back(std::stod(word));
+		}
+		else {
+			grid.push_back(std::stod(line));
+		}
 	}
 	yfile.close();
+}
+
+std::size_t find_multiple(const std::string& line, int pos)
+{
+	std::size_t t1, t2;
+
+	t1 = line.find("  ", pos);
+	t2 = line.find(" -", pos);
+
+	if ((t1 < t2) & (t1 != std::string::npos)) {
+		return t1;
+	}
+	else {
+		return t2;
+	}
 }
