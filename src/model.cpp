@@ -1,34 +1,28 @@
 #include <model.h>
 
-Model::Model(Parameters params, const std::string& income_dir) {
-	p = params;
-	make_grids();
-	create_income_process(income_dir);
-}
-
-void Model::make_grids() {
-	bgrid = double_vector(p.nb);
-	agrid = double_vector(p.na);
-	powerSpacedGrid(p.nb, p.bmin, p.bmax, p.bcurv, bgrid);
-	powerSpacedGrid(p.na, p.amin, p.amax, p.acurv, agrid);
+void ModelBase::make_grids(const Parameters& p) {
+	bgrid_ = double_vector(nb_);
+	agrid_ = double_vector(na_);
+	powerSpacedGrid(nb_, p.bmin, p.bmax, p.bcurv, bgrid_);
+	powerSpacedGrid(na_, p.amin, p.amax, p.acurv, agrid_);
 
 	auto occgrids = occupationGrid(p);
-	occgrid = vector2eigenv(occgrids.first);
-	occdist = vector2eigenv(occgrids.second);
+	occgrid_ = vector2eigenv(occgrids.first);
+	occdist_ = vector2eigenv(occgrids.second);
 }
 
-void Model::create_income_process(const std::string& income_dir) {
+void ModelBase::create_income_process(const std::string& income_dir) {
 	std::string grid_loc = "input/" + income_dir + "/ygrid_combined.txt";
-	logprodgrid = vector2eigenv(read_matrix(grid_loc));
+	logprodgrid_ = vector2eigenv(read_matrix(grid_loc));
 
 	std::string dist_loc = "input/" + income_dir + "/ydist_combined.txt";
-	proddist = vector2eigenv(read_matrix(dist_loc));
+	proddist_ = vector2eigenv(read_matrix(dist_loc));
 
 	std::string markov_loc = "input/" + income_dir + "/ymarkov_combined.txt";
-	int k = proddist.size();
-	prodmarkov = vector2eigenm(read_matrix(markov_loc), k, k);
+	int k = proddist_.size();
+	prodmarkov_ = vector2eigenm(read_matrix(markov_loc), k, k);
 
-	prodgrid = logprodgrid.array().exp();
+	prodgrid_ = logprodgrid_.array().exp();
 }
 
 std::vector<double> read_matrix(const std::string& file_loc)

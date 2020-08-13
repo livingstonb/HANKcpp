@@ -3,7 +3,7 @@
 #include <procedures.h>
 #include <parameters.h>
 #include <model.h>
-#include <initial_steady_state.h>
+// #include <initial_steady_state.h>
 #include <hank.h>
 #include <Eigen/Dense>
 
@@ -13,9 +13,9 @@ int main () {
 	Parameters params;
 	Model model = Model(params, income_dir);
 	
-	SolverOptions options;
-	solve_initial_steady_state(model);
+	// SolverOptions options;
+	// solve_initial_steady_state(model);
 
 	// printvec(model.prodgrid);
-	std::cout << model.prodmarkov;
+	std::cout << model.drs_Y;
 }
