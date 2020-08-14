@@ -83,29 +83,6 @@ class Model : private ModelBase {
 		const int nocc = nocc_;
 		const int nprod = nprod_;
 
-		const double drs_Y = p.drs_Y;
-		const double drs_N = p.drs_N;
-		const double alpha_Y = p.alpha_Y;
-		const double alpha_N = p.alpha_N;
-		const double meanlabeff = p.meanlabeff;
-		const double hourtarget = p.hourtarget;
-		const double depreciation = p.depreciation;
-
-		const double rb = p.rb;
-		const double rborr = p.rborr;
-		const double deathrate = p.deathrate;
-		const bool perfectAnnuityMarkets = p.perfectAnnuityMarkets;
-
-		const double profdistfracA = p.profdistfracA;
-		const double profdistfracB = p.profdistfracB;
-		const double profdistfracW = p.profdistfracW;
-		const double profdistfracL = p.profdistfracL;
-		const double corptax = p.corptax;
-
-		const double labtax = p.labtax;
-
-		const double targetMeanIll = p.targetMeanIll;
-
 		double_vector get_rb_effective() const;
 };
 

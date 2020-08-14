@@ -87,9 +87,9 @@ double_vector Model::get_rb_effective() const
 {
 	double_vector rb_effective = bgrid;
 	rb_effective.unaryExpr([=, *this](double x) {
-			return (x >= 0.0) ? rb : rborr;
+			return (x >= 0.0) ? p.rb : p.rborr;
 		});
-	rb_effective = rb_effective.array() + perfectAnnuityMarkets * deathrate;
+	rb_effective = rb_effective.array() + p.perfectAnnuityMarkets * p.deathrate;
 
 	return rb_effective;
 }
