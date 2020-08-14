@@ -2,8 +2,9 @@
 #include <iostream>
 #include <procedures.h>
 #include <parameters.h>
+#include <options.h>
 #include <model.h>
-// #include <initial_steady_state.h>
+#include <steady_state.h>
 #include <hank.h>
 #include <Eigen/Dense>
 
@@ -13,8 +14,9 @@ int main () {
 	Parameters params;
 	Model model = Model(params, income_dir);
 	
-	// SolverOptions options;
-	// solve_initial_steady_state(model);
+	Options options;
+	// InitialSteadyState iss(model, options);
+	solve_initial_steady_state(model, options);
 
 	std::cout << model.get_rb_effective();
 }

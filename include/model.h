@@ -41,6 +41,14 @@ class ModelBase
 		double_vector proddist_;
 		double_matrix prodmarkov_;
 
+		double_vector yprodgrid_;
+		double_vector yoccgrid_;
+		double_vector ydist_;
+		double_matrix ymarkov_;
+
+		int nocc_;
+		int nprod_;
+
 		void make_grids(const Parameters& p);
 		void create_income_process(const std::string& income_dir, const Parameters& p);
 		void create_combined_variables();
@@ -58,12 +66,22 @@ class Model : private ModelBase {
 		const double_vector& agrid = agrid_;
 		const double_vector& adelta = adelta_;
 		const double_vector& occgrid = occgrid_;
+		const double_vector& occdist = occdist_;
+
 		const double_vector& logprodgrid = logprodgrid_;
 		const double_vector& prodgrid = prodgrid_;
 		const double_vector& proddist = proddist_;
 		const double_matrix& prodmarkov = prodmarkov_;
+
+		const double_vector& yprodgrid = yprodgrid_;
+		const double_vector& yoccgrid = yoccgrid_;
+		const double_vector& ydist = ydist_;
+		const double_matrix& ymarkov = ymarkov_;
+
 		const int nb = p.nb;
 		const int na = p.na;
+		const int nocc = nocc_;
+		const int nprod = nprod_;
 
 		const double drs_Y = p.drs_Y;
 		const double drs_N = p.drs_N;
@@ -71,11 +89,22 @@ class Model : private ModelBase {
 		const double alpha_N = p.alpha_N;
 		const double meanlabeff = p.meanlabeff;
 		const double hourtarget = p.hourtarget;
+		const double depreciation = p.depreciation;
 
 		const double rb = p.rb;
 		const double rborr = p.rborr;
 		const double deathrate = p.deathrate;
 		const bool perfectAnnuityMarkets = p.perfectAnnuityMarkets;
+
+		const double profdistfracA = p.profdistfracA;
+		const double profdistfracB = p.profdistfracB;
+		const double profdistfracW = p.profdistfracW;
+		const double profdistfracL = p.profdistfracL;
+		const double corptax = p.corptax;
+
+		const double labtax = p.labtax;
+
+		const double targetMeanIll = p.targetMeanIll;
 
 		double_vector get_rb_effective() const;
 };

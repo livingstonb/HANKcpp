@@ -18,6 +18,7 @@ void ModelBase::make_grids(const Parameters& p) {
 	auto occgrids = occupationGrid(p);
 	occgrid_ = vector2eigenv(occgrids.first);
 	occdist_ = vector2eigenv(occgrids.second);
+	nocc_ = occgrid_.size();
 }
 
 void ModelBase::create_income_process(
@@ -35,6 +36,7 @@ void ModelBase::create_income_process(
 	fix_rounding(prodmarkov_);
 
 	prodgrid_ = logprodgrid_.array().exp();
+	nprod_ = prodgrid_.size();
 
 	// Normalize mean productivity
 	double lmean = prodgrid_.dot(proddist_);
@@ -43,17 +45,15 @@ void ModelBase::create_income_process(
 
 void ModelBase::create_combined_variables() {
 	int iy, io, ip, iy2, io2, ip2;
-	int nocc = occgrid_.size();
-	int nprod = prodgrid_.size();
-	int ny = nprod * nocc;
+	int ny = nprod_ * nocc_;
 
 	double_vector occfromy(ny);
 	double_vector prodfromy(ny);
-	double_matrix yfromoccprod(nocc, nprod);
+	double_matrix yfromoccprod(nocc_, nprod_);
 
 	iy = 0;
-	for (int io=0; io<nocc; ++io) {
-		for (int ip=0; ip<nprod; ++ip) {
+	for (int io=0; io<nocc_; ++io) {
+		for (int ip=0; ip<nprod_; ++ip) {
 			occfromy(iy) = io;
 			prodfromy(iy) = ip;
 			yfromoccprod(io,ip) = iy;
@@ -61,9 +61,26 @@ void ModelBase::create_combined_variables() {
 		}
 	}
 
-	// for (int iy=0; i<ny; ++i) {
-	// 	io = 
-	// }
+	ymarkov_ = double_matrix::Zero(ny, ny);
+	yprodgrid_ = double_vector(ny);
+	yoccgrid_ = double_vector(ny);
+	ydist_ = double_vector(ny);
+
+	for (int iy=0; iy<ny; ++iy) {
+		io = occfromy(iy);
+		ip = prodfromy(iy);
+		yprodgrid_(iy) = prodgrid_(ip);
+		yoccgrid_(iy) = occgrid_(io);
+		ydist_(iy) = proddist_(ip) * occdist_(io);
+
+		for (iy2=0; iy2<ny; ++iy2) {
+			io2 = occfromy(iy2);
+			ip2 = prodfromy(iy2);
+
+			if (io == io2)
+				ymarkov_(iy,iy2) = prodmarkov_(ip,ip2);
+		}
+	}
 }
 
 double_vector Model::get_rb_effective() const

@@ -46,7 +46,10 @@ class Parameters {
 
 		// --- OTHER FIRM-SIDE PARAMETERS --
 		// Fraction of profits to illiquid equity (set to alpha)
-		double profdistfracA;
+		double profdistfracA = 0.333;
+		double profdistfracB = 0.0;
+		double profdistfracW = 0.667;
+		double profdistfracL = 0.0;
 		double priceadjcost = 100.0;
 
 		// --- OTHER MODEL PARAMETERS ---
@@ -58,7 +61,9 @@ class Parameters {
 		double deathrate = 1.0 / (4.0 * 45.0);
 		double rb = 0.02 / 4.0;
 		double borrwedge = 0.025;
-		double rborr = -1.0e5;
+		double rborr = -1.0e5; // Will be set to rb + borrwedge
+		double corptax = 0.0;
+		double labtax = 0.30;
 
 		// --- OTHER SOLUTION PARAMETERS ---
 		double cmin = 1.0e-5;
