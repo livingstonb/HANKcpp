@@ -10,7 +10,7 @@ void solve_initial_prices(const Model& model) {
 	bool initialSS = true;
 	double lmeanwage;
 
-	// Normalize steady state Y = N = P= P_R = 1
+	// Normalize steady state Y = N = P = P_R = 1
 	double output = 1.0;
 	double varieties = 1.0;
 	double totoutput = output * varieties;

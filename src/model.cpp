@@ -68,7 +68,6 @@ void ModelBase::create_combined_variables() {
 
 double_vector Model::get_rb_effective() const
 {
-	bool_vector mask = bgrid.array() >= 0.0;
 	double_vector rb_effective = bgrid;
 	rb_effective.unaryExpr([=, *this](double x) {
 			return (x >= 0.0) ? rb : rborr;
