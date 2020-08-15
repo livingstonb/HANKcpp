@@ -7,15 +7,39 @@
 #include <parameters.h>
 #include <options.h>
 
-void solve_initial_steady_state(const Model& model, const Options& options);
-
-void solve_initial_prices(const Model& model);
-
-double compute_ss_capital_output_ratio(const Parameters& p, double lprice_W);
-
-class Prices {
+class SteadyState {
 	public:
 		double ra;
+		double profit;
+
+		double dividend_A;
+		double dividend_B;
+		double equity_A;
+		double equity_B;
+
+		double_vector netwagegrid;
+
+		double wage_N;
+		double wage_Y;
+
+		double chi;
 };
+
+void solve_initial_steady_state(const Model& model, const Options& options);
+
+/*
+	Solves for various steady state quantities and returns and object with the
+	results.
+*/
+SteadyState solve_initial_prices(const Model& model);
+
+/*
+	Computes the steady state capital-output ratio K/NY, given the model
+	parameters and the target for mean illiquid wealth.
+*/
+double compute_ss_capital_output_ratio(double price_W,
+	double targetMeanIll, double depreciation, double alpha_Y,
+	double drs_Y, double alpha_N, double drs_N);
+
 
 #endif

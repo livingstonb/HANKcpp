@@ -2,7 +2,7 @@
 #define _BELLMAN_H
 
 void iterate_bellman() {
-	
+	double_vector adrift = ss.ra *
 }
 
 

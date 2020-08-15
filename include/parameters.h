@@ -34,6 +34,8 @@ class Parameters {
 		// --- PREFERENCES ---
 		// Elasticity of substitution
 		double elast = 1.1;
+		double frisch = 1.0;
+		double riskaver = 1.0;
 
 		// --- PRODUCTION PARAMETERS ---
 		double drs_Y = 1.0;
