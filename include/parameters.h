@@ -2,6 +2,7 @@
 #define _PARAMETERS_H
 
 #include <iostream>
+#include <hank.h>
 
 class Parameters {
 	public:
@@ -32,10 +33,10 @@ class Parameters {
 		int nab;
 
 		// --- PREFERENCES ---
-		// Elasticity of substitution
 		double elast = 1.1;
 		double frisch = 1.0;
 		double riskaver = 1.0;
+		LaborType laborsupply = LaborType::sep;
 
 		// --- PRODUCTION PARAMETERS ---
 		double drs_Y = 1.0;

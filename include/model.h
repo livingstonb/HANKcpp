@@ -84,6 +84,7 @@ class Model : private ModelBase {
 		const int nprod = nprod_;
 
 		double_vector get_rb_effective() const;
+		double util(double c) const;
 };
 
 #endif

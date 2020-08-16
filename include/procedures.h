@@ -39,10 +39,13 @@ void adjustPowerSpacedGrid(T& grid)
 			grid[i] = (i - 1) * grid[9] / (10.0 - 1.0);
 }
 
+// template <typename T, typename F>
+// void apply(T& vec, F func) {
+// 	std::for_each(vec.begin(), vec.end(), func);
+// }
+
 template <typename T, typename F>
-void apply(T& vec, F func) {
-	std::for_each(vec.begin(), vec.end(), func);
-}
+void apply(T& vec)
 
 template<typename T>
 void printvec(const T& vec) {

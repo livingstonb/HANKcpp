@@ -3,10 +3,14 @@
 
 class HJB {
 	public:
-		HJB(const Model& model, const SteadyState& ss)
+		HJB(const Model& model, const SteadyState& ss);
 
 		void iterate();
+
+		array_type<double, 3> V;
 };
+
+array_type<double, 3> make_value_guess();
 
 void iterate(const Model& model, const SteadyState& ss) {
 	const Parameters& p = model.p;

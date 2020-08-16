@@ -94,6 +94,14 @@ double_vector Model::get_rb_effective() const
 	return rb_effective;
 }
 
+double Model::util(double c) const
+{
+	if (p.riskaver == 1.0)
+		return p.prefshock * log(c);
+	else
+		return p.prefshock * pow(c, 1.0 - p.riskaver) / (1.0 - p.riskaver);
+}
+
 std::vector<double> read_matrix(const std::string& file_loc)
 {
 	std::string line, word;
