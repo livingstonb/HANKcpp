@@ -36,6 +36,7 @@ class Parameters {
 		double elast = 1.1;
 		double frisch = 1.0;
 		double riskaver = 1.0;
+		double rho = 0.01444;
 		double prefshock = 1.0;
 		LaborType laborsupply = LaborType::sep;
 
@@ -68,6 +69,7 @@ class Parameters {
 		double rborr = -1.0e5; // Will be set to rb + borrwedge
 		double corptax = 0.0;
 		double labtax = 0.30;
+		double lumptransfer = 0.05;
 
 		// --- OTHER SOLUTION PARAMETERS ---
 		double cmin = 1.0e-5;

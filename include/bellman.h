@@ -1,25 +1,20 @@
 #ifndef _BELLMAN_H
 #define _BELLMAN_H
 
+#include <model.h>
+#include <steady_state.h>
+
 class HJB {
 	public:
 		HJB(const Model& model, const SteadyState& ss);
 
-		void iterate();
+		void iterate(const Model& model, const SteadyState& ss);
 
-		array_type<double, 3> V;
+		boost_array_type<double, 3> V;
 };
 
-array_type<double, 3> make_value_guess();
+boost_array_type<double, 3> make_value_guess(const Model& model, const SteadyState& ss);
 
-void iterate(const Model& model, const SteadyState& ss) {
-	const Parameters& p = model.p;
-
-	double_vector adrift = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
-	double_vector bdrift = model.get_rb_effective().array() * model.bgrid.array();
-
-
-}
 
 
 #endif
