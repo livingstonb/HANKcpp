@@ -1,16 +1,16 @@
 #include <steady_state.h>
 
-void solve_initial_steady_state(const Model& model, const Options& options)
-{
-	std::cout << "Solving for initial steady state" << '\n';
+InitialSteadyState find__initial_steady_state(const Model& model, const Options& options) {
+	InitialSteadyState iss = initialize_steady_state(model);
 
-	if ( (~options.equilibriumR) & (~options.calibrateDiscountRate) ) {
-			Prices prices = solve_initial_prices(model);
-			// iterate_bellman(model);
-		}
+	if ( options.calibrateDiscountRate ) {
+		double lrhoL = invlogistic(exp(-0.02));
+		double lrhoU = invlogistic(exp(-0.01));
+		rtflsp(FnDiscountRate,lrhoL,lrhoU,1.0e-8_8,tolrho,iflag,maxiterrho)
+	}
 }
 
-SteadyState solve_initial_prices(const Model& model) {
+InitialSteadyState initialize_steady_state(const Model& model) {
 	bool initialSS = true;
 	double lmeanwage;
 	const Parameters& p = model.p;
@@ -74,7 +74,7 @@ SteadyState solve_initial_prices(const Model& model) {
 	double chi = lmeanwage * p.meanlabeff / (pow(0.7, -p.riskaver) * pow(p.hourtarget, 1.0/p.frisch));
 
 	// Output object
-	SteadyState ss;
+	InitialSteadyState ss;
 
 	ss.ra = rcapital - p.depreciation;
 	ss.dividend_A = p.profdistfracA * profit * (1.0 - p.corptax);

@@ -1,5 +1,5 @@
-#ifndef _STEADY_STATE_H
-#define _STEADY_STATE_H
+#ifndef _INITIAL_STEADY_STATE_H
+#define _INITIAL_STEADY_STATE_H
 
 #include <iostream>
 #include <mkl.h>
@@ -7,7 +7,7 @@
 #include <parameters.h>
 #include <options.h>
 
-class SteadyState {
+class InitialSteadyState {
 	public:
 		double ra;
 		double profit;
@@ -25,13 +25,13 @@ class SteadyState {
 		double chi;
 };
 
-void solve_initial_steady_state(const Model& model, const Options& options);
+InitialSteadyState find_steady_state(const Model& model, const Options& options);
 
 /*
 	Solves for various steady state quantities and returns and object with the
 	results.
 */
-SteadyState solve_initial_prices(const Model& model);
+InitialSteadyState initialize_steady_state(const Model& model);
 
 /*
 	Computes the steady state capital-output ratio K/NY, given the model

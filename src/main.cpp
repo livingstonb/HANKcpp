@@ -11,12 +11,13 @@
 int main () {
 	std::string income_dir = "2point_3_5";
 
+	Options options;
 	Parameters params;
+
 	Model model = Model(params, income_dir);
 	
-	Options options;
-	// InitialSteadyState iss(model, options);
-	solve_initial_steady_state(model, options);
+	InitialSteadyState iss(model, options);
+	iss = find_initial_steady_state(model);
 
 	std::cout << model.get_rb_effective();
 }
