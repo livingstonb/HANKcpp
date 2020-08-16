@@ -36,6 +36,7 @@ class Parameters {
 		double elast = 1.1;
 		double frisch = 1.0;
 		double riskaver = 1.0;
+		double prefshock = 1.0;
 		LaborType laborsupply = LaborType::sep;
 
 		// --- PRODUCTION PARAMETERS ---

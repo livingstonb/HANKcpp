@@ -44,8 +44,6 @@ void adjustPowerSpacedGrid(T& grid)
 // 	std::for_each(vec.begin(), vec.end(), func);
 // }
 
-template <typename T, typename F>
-void apply(T& vec)
 
 template<typename T>
 void printvec(const T& vec) {

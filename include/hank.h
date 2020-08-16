@@ -12,7 +12,7 @@ using Eigen::last;
 using Eigen::seq;
 typedef Eigen::Map<Eigen::MatrixXd> map_type;
 typedef Eigen::VectorXd double_vector;
-typedef Eigen::ArrayXd double_vector;
+typedef Eigen::ArrayXd double_array;
 typedef Eigen::MatrixXd double_matrix;
 typedef Eigen::Matrix<bool,Eigen::Dynamic,1> bool_vector;
 
