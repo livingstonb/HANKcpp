@@ -16,8 +16,7 @@ int main () {
 
 	Model model = Model(params, income_dir);
 	
-	InitialSteadyState iss(model, options);
-	iss = find_initial_steady_state(model);
+	SteadyState iss(model);
 
-	std::cout << model.get_rb_effective();
+	std::cout << iss.capital << '\n';
 }

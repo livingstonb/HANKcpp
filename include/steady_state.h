@@ -7,39 +7,55 @@
 #include <parameters.h>
 #include <options.h>
 
-class InitialSteadyState {
-	public:
-		double ra;
-		double profit;
+double marginal_cost(double tfp, double r, double alpha, double wage);
 
-		double dividend_A;
-		double dividend_B;
-		double equity_A;
-		double equity_B;
-
-		double_vector netwagegrid;
-
-		double wage_N;
-		double wage_Y;
-
-		double chi;
-};
-
-InitialSteadyState find_steady_state(const Model& model, const Options& options);
-
-/*
-	Solves for various steady state quantities and returns and object with the
-	results.
-*/
-InitialSteadyState initialize_steady_state(const Model& model);
-
-/*
-	Computes the steady state capital-output ratio K/NY, given the model
-	parameters and the target for mean illiquid wealth.
-*/
 double compute_ss_capital_output_ratio(double price_W,
 	double targetMeanIll, double depreciation, double alpha_Y,
 	double drs_Y, double alpha_N, double drs_N);
+
+double compute_ss_capital_output_ratio(const Parameters& p, double price_w);
+
+double quadratic_formula(double a, double b, double c);
+
+class SteadyState {
+	private:
+		const Model& model;
+		const Parameters& p;
+
+	public:
+		SteadyState(const Model& model_);
+
+		void update();
+
+		// Normalize to 1
+		double output = 1.0;
+		double varieties = 1.0;
+		double totoutput;
+
+		// Profits, prices, and dividends
+		double price_W;
+		double grossprofit_W, netprofit_W;
+		double grossprofit_R, netprofit_R;
+		double profit;
+		double dividend_A, dividend_B, equity_A, equity_B;
+
+		// Production
+		double tfp_N, tfp_Y, mc_N, mc_Y;
+
+		// Labor market
+		double labor_Y, labor_N, wage_N, wage_Y;
+		double_vector netwagegrid;
+
+		// Capital
+		double ra, rcapital;
+		double capital, capital_N, capital_Y;
+		double K_totoutput_ratio;
+
+		// Labor disutility
+		double chi;
+};
+
+
 
 
 #endif
