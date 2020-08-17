@@ -18,7 +18,13 @@ class HJB {
 
 		void update(const SteadyState& ss);
 
+		void compute_derivatives(
+			double& VaF, double& VbF, double& VaB, double& VbB,
+			int ia, int ib, int iy) const;
+
 		const Model& model;
+
+		const Parameters& p;
 
 		boost_array_type<double, 3> V;
 

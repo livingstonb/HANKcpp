@@ -5,8 +5,8 @@
 #include <iostream>
 #include <algorithm>
 #include <cmath>
-#include <mkl.h>
-#include <mkl_cblas.h>
+// #include <mkl.h>
+// #include <mkl_cblas.h>
 // #include <mkl_blas.h>
 // #include <mkl_lapack.h>
 // #include <mkl_lapacke.h>
@@ -52,11 +52,11 @@ void printvec(const T& vec) {
 	}
 }
 
-template<typename T>
-double vdot(const T& vec1, const T& vec2) {
-	assert(vec1.size() == vec2.size());
-	return cblas_ddot(vec1.size(), vec1.data(), 1, vec2.data(), 1);
-}
+// template<typename T>
+// double vdot(const T& vec1, const T& vec2) {
+// 	assert(vec1.size() == vec2.size());
+// 	return cblas_ddot(vec1.size(), vec1.data(), 1, vec2.data(), 1);
+// }
 
 template<typename V>
 std::pair<std::vector<double>,std::vector<double>> occupationGrid(const V& p)
@@ -113,7 +113,7 @@ double_vector vector2eigenv(const T& vec)
 {
 	double_vector out(vec.size());
 
-	for (int i=0; i<vec.size(); ++i)
+	for (size_t i=0; i<vec.size(); ++i)
 		out[i] = vec[i];	
 
 	return out;
@@ -124,7 +124,7 @@ double_matrix vector2eigenm(const T& vec, int n, int m)
 {
 	double_matrix out(n, m);
 
-	assert(vec.size() == m * n);
+	assert(vec.size() == static_cast<size_t>(m * n));
 
 	for (int i=0; i<n; ++i)
 		for (int j=0; j<m; ++j)
@@ -172,7 +172,7 @@ map_type boost2eigen(T& arr)
 	int dims_found = 0;
 	auto shape = arr.shape();
 
-	for (int i=0; i<arr.num_dimensions(); ++i) {
+	for (size_t i=0; i<arr.num_dimensions(); ++i) {
 		if (shape[i] > 1) {
 			if (dims_found == 0) {
 				n0 = shape[i];

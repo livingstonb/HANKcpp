@@ -1,6 +1,7 @@
 
 CC=g++
-MKL=-DMKL_ILP64 -m64 -I/media/hdd/lib/intel/mkl/include
+# MKL=-DMKL_ILP64 -m64 -I/media/hdd/lib/intel/mkl/include
+MKL=
 CFLAGS=-O3 -c -W -Wall -g3  $(MKL) -I$(shell pwd) -I$(shell pwd)/include -I$(shell pwd)/src
 SOURCES=parameters.cpp model.cpp steady_state.cpp bellman.cpp
 MAIN=main.cpp

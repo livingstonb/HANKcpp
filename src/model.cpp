@@ -45,7 +45,7 @@ void ModelBase::create_income_process(
 	prodgrid_ = p.meanlabeff * prodgrid_ / lmean;
 }
 
-void ModelBase::create_combined_variables() {
+void ModelBase::create_combined_variables(const Parameters& p) {
 	int iy, io, ip, iy2, io2, ip2;
 	int ny = nprod_ * nocc_;
 
@@ -83,6 +83,8 @@ void ModelBase::create_combined_variables() {
 				ymarkov_(iy,iy2) = prodmarkov_(ip,ip2);
 		}
 	}
+
+	profsharegrid_ = yprodgrid_.array() / p.meanlabeff;
 }
 
 void ModelBase::check_nbl(const Parameters& p) const {
@@ -96,7 +98,7 @@ void ModelBase::check_nbl(const Parameters& p) const {
 double_vector Model::get_rb_effective() const
 {
 	double_vector rb_effective = bgrid;
-	rb_effective = rb_effective.unaryExpr([=, *this](double x) {
+	rb_effective = rb_effective.unaryExpr([this](double x) {
 			return (x >= 0.0) ? p.rb : p.rborr;
 		});
 	rb_effective = rb_effective.array() + p.perfectAnnuityMarkets * p.deathrate;

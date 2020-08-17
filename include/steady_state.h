@@ -2,7 +2,7 @@
 #define _INITIAL_STEADY_STATE_H
 
 #include <iostream>
-#include <mkl.h>
+// #include <mkl.h>
 #include <model.h>
 #include <parameters.h>
 #include <options.h>

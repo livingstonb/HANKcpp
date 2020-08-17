@@ -1,6 +1,6 @@
 #include <bellman.h>
 
-HJB::HJB(const Model& model_, const SteadyState& ss) : V(model.dims), model(model_) {
+HJB::HJB(const Model& model_, const SteadyState& ss) : model(model_), p(model_.p), V(model.dims) {
 	V = make_value_guess(model, ss);
 }
 
@@ -8,18 +8,18 @@ void HJB::iterate(const SteadyState& ss) {
 	int ii = 0;
 	double lVdiff = 1.0;
 
-	boost_array_shape<double, 3> flat_dims = {{V.num_elements(), 1, 1}};
+	boost_array_shape<double, 3> flat_dims = {{model.ntot, 1, 1}};
 
 	boost_array_type<double, 3> lastV(flat_dims);
 	boost_array_type<double, 3> newV(flat_dims);
-	lastV = reshape_array(V, {V.num_elements(), 1, 1});
+	lastV = reshape_array(V, {model.ntot, 1, 1});
 
 	while ( (ii < maxiter) & (lVdiff > vtol) ) {
 		update(ss);
 
 		newV = reshape_array(V, {model.ntot, 1, 1});
 		lVdiff = (boost2eigen(lastV) - boost2eigen(newV)).lpNorm<Eigen::Infinity>();
-		lastV = reshape_array(V, {V.num_elements(), 1, 1});
+		lastV = reshape_array(V, {model.ntot, 1, 1});
 
 		check_progress(lVdiff, dispfreq, ii, vtol);
 
@@ -28,8 +28,16 @@ void HJB::iterate(const SteadyState& ss) {
 }
 
 void HJB::update(const SteadyState& ss) {
-	const Parameters& p = model.p;
-	double VaF, VaB, VbF, VbB;
+	double VaF, VaB, VbF, VbB, gbdrift, prof_keep;
+	double prof_common = p.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
+
+	if ( p.taxHHProfitIncome )
+		prof_keep = 1.0 - p.labtax;
+	else
+		prof_keep = 1.0;
+
+	double_vector profW = prof_keep * p.profdistfracW
+			* (1.0 - p.corptax) * ss.profit * model.profsharegrid.array();
 
 	double_vector adrift = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
 	double_vector bdrift = model.get_rb_effective().array() * model.bgrid.array();
@@ -37,27 +45,12 @@ void HJB::update(const SteadyState& ss) {
 	for (int ia=0; ia<p.na; ++ia) {
 		for (int ib=0; ib<p.nb; ++ib) {
 			for (int iy=0; iy<p.ny; ++iy) {
-				// Forward derivatives
-				if (ia < p.na - 1) {
-					VaF = (V[ia+1][ib][iy] - V[ia][ib][iy]) / model.dagrid(ia);
-					VaF = std::max(VaF, dVamin);
-				}
+				compute_derivatives(VaF, VbF, VaB, VbB, ia, ib, iy);
 
-				if (ib < p.nb - 1) {
-					VbF = (V[ia][ib+1][iy] - V[ia][ib][iy]) / model.dbgrid(ib);
-					VbF = std::max(VbF, dVbmin);
-				}
+				// if (p.prodispshock)
 
-				// Backward derivatives
-				if (ia > 0) {
-					VaB = (V[ia][ib][iy] - V[ia-1][ib][iy]) / model.dagrid(ia-1);
-					VaB = std::max(VaB, dVamin);
-				}
+				gbdrift = bdrift(ib) + prof_common + profW(iy);
 
-				if (ib > 0) {
-					VbB = (V[ia][ib][iy] - V[ia][ib-1][iy]) / model.dbgrid(ib-1);
-					VbB = std::max(VbB, dVbmin);
-				}
 
 				V[ia][ib][iy] = 0.9 * V[ia][ib][iy];
 
@@ -65,6 +58,32 @@ void HJB::update(const SteadyState& ss) {
 		}
 	}
 
+}
+
+void HJB::compute_derivatives(
+	double& VaF, double& VbF, double& VaB, double& VbB,
+	int ia, int ib, int iy) const {
+	// Forward derivatives
+	if (ia < p.na - 1) {
+		VaF = (V[ia+1][ib][iy] - V[ia][ib][iy]) / model.dagrid(ia);
+		VaF = std::max(VaF, dVamin);
+	}
+
+	if (ib < p.nb - 1) {
+		VbF = (V[ia][ib+1][iy] - V[ia][ib][iy]) / model.dbgrid(ib);
+		VbF = std::max(VbF, dVbmin);
+	}
+
+	// Backward derivatives
+	if (ia > 0) {
+		VaB = (V[ia][ib][iy] - V[ia-1][ib][iy]) / model.dagrid(ia-1);
+		VaB = std::max(VaB, dVamin);
+	}
+
+	if (ib > 0) {
+		VbB = (V[ia][ib][iy] - V[ia][ib-1][iy]) / model.dbgrid(ib-1);
+		VbB = std::max(VbB, dVbmin);
+	}
 }
 
 boost_array_type<double, 3> make_value_guess(const Model& model, const SteadyState& ss) {

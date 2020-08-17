@@ -26,7 +26,7 @@ class ModelBase
 		ModelBase(const Parameters p, const std::string& income_dir) {
 			make_grids(p);
 			create_income_process(income_dir, p);
-			create_combined_variables();
+			create_combined_variables(p);
 			check_nbl(p);
 		}
 
@@ -42,6 +42,7 @@ class ModelBase
 		double_vector logprodgrid_;
 		double_vector prodgrid_;
 		double_vector proddist_;
+		double_vector profsharegrid_;
 		double_matrix prodmarkov_;
 
 		double_vector yprodgrid_;
@@ -54,7 +55,7 @@ class ModelBase
 
 		void make_grids(const Parameters& p);
 		void create_income_process(const std::string& income_dir, const Parameters& p);
-		void create_combined_variables();
+		void create_combined_variables(const Parameters& p);
 		void check_nbl(const Parameters& p) const;
 };
 
@@ -77,6 +78,7 @@ class Model : private ModelBase {
 		const double_vector& logprodgrid = logprodgrid_;
 		const double_vector& prodgrid = prodgrid_;
 		const double_vector& proddist = proddist_;
+		const double_vector& profsharegrid = profsharegrid_;
 		const double_matrix& prodmarkov = prodmarkov_;
 
 		const double_vector& yprodgrid = yprodgrid_;
