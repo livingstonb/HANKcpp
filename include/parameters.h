@@ -70,6 +70,7 @@ class Parameters {
 		double corptax = 0.0;
 		double labtax = 0.30;
 		double lumptransfer = 0.05;
+		bool imposeMaxHours = true;
 
 		// --- OTHER SOLUTION PARAMETERS ---
 		double cmin = 1.0e-5;

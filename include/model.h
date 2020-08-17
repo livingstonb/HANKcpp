@@ -95,6 +95,7 @@ class Model : private ModelBase {
 
 		double_vector get_rb_effective() const;
 		double util(double c) const;
+		double util1(double u) const;
 };
 
 #endif

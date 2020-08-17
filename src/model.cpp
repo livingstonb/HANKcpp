@@ -114,6 +114,11 @@ double Model::util(double c) const
 		return p.prefshock * pow(c, 1.0 - p.riskaver) / (1.0 - p.riskaver);
 }
 
+double Model::util1(double u) const
+{
+	return p.prefshock * pow(u, -p.riskaver);
+}
+
 std::vector<double> read_matrix(const std::string& file_loc)
 {
 	std::string line, word;

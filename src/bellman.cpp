@@ -28,7 +28,8 @@ void HJB::iterate(const SteadyState& ss) {
 }
 
 void HJB::update(const SteadyState& ss) {
-	double VaF, VaB, VbF, VbB, gbdrift, prof_keep;
+	OptConsumptionArgs optc_args;
+	double VaF, VaB, VbF, VbB, prof_keep;
 	double prof_common = p.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
 
 	if ( p.taxHHProfitIncome )
@@ -49,7 +50,11 @@ void HJB::update(const SteadyState& ss) {
 
 				// if (p.prodispshock)
 
-				gbdrift = bdrift(ib) + prof_common + profW(iy);
+				optc_args.gbdrift = bdrift(ib) + prof_common + profW(iy);
+				optc_args.gnetwage = netwagegrid(iy);
+
+
+				optimalConsumption(VbB, cB, hB, sB, HcB)
 
 
 				V[ia][ib][iy] = 0.9 * V[ia][ib][iy];
@@ -84,6 +89,35 @@ void HJB::compute_derivatives(
 		VbB = (V[ia][ib][iy] - V[ia][ib-1][iy]) / model.dbgrid(ib-1);
 		VbB = std::max(VbB, dVbmin);
 	}
+}
+
+ConUpwind HJB::optimal_consumption(double gbdrift, double gnetwage) {
+	ConUpwind output;
+	output.s = 0.0;
+
+	if (p.laborsupply == LaborType::none) {
+		output.h = 1.0;
+		output.c = gbdrift * lh * gnetwage;
+
+		if (lc > 0.0)
+			output.Hc = model.util(output.c);
+		else
+			output.Hc = 1.0e12;
+	}
+	else if (p.laborsupply == LaborType::sep) {
+		double hmin = std::max(-gbdrift / gnetwage + 1.0e-5, 0.0);
+
+		if (p.imposeMaxHours)
+			double hmax = 1.0;
+		else
+			double hmax = 100.0;
+
+	}
+	else if (p.laborsupply == LaborType::ghh) {
+
+	}
+
+	return output;
 }
 
 boost_array_type<double, 3> make_value_guess(const Model& model, const SteadyState& ss) {

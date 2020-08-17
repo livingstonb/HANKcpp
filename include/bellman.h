@@ -10,6 +10,15 @@ void check_progress(double vdiff, int freq, int i, double vtol);
 
 boost_array_type<double, 3> make_value_guess(const Model& model, const SteadyState& ss);
 
+struct ConUpwind {
+	double c, h, s, Hc;
+};
+
+ConUpwind optimal_consumption(double Vb);
+
+ConUpwind optimal_consumption();
+
+
 class HJB {
 	public:
 		HJB(const Model& model_, const SteadyState& ss);
