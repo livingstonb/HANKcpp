@@ -20,24 +20,9 @@ void linspace(double x, double y, int n, T& cont) {
 	}
 }
 
-template<typename T>
-void powerSpacedGrid(
-	int n, double low, double high, double curv, T& grid)
-{
-	linspace(0.0, 1.0, n, grid);
+void powerSpacedGrid(double low, double high, double curv, grid_type& grid);
 
-	for (int i=0; i<n; ++i) {
-		grid[i] = low + (high - low) * pow(grid[i], 1.0 / curv);
-	}
-}
-
-template<typename T>
-void adjustPowerSpacedGrid(T& grid)
-{
-	if (grid.size() >= 10)
-		for (int i=0; i<9; ++i)
-			grid[i] = (i - 1) * grid[9] / (10.0 - 1.0);
-}
+void adjustPowerSpacedGrid(grid_type& grid);
 
 // template <typename T, typename F>
 // void apply(T& vec, F func) {

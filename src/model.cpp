@@ -3,14 +3,14 @@
 void ModelBase::make_grids(const Parameters& p) {
 	// Liquid asset
 	bgrid_ = double_vector(p.nb);
-	powerSpacedGrid(p.nb, p.bmin, p.bmax, p.bcurv, bgrid_);
+	powerSpacedGrid(p.bmin, p.bmax, p.bcurv, bgrid_);
 
 	dbgrid_ = bgrid_(seq(1,last)) - bgrid_(seq(0,last-1));
 	bdelta_ = compute_grid_deltas(bgrid_, dbgrid_);
 
 	// Illiquid asset
 	agrid_ = double_vector(p.na);
-	powerSpacedGrid(p.na, p.amin, p.amax, p.acurv, agrid_);
+	powerSpacedGrid(p.amin, p.amax, p.acurv, agrid_);
 	adjustPowerSpacedGrid(agrid_);
 
 	dagrid_ = agrid_(seq(1,last)) - agrid_(seq(0,last-1));
@@ -106,17 +106,24 @@ double_vector Model::get_rb_effective() const
 	return rb_effective;
 }
 
-double Model::util(double c) const
-{
-	if (p.riskaver == 1.0)
-		return p.prefshock * log(c);
-	else
-		return p.prefshock * pow(c, 1.0 - p.riskaver) / (1.0 - p.riskaver);
+double Model::util(double c) const {
+	return utility(c, p.prefshock, p.riskaver);
 }
 
-double Model::util1(double u) const
-{
-	return p.prefshock * pow(u, -p.riskaver);
+double Model::util1(double c) const {
+	return utility1(c, p.prefshock, p.riskaver);
+}
+
+double Model::labdisutil(double h, double chi) const {
+	return labor_disutility(h, p.frisch, chi);
+}
+
+double Model::labdisutil1(double h, double chi) const {
+	return labor_disutility1(h, p.frisch, chi);
+}
+
+double Model::util1BC(double h, double chi, double bdrift, double netwage, double wagescale) const {
+	return labdisutil1(h, chi) - util1(bdrift + h * netwage) * netwage * wagescale * p.labwedge;
 }
 
 std::vector<double> read_matrix(const std::string& file_loc)

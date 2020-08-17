@@ -9,7 +9,8 @@
 #include <boost/algorithm/string.hpp>
 
 #include <parameters.h>
-#include <procedures.h>
+#include <utilities.h>
+#include <functions.h>
 #include <hank.h>
 
 std::vector<double> read_matrix(const std::string& file_loc);
@@ -96,6 +97,9 @@ class Model : private ModelBase {
 		double_vector get_rb_effective() const;
 		double util(double c) const;
 		double util1(double u) const;
+		double labdisutil(double h, double chi) const;
+		double labdisutil1(double u, double chi) const;
+		double util1BC(double h, double chi, double bdrift, double netwage, double wagescale) const;
 };
 
 #endif

@@ -28,4 +28,7 @@ typedef boost::multi_array_types::index_range range;
 // Enumerations
 enum class LaborType { none, sep, ghh };
 
+// Declare which type to use for grids
+typedef double_vector grid_type;
+
 #endif

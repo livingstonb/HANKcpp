@@ -2,6 +2,7 @@
 #define _BELLMAN_H
 
 #include <algorithm>
+#include <HankNumerics.h>
 
 #include <model.h>
 #include <steady_state.h>
@@ -13,10 +14,6 @@ boost_array_type<double, 3> make_value_guess(const Model& model, const SteadySta
 struct ConUpwind {
 	double c, h, s, Hc;
 };
-
-ConUpwind optimal_consumption(double Vb);
-
-ConUpwind optimal_consumption();
 
 
 class HJB {
@@ -30,6 +27,8 @@ class HJB {
 		void compute_derivatives(
 			double& VaF, double& VbF, double& VaB, double& VbB,
 			int ia, int ib, int iy) const;
+
+		ConUpwind optimal_consumption(double, double, double) const;
 
 		const Model& model;
 

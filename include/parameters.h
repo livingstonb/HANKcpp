@@ -71,6 +71,7 @@ class Parameters {
 		double labtax = 0.30;
 		double lumptransfer = 0.05;
 		bool imposeMaxHours = true;
+		double labwedge = 1.0;
 
 		// --- OTHER SOLUTION PARAMETERS ---
 		double cmin = 1.0e-5;

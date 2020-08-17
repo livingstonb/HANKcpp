@@ -28,8 +28,9 @@ void HJB::iterate(const SteadyState& ss) {
 }
 
 void HJB::update(const SteadyState& ss) {
-	OptConsumptionArgs optc_args;
+	// OptConsumptionArgs optc_args;
 	double VaF, VaB, VbF, VbB, prof_keep;
+	double gbdrift, gnetwage;
 	double prof_common = p.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
 
 	if ( p.taxHHProfitIncome )
@@ -50,11 +51,11 @@ void HJB::update(const SteadyState& ss) {
 
 				// if (p.prodispshock)
 
-				optc_args.gbdrift = bdrift(ib) + prof_common + profW(iy);
-				optc_args.gnetwage = netwagegrid(iy);
+				gbdrift = bdrift(ib) + prof_common + profW(iy);
+				gnetwage = ss.netwagegrid(iy);
 
 
-				optimalConsumption(VbB, cB, hB, sB, HcB)
+				optimal_consumption(gbdrift, gnetwage, ss.chi);
 
 
 				V[ia][ib][iy] = 0.9 * V[ia][ib][iy];
@@ -91,26 +92,42 @@ void HJB::compute_derivatives(
 	}
 }
 
-ConUpwind HJB::optimal_consumption(double gbdrift, double gnetwage) {
+ConUpwind HJB::optimal_consumption(double gbdrift, double gnetwage, double chi) const {
 	ConUpwind output;
 	output.s = 0.0;
 
 	if (p.laborsupply == LaborType::none) {
 		output.h = 1.0;
-		output.c = gbdrift * lh * gnetwage;
+		output.c = gbdrift * output.h * gnetwage;
 
-		if (lc > 0.0)
+		if (output.c > 0.0)
 			output.Hc = model.util(output.c);
 		else
 			output.Hc = 1.0e12;
 	}
 	else if (p.laborsupply == LaborType::sep) {
 		double hmin = std::max(-gbdrift / gnetwage + 1.0e-5, 0.0);
+		double wscale = 1.0;
+		double hmax = 100.0;
 
 		if (p.imposeMaxHours)
-			double hmax = 1.0;
-		else
-			double hmax = 100.0;
+			hmax = 1.0;
+
+		double v1_at_min = model.util1BC(hmin, chi, gbdrift, gnetwage, wscale);
+		double v1_at_max = model.util1BC(hmax, chi, gbdrift, gnetwage, wscale);
+
+		if (v1_at_max <= 0.0)
+			output.h = hmax;
+		else if (v1_at_min >= 0.0)
+			output.h = hmin;
+		else {
+			std::function<double(double)> objective = [=] (double h) {
+				return model.util1BC(h, chi, gbdrift, gnetwage, wscale);
+			};
+			double facc = 1.0e-8;
+			output.h = HankNumerics::rtsec(objective, hmin, hmax, facc);
+		}
+
 
 	}
 	else if (p.laborsupply == LaborType::ghh) {
@@ -135,7 +152,7 @@ boost_array_type<double, 3> make_value_guess(const Model& model, const SteadySta
 	switch (p.laborsupply) {
 		case LaborType::sep:
 			wageexpr = ss.netwagegrid.array() * sep_constant;
-			llabdisutil = ss.chi * pow(sep_constant, 1.0 + 1.0 / p.frisch) / (1.0 + 1.0 / p.frisch);
+			llabdisutil = model.labdisutil(sep_constant, ss.chi);
 			break;
 		case LaborType::none:
 			wageexpr = ss.netwagegrid.array();
