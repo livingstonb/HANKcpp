@@ -1,6 +1,8 @@
 #ifndef _BELLMAN_H
 #define _BELLMAN_H
 
+#include <algorithm>
+
 #include <model.h>
 #include <steady_state.h>
 
@@ -23,6 +25,9 @@ class HJB {
 		int maxiter = 500;
 		int dispfreq = 50;
 		double vtol = 1.0e-8;
+
+		double dVamin = 1.0e-8;
+		double dVbmin = 1.0e-8;
 };
 
 

@@ -18,7 +18,7 @@ std::size_t find_multiple(const std::string& line, int pos);
 
 void fix_rounding(double_matrix& mat);
 
-double_vector compute_grid_deltas(const double_vector& grid);
+double_vector compute_grid_deltas(const double_vector& grid, const double_vector& dgrid);
 
 class ModelBase
 {
@@ -31,8 +31,10 @@ class ModelBase
 		}
 
 		double_vector bgrid_;
+		double_vector dbgrid_;
 		double_vector bdelta_;
 		double_vector agrid_;
+		double_vector dagrid_;
 		double_vector adelta_;
 		double_vector occgrid_;
 		double_vector occdist_;
@@ -64,8 +66,10 @@ class Model : private ModelBase {
 		const Parameters p;
 
 		const double_vector& bgrid = bgrid_;
+		const double_vector& dbgrid = dbgrid_;
 		const double_vector& bdelta = bdelta_;
 		const double_vector& agrid = agrid_;
+		const double_vector& dagrid = dagrid_;
 		const double_vector& adelta = adelta_;
 		const double_vector& occgrid = occgrid_;
 		const double_vector& occdist = occdist_;

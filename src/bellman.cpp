@@ -18,7 +18,7 @@ void HJB::iterate(const SteadyState& ss) {
 		update(ss);
 
 		newV = reshape_array(V, {model.ntot, 1, 1});
-		lVdiff = (boost2eigen(lastV) - boost2eigen(newV)).cwiseAbs().maxCoeff();
+		lVdiff = (boost2eigen(lastV) - boost2eigen(newV)).lpNorm<Eigen::Infinity>();
 		lastV = reshape_array(V, {V.num_elements(), 1, 1});
 
 		check_progress(lVdiff, dispfreq, ii, vtol);
@@ -29,14 +29,41 @@ void HJB::iterate(const SteadyState& ss) {
 
 void HJB::update(const SteadyState& ss) {
 	const Parameters& p = model.p;
+	double VaF, VaB, VbF, VbB;
 
 	double_vector adrift = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
 	double_vector bdrift = model.get_rb_effective().array() * model.bgrid.array();
 
-	for (int ia=0; ia<p.na; ++ia)
-		for (int ib=0; ib<p.nb; ++ib)
-			for (int iy=0; iy<p.ny; ++iy)
-				V[ia][ib][iy] = V[ia][ib][iy] * 0.9;
+	for (int ia=0; ia<p.na; ++ia) {
+		for (int ib=0; ib<p.nb; ++ib) {
+			for (int iy=0; iy<p.ny; ++iy) {
+				// Forward derivatives
+				if (ia < p.na - 1) {
+					VaF = (V[ia+1][ib][iy] - V[ia][ib][iy]) / model.dagrid(ia);
+					VaF = std::max(VaF, dVamin);
+				}
+
+				if (ib < p.nb - 1) {
+					VbF = (V[ia][ib+1][iy] - V[ia][ib][iy]) / model.dbgrid(ib);
+					VbF = std::max(VbF, dVbmin);
+				}
+
+				// Backward derivatives
+				if (ia > 0) {
+					VaB = (V[ia][ib][iy] - V[ia-1][ib][iy]) / model.dagrid(ia-1);
+					VaB = std::max(VaB, dVamin);
+				}
+
+				if (ib > 0) {
+					VbB = (V[ia][ib][iy] - V[ia][ib-1][iy]) / model.dbgrid(ib-1);
+					VbB = std::max(VbB, dVbmin);
+				}
+
+				V[ia][ib][iy] = 0.9 * V[ia][ib][iy];
+
+			}
+		}
+	}
 
 }
 

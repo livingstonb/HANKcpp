@@ -5,14 +5,16 @@ void ModelBase::make_grids(const Parameters& p) {
 	bgrid_ = double_vector(p.nb);
 	powerSpacedGrid(p.nb, p.bmin, p.bmax, p.bcurv, bgrid_);
 
-	bdelta_ = compute_grid_deltas(bgrid_);
+	dbgrid_ = bgrid_(seq(1,last)) - bgrid_(seq(0,last-1));
+	bdelta_ = compute_grid_deltas(bgrid_, dbgrid_);
 
 	// Illiquid asset
 	agrid_ = double_vector(p.na);
 	powerSpacedGrid(p.na, p.amin, p.amax, p.acurv, agrid_);
 	adjustPowerSpacedGrid(agrid_);
 
-	adelta_ = compute_grid_deltas(agrid_);
+	dagrid_ = agrid_(seq(1,last)) - agrid_(seq(0,last-1));
+	adelta_ = compute_grid_deltas(agrid_, dagrid_);
 
 	// Occupations
 	auto occgrids = occupationGrid(p);
@@ -166,10 +168,9 @@ void fix_rounding(double_matrix& mat)
 		mat(i,i) = mat(i,i) - mat.row(i).sum();
 }
 
-double_vector compute_grid_deltas(const double_vector& grid)
+double_vector compute_grid_deltas(const double_vector& grid, const double_vector& dgrid)
 {
 	int n = grid.size();
-	double_vector dgrid = grid(seq(1,last)) - grid(seq(0,last-1));
 	double_vector deltas(n);
 
 	deltas(0) = 0.5 * dgrid(0);
