@@ -27,6 +27,7 @@ class ModelBase
 			make_grids(p);
 			create_income_process(income_dir, p);
 			create_combined_variables();
+			check_nbl(p);
 		}
 
 		double_vector bgrid_;
@@ -52,6 +53,7 @@ class ModelBase
 		void make_grids(const Parameters& p);
 		void create_income_process(const std::string& income_dir, const Parameters& p);
 		void create_combined_variables();
+		void check_nbl(const Parameters& p) const;
 };
 
 class Model : private ModelBase {
@@ -82,6 +84,7 @@ class Model : private ModelBase {
 		const int na = p.na;
 		const int nocc = nocc_;
 		const int nprod = nprod_;
+		const int ntot = p.nb * p.na * nocc_ * nprod_;
 		const boost_array_shape<double, 3> dims;
 
 		double_vector get_rb_effective() const;

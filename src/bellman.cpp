@@ -1,15 +1,42 @@
 #include <bellman.h>
 
-HJB::HJB(const Model& model, const SteadyState& ss) : V(model.dims) {
+HJB::HJB(const Model& model_, const SteadyState& ss) : V(model.dims), model(model_) {
 	V = make_value_guess(model, ss);
 }
 
-void HJB::iterate(const Model& model, const SteadyState& ss) {
+void HJB::iterate(const SteadyState& ss) {
+	int ii = 0;
+	double lVdiff = 1.0;
+
+	boost_array_shape<double, 3> flat_dims = {{V.num_elements(), 1, 1}};
+
+	boost_array_type<double, 3> lastV(flat_dims);
+	boost_array_type<double, 3> newV(flat_dims);
+	lastV = reshape_array(V, {V.num_elements(), 1, 1});
+
+	while ( (ii < maxiter) & (lVdiff > vtol) ) {
+		update(ss);
+
+		newV = reshape_array(V, {model.ntot, 1, 1});
+		lVdiff = (boost2eigen(lastV) - boost2eigen(newV)).cwiseAbs().maxCoeff();
+		lastV = reshape_array(V, {V.num_elements(), 1, 1});
+
+		check_progress(lVdiff, dispfreq, ii, vtol);
+
+		++ii;
+	}
+}
+
+void HJB::update(const SteadyState& ss) {
 	const Parameters& p = model.p;
 
 	double_vector adrift = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
 	double_vector bdrift = model.get_rb_effective().array() * model.bgrid.array();
 
+	for (int ia=0; ia<p.na; ++ia)
+		for (int ib=0; ib<p.nb; ++ib)
+			for (int iy=0; iy<p.ny; ++iy)
+				V[ia][ib][iy] = V[ia][ib][iy] * 0.9;
 
 }
 
@@ -18,7 +45,7 @@ boost_array_type<double, 3> make_value_guess(const Model& model, const SteadySta
 
 	boost_array_type<double, 3> V(model.dims);
 	double lc, u, llabdisutil = 0.0;
-	double sep_constant = 1.0 / 3.0;
+	const double sep_constant = 1.0 / 3.0;
 	double_array wageexpr;
 	double_array bdriftnn;
 
@@ -49,4 +76,15 @@ boost_array_type<double, 3> make_value_guess(const Model& model, const SteadySta
 	}
 
 	return V;
+}
+
+void check_progress(double vdiff, int freq, int ii, double vtol) {
+	if ( ii == 0 )
+		return;
+	else if ( (ii == 1) | (ii % freq == 0) ) {
+		std::cout << "Iteration " << ii << ", diff = " << vdiff << '\n';
+	}
+
+	if ( vdiff <= vtol )
+		std::cout << "Converged after " << ii << " iterations." << '\n';
 }

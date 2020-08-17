@@ -83,6 +83,14 @@ void ModelBase::create_combined_variables() {
 	}
 }
 
+void ModelBase::check_nbl(const Parameters& p) const {
+	double nbl = -p.lumptransfer / (p.rborr + p.perfectAnnuityMarkets * p.deathrate);
+
+	if (bgrid_(0) < nbl) {
+		throw "Natural borrowing limit violated";
+	}
+}
+
 double_vector Model::get_rb_effective() const
 {
 	double_vector rb_effective = bgrid;

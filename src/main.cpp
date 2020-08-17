@@ -19,13 +19,25 @@ int main () {
 	
 	SteadyState iss(model);
 
-	HJB hjb(model, iss);
+	HJB hjb(model, iss); 
 
-	// auto arr = new_array<double, 2>({3, 2});
+	boost_array_type<double, 2> arr(boost::extents[2][3]);
 
-	// for (int i=0; i<3; ++i)
-	// 	for (int j=0; j<2; ++j)
-	// 		arr[i][j] = i + j;
+	for (int i=0; i<2; ++i) {
+		for (int j=0; j<3; ++j) {
+			arr[i][j] = i + j;
+		}
+	}
 
-	std::cout << hjb.V[2][1][8] << '\n';
+	auto earr = boost2eigen(arr);
+	std::cout << earr << '\n';
+
+	boost_array_type<double, 2> temp_arr = reshape_array(arr, {6, 1});
+
+	// auto earr2 = boost2eigen(temp_arr);
+	std::cout << boost2eigen(temp_arr) << '\n';
+
+
+	hjb.iterate(iss);
+
 }

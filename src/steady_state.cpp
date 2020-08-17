@@ -63,7 +63,6 @@ void SteadyState::update() {
 	dividend_B = p.profdistfracB * profit * (1.0 - p.corptax);
 	equity_B = dividend_B / p.rb;
 
-
 	netwagegrid = (1.0 - p.labtax) * model.yprodgrid.array()
 		* (wage_N * model.yoccgrid.array() + wage_Y * (1.0 - model.yoccgrid.array()));
 }

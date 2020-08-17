@@ -143,6 +143,27 @@ boost_array_type<T, N> new_array(const boost_array_shape<T, N>& shape)
 	return arr;
 }
 
+template<typename T, size_t N>
+boost_array_type<T, N> reshape_array(const boost_array_type<T, N>& arr, const boost_array_shape<T, N>& shape)
+{
+	boost_array_type<T, N> out = arr;
+	out.reshape(shape);
+	// boost_array_shape<T, N> new_shape;
+	// int n = arr.num_dimensions();
+
+	// if (n > 1) {
+	// 	auto new_shape = arr.shape();
+	// 	new_shape[0] = arr.num_elements();
+
+	// 	for (int i=1; i<n; ++i)
+	// 		new_shape[i] = 1;
+
+	// 	out.reshape(new_shape);
+	// }
+
+	return out;
+}
+
 template<typename T>
 map_type boost2eigen(T& arr)
 {
