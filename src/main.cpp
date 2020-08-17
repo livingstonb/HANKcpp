@@ -5,6 +5,7 @@
 #include <options.h>
 #include <model.h>
 #include <steady_state.h>
+#include <bellman.h>
 #include <hank.h>
 #include <Eigen/Dense>
 
@@ -18,5 +19,13 @@ int main () {
 	
 	SteadyState iss(model);
 
-	std::cout << iss.capital << '\n';
+	HJB hjb(model, iss);
+
+	// auto arr = new_array<double, 2>({3, 2});
+
+	// for (int i=0; i<3; ++i)
+	// 	for (int j=0; j<2; ++j)
+	// 		arr[i][j] = i + j;
+
+	std::cout << hjb.V[2][1][8] << '\n';
 }

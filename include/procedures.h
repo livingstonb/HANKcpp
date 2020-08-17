@@ -61,10 +61,11 @@ double vdot(const T& vec1, const T& vec2) {
 template<typename V>
 std::pair<std::vector<double>,std::vector<double>> occupationGrid(const V& p)
 {
-	std::vector<double> occgrid, occdist;
+	std::vector<double> occgrid(p.nocc);
+	std::vector<double> occdist(p.nocc);
 	if (p.nocc == 1) {
-		occgrid.push_back(0.0);
-		occdist.push_back(1.0);
+		std::fill(occgrid.begin(), occgrid.end(), 0.0);
+		std::fill(occdist.begin(), occdist.end(), 1.0);
 	}
 	else {
 		// S_N / (S_N + S_Y)
@@ -73,18 +74,17 @@ std::pair<std::vector<double>,std::vector<double>> occupationGrid(const V& p)
 
 		if (lshareNY == 0.0) {
 			// No labor income accrues to N-type
-			occgrid.push_back(0.0);
-			occdist.push_back(1.0 / p.nocc);
+			std::fill(occgrid.begin(), occgrid.end(), 0.0);
+			std::fill(occdist.begin(), occdist.end(), 1.0 / p.nocc);
 		}
 		else if (lshareNY == 1.0) {
 			// All labor income accrues to N-type
-			occgrid.push_back(1.0);
-			occdist.push_back(1.0 / p.nocc);
+			std::fill(occgrid.begin(), occgrid.end(), 1.0);
+			std::fill(occdist.begin(), occdist.end(), 1.0 / p.nocc);
 		}
 		else {
 			// Equally spaced in [0, 1], midpoints of intervals
 			double lwidth = 1.0 / p.nocc;
-			occgrid.resize(p.nocc);
 			occgrid[0] = 0.5 * lwidth;
 			occgrid[p.nocc-1] = 1.0 - 0.5 * lwidth;
 			if (p.nocc >= 2) {
@@ -97,7 +97,6 @@ std::pair<std::vector<double>,std::vector<double>> occupationGrid(const V& p)
 			double lWNtoWY = 1.5;
 			double lmeanocc = lshareNY / (lshareNY + (1.0 - lshareNY) * lWNtoWY);
 			double lpar = lmeanocc / (1.0 - lmeanocc);
-			occdist.resize(p.nocc);
 			for (int i=0; i<p.nocc; ++i) {
 				occdist[i] = pow(occgrid[i] + 0.5 * lwidth, lpar)
 					- pow(occgrid[i] - 0.5 * lwidth, lpar);

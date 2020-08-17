@@ -1,6 +1,6 @@
 #include <bellman.h>
 
-HJB::HJB(const Model& model, const SteadyState& ss) {
+HJB::HJB(const Model& model, const SteadyState& ss) : V(model.dims) {
 	V = make_value_guess(model, ss);
 }
 
@@ -16,7 +16,7 @@ void HJB::iterate(const Model& model, const SteadyState& ss) {
 boost_array_type<double, 3> make_value_guess(const Model& model, const SteadyState& ss) {
 	const Parameters& p = model.p;
 
-	boost_array_type<double, 3> V = new_array<double, 3>({p.na, p.nb, p.ny});
+	boost_array_type<double, 3> V(model.dims);
 	double lc, u, llabdisutil = 0.0;
 	double sep_constant = 1.0 / 3.0;
 	double_array wageexpr;

@@ -57,7 +57,7 @@ class ModelBase
 class Model : private ModelBase {
 	public:
 		Model(const Parameters p_, const std::string& income_dir)
-			: ModelBase(p_, income_dir), p(p_) {};
+			: ModelBase(p_, income_dir), p(p_), dims({p_.na, p_.nb, p_.ny}) {};
 
 		const Parameters p;
 
@@ -82,6 +82,7 @@ class Model : private ModelBase {
 		const int na = p.na;
 		const int nocc = nocc_;
 		const int nprod = nprod_;
+		const boost_array_shape<double, 3> dims;
 
 		double_vector get_rb_effective() const;
 		double util(double c) const;
