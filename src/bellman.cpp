@@ -28,7 +28,10 @@ void HJB::iterate(const SteadyState& ss) {
 }
 
 void HJB::update(const SteadyState& ss) {
-	ConUpwind upwindB, upwindF;
+	ConUpwind upwindB, upwindF, upwindBad;
+	upwindBad.s = 0.0;
+	upwindBad.Hc = -1.0e12;
+
 	double VaF, VaB, VbF, VbB, prof_keep;
 	double gbdrift, gnetwage, idioscale, chi = ss.chi;
 	const double prof_common = p.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
@@ -63,8 +66,15 @@ void HJB::update(const SteadyState& ss) {
 				gbdrift = bdrift(ib) + prof_common + profW(iy);
 				gnetwage = ss.netwagegrid(iy);
 
-				upwindB = optimal_consumption(VbB, gbdrift, gnetwage, chi, idioscale);
-				upwindF = optimal_consumption(VbF, gbdrift, gnetwage, chi, idioscale);
+				if ( ib < p.nb - 1 )
+					upwindB = optimal_consumption(VbB, gbdrift, gnetwage, chi, idioscale);
+				else
+					upwindB = upwindBad;
+
+				if ( ib > 0 )
+					upwindF = optimal_consumption(VbF, gbdrift, gnetwage, chi, idioscale);
+				else
+					upwindF = optimal_consumption(STATIONARY_PT_OR_LIMIT, gbdrift, gnetwage, chi, idioscale);
 
 
 				V[ia][ib][iy] = 0.9 * V[ia][ib][iy];
@@ -121,7 +131,7 @@ ConUpwind HJB::optimal_consumption_no_laborsupply(double Vb, double bdrift, doub
 	ConUpwind upwind;
 	upwind.h = 1.0;
 
-	if ( Vb > -999.0 ) {
+	if ( is_stationary_pt_or_limit(Vb)) {
 		upwind.c = model.util1inv(Vb);
 		upwind.s = bdrift + upwind.h * netwage - upwind.c;
 	}
@@ -141,7 +151,7 @@ ConUpwind HJB::optimal_consumption_no_laborsupply(double Vb, double bdrift, doub
 ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const {
 	ConUpwind upwind;
 
-	if ( Vb > -999.0 ) {
+	if ( is_stationary_pt_or_limit(Vb) ) {
 		upwind.h = model.labdisutil1inv(p.labwedge * netwage * Vb / idioscale, chi);
 	}
 	else {
@@ -170,7 +180,7 @@ ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift, double ne
 
 	double labdisutil = idioscale * model.labdisutil(upwind.h, chi);
 
-	if ( Vb > -999.0 ) {
+	if ( is_stationary_pt_or_limit(Vb) ) {
 		upwind.c = model.util1inv(Vb);
 		upwind.s = bdrift + upwind.h * netwage - upwind.c;
 	}
@@ -195,7 +205,7 @@ ConUpwind HJB::optimal_consumption_ghh_labor(double Vb, double bdrift, double ne
 
 	double labdisutil = idioscale * model.labdisutil(upwind.h, chi);
 
-	if ( Vb > -999.0 ) {
+	if ( is_stationary_pt_or_limit(Vb) ) {
 		upwind.c = model.util1inv(Vb) + labdisutil / p.labwedge;
 		upwind.s = bdrift + upwind.h * netwage - upwind.c;
 	}

@@ -15,6 +15,12 @@ struct ConUpwind {
 	double c, h, s, Hc;
 };
 
+const int STATIONARY_PT_OR_LIMIT = -999.9;
+
+constexpr bool is_stationary_pt_or_limit(double Vb) {
+	return (Vb <= STATIONARY_PT_OR_LIMIT);
+}
+
 
 class HJB {
 	public:
