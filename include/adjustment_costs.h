@@ -8,69 +8,57 @@ class AdjustmentCosts {
 	private:
 		double cost_fn_exponential(double d, double a) const {
 			double x = scale_factor(a) * d;
-			double acost;
 
 			if ( x == 0 )
-				acost = 0;
+				return 0;
 			else if ( x > 0 )
-				acost = kappa_d_fc - x
-					+ (1.0 / kappa_d[4]) * (exp(kappa_d[4] * x) - 1.0);
+				return kappa_d_fc - x + (1.0 / kappa_d[4]) * (exp(kappa_d[4] * x) - 1.0);
 			else
-				acost = kappa_w_fc - x
-					+ (1.0 / kappa_w[4]) * (exp(kappa_w[4] * x) - 1.0);
+				return kappa_w_fc - x + (1.0 / kappa_w[4]) * (exp(kappa_w[4] * x) - 1.0);
 
 			return acost;
 		}
 
-		double cost_fn_other(double d, double a) {
+		double cost_fn_other(double d, double a) const {
 			double scale = scale_factor(a);
-			double x = scale * d;
-			double acost;
+			double fcost, x = scale * d;
+			const double* kappa = NULL;
 
 			if ( x == 0 )
-				acost = 0;
+				return 0;
 			else if ( x > 0 ) {
-				acost = kappa_d[0] * fabs(x)
-					+ pow(fabs(x), 1.0 + kappa_d[2])
-						* pow(kappa_d[1], -kappa_d[2]) / (1.0 + kappa_d[2]);
-				acost = kappa_d_fc + scale * acost;
+				kappa = kappa_d.data();
+				fcost = kappa_d_fc;
 			}
 			else {
-				acost = kappa_w[0] * fabs(x)
-					+ pow(fabs(x), 1.0 + kappa_w[2])
-						* pow(kappa_w[1], -kappa_w[2]) / (1.0 + kappa_w[2]);
-				acost = kappa_w_fc + scale * acost;
+				kappa = kappa_w.data();
+				fcost = kappa_w_fc;
 			}
 
-			return acost;
+			return fcost + scale * (kappa[0] * fabs(x) + pow(fabs(x), 1.0 + kappa[2])
+									* pow(kappa[1], -kappa[2]) / (1.0 + kappa[2]));
 		}
 
 		double cost_deriv_exponential(double d, double a) const {
 			double x = scale_factor(a) * d;
-			double dcost;
 
 			if ( x == 0 )
-				dcost = 0;
+				return 0;
 			else if ( x > 0 )
-				dcost = exp(kappa_d[4] * x) - 1.0;
+				return exp(kappa_d[4] * x) - 1.0;
 			else
-				dcost = exp(kappa_w[4] * x) - 1.0;
-
-			return dcost;
+				return exp(kappa_w[4] * x) - 1.0;
 		}
 
 		double cost_deriv_other(double d, double a) const {
 			double x = scale_factor(a) * d;
-			double dcost;
 
 			if ( x == 0 )
-				dcost = 0;
+				return 0;
 			else if ( x > 0 )
-				dcost = kappa_d[0] + pow(x / kappa_d[1], kappa_d[2]);
+				return kappa_d[0] + pow(x / kappa_d[1], kappa_d[2]);
 			else
-				dcost = -kappa_w[0] - pow(-x / kappa_w[1], kappa_w[2]);
-
-			return dcost;
+				return -kappa_w[0] - pow(-x / kappa_w[1], kappa_w[2]);
 		}
 
 	public:
@@ -95,14 +83,9 @@ class AdjustmentCosts {
 				cost1 = [this](double d, double a) {return cost_deriv_other(d, a);};
 			}
 		}
-
-		// AdjustmentCosts& operator=(AdjustmentCosts&& adjcostobj) {
-		// 	*this = std::move(adjcostobj);
-		// 	return *this;
-		// }
 		
-		std::function<double(double, double)> cost = cost;
-		std::function<double(double, double)> cost1 = cost1;
+		std::function<double(double, double)> cost;
+		std::function<double(double, double)> cost1;
 
 		double cost1inv(double chi, double a) {return 0.0;}
 

@@ -12,6 +12,11 @@ struct ConUpwind {
 	bool valid = false;
 };
 
+struct DepositUpwind {
+	double d, Hd;
+	bool valid = false;
+}
+
 struct ValueFnDerivatives {
 	static const int StationaryPtOrLimit = -999.9;
 	double VaF, VaB, VbF, VbB;
