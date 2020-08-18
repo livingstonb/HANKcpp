@@ -15,7 +15,7 @@ struct ConUpwind {
 struct DepositUpwind {
 	double d, Hd;
 	bool valid = false;
-}
+};
 
 struct ValueFnDerivatives {
 	static const int StationaryPtOrLimit = -999.9;
@@ -25,6 +25,10 @@ struct ValueFnDerivatives {
 class HJB {
 	public:
 		HJB(const Model& model_, const SteadyState& ss);
+
+		struct NoLaborSupply {};
+		struct SepLabor {};
+		struct GHHLabor {};
 
 		void iterate(const SteadyState& ss);
 
@@ -41,7 +45,7 @@ class HJB {
 
 		const Parameters& p;
 
-		boost_array_type<double, 3> V;
+		boost3d V;
 
 		int maxiter = 500;
 		int dispfreq = 50;

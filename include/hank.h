@@ -20,6 +20,8 @@ typedef Eigen::Matrix<bool,Eigen::Dynamic,1> bool_vector;
 template <typename T, size_t N>
 using boost_array_type = boost::multi_array<T, N>;
 
+using boost3d = boost_array_type<double, 3>;
+
 template <typename T, size_t N>
 using boost_array_shape = boost::array<typename boost_array_type<T, N>::index, N>;
 

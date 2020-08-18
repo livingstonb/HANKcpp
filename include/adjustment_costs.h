@@ -15,8 +15,6 @@ class AdjustmentCosts {
 				return kappa_d_fc - x + (1.0 / kappa_d[4]) * (exp(kappa_d[4] * x) - 1.0);
 			else
 				return kappa_w_fc - x + (1.0 / kappa_w[4]) * (exp(kappa_w[4] * x) - 1.0);
-
-			return acost;
 		}
 
 		double cost_fn_other(double d, double a) const {
