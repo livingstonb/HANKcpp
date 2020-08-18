@@ -1,5 +1,63 @@
 #include <bellman.h>
 
+namespace {
+	const int STATIONARY_PT_OR_LIMIT = -999.9;
+
+	constexpr bool is_stationary_pt_or_limit(double Vb) {
+		return (Vb <= STATIONARY_PT_OR_LIMIT);
+	}
+
+	void check_progress(double vdiff, int freq, int ii, double vtol) {
+	if ( ii == 0 )
+		return;
+	else if ( (ii == 1) | (ii % freq == 0) ) {
+		std::cout << "Iteration " << ii << ", diff = " << vdiff << '\n';
+	}
+
+		if ( vdiff <= vtol )
+			std::cout << "Converged after " << ii << " iterations." << '\n';
+	}
+
+	boost_array_type<double, 3> make_value_guess(const Model& model, const SteadyState& ss) {
+		const Parameters& p = model.p;
+
+		boost_array_type<double, 3> V(model.dims);
+		double lc, u, llabdisutil = 0.0;
+		const double sep_constant = 1.0 / 3.0;
+		double_array wageexpr;
+		double_array bdriftnn;
+
+		bdriftnn = model.get_rb_effective().array() * model.bgrid.array();
+		bdriftnn = bdriftnn.max(0.0);
+
+		switch (p.laborsupply) {
+			case LaborType::sep:
+				wageexpr = ss.netwagegrid.array() * sep_constant;
+				llabdisutil = model.labdisutil(sep_constant, ss.chi);
+				break;
+			case LaborType::none:
+				wageexpr = ss.netwagegrid.array();
+				break;
+			case LaborType::ghh:
+				wageexpr = ss.netwagegrid.array().pow(1 + p.frisch);
+				break;
+		}
+
+		for (int ia=0; ia<p.na; ++ia) {
+			for (int ib=0; ib<p.nb; ++ib) {
+				for (int iy=0; iy<p.ny; ++iy) {
+					lc = wageexpr(iy) + p.lumptransfer + bdriftnn(ib);
+					u = model.util(lc);
+					V[ia][ib][iy] = (u - llabdisutil) / (p.rho + p.deathrate);
+				}
+			}
+		}
+
+		return V;
+	}
+
+}
+
 HJB::HJB(const Model& model_, const SteadyState& ss) : model(model_), p(model_.p), V(model.dims) {
 	V = make_value_guess(model, ss);
 }
@@ -222,51 +280,4 @@ ConUpwind HJB::optimal_consumption_ghh_labor(double Vb, double bdrift, double ne
 	return upwind;
 }
 
-boost_array_type<double, 3> make_value_guess(const Model& model, const SteadyState& ss) {
-	const Parameters& p = model.p;
 
-	boost_array_type<double, 3> V(model.dims);
-	double lc, u, llabdisutil = 0.0;
-	const double sep_constant = 1.0 / 3.0;
-	double_array wageexpr;
-	double_array bdriftnn;
-
-	bdriftnn = model.get_rb_effective().array() * model.bgrid.array();
-	bdriftnn = bdriftnn.max(0.0);
-
-	switch (p.laborsupply) {
-		case LaborType::sep:
-			wageexpr = ss.netwagegrid.array() * sep_constant;
-			llabdisutil = model.labdisutil(sep_constant, ss.chi);
-			break;
-		case LaborType::none:
-			wageexpr = ss.netwagegrid.array();
-			break;
-		case LaborType::ghh:
-			wageexpr = ss.netwagegrid.array().pow(1 + p.frisch);
-			break;
-	}
-
-	for (int ia=0; ia<p.na; ++ia) {
-		for (int ib=0; ib<p.nb; ++ib) {
-			for (int iy=0; iy<p.ny; ++iy) {
-				lc = wageexpr(iy) + p.lumptransfer + bdriftnn(ib);
-				u = model.util(lc);
-				V[ia][ib][iy] = (u - llabdisutil) / (p.rho + p.deathrate);
-			}
-		}
-	}
-
-	return V;
-}
-
-void check_progress(double vdiff, int freq, int ii, double vtol) {
-	if ( ii == 0 )
-		return;
-	else if ( (ii == 1) | (ii % freq == 0) ) {
-		std::cout << "Iteration " << ii << ", diff = " << vdiff << '\n';
-	}
-
-	if ( vdiff <= vtol )
-		std::cout << "Converged after " << ii << " iterations." << '\n';
-}

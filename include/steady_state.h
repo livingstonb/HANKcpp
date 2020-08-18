@@ -7,16 +7,6 @@
 #include <parameters.h>
 #include <options.h>
 
-double marginal_cost(double tfp, double r, double alpha, double wage);
-
-double compute_ss_capital_output_ratio(double price_W,
-	double targetMeanIll, double depreciation, double alpha_Y,
-	double drs_Y, double alpha_N, double drs_N);
-
-double compute_ss_capital_output_ratio(const Parameters& p, double price_w);
-
-double quadratic_formula(double a, double b, double c);
-
 class SteadyState {
 	private:
 		const Model& model;

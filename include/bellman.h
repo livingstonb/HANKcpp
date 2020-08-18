@@ -7,20 +7,9 @@
 #include <model.h>
 #include <steady_state.h>
 
-void check_progress(double vdiff, int freq, int i, double vtol);
-
-boost_array_type<double, 3> make_value_guess(const Model& model, const SteadyState& ss);
-
 struct ConUpwind {
 	double c, h, s, Hc;
 };
-
-const int STATIONARY_PT_OR_LIMIT = -999.9;
-
-constexpr bool is_stationary_pt_or_limit(double Vb) {
-	return (Vb <= STATIONARY_PT_OR_LIMIT);
-}
-
 
 class HJB {
 	public:
@@ -52,8 +41,5 @@ class HJB {
 		double dVamin = 1.0e-8;
 		double dVbmin = 1.0e-8;
 };
-
-
-
 
 #endif

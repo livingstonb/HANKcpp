@@ -1,5 +1,25 @@
 #include <model.h>
 
+namespace {
+	void fix_rounding(double_matrix& mat)
+	{
+		for (int i=0; i<mat.rows(); ++i)
+			mat(i,i) = mat(i,i) - mat.row(i).sum();
+	}
+
+	double_vector compute_grid_deltas(const double_vector& grid, const double_vector& dgrid)
+	{
+		int n = grid.size();
+		double_vector deltas(n);
+
+		deltas(0) = 0.5 * dgrid(0);
+		deltas(seq(1,n-2)) = 0.5 * (dgrid(seq(0,last-1)) + dgrid(seq(1,last)));
+		deltas(n-1) = 0.5 * dgrid(last);
+
+		return deltas;
+	}
+}
+
 void ModelBase::make_asset_grids(const Parameters& p) {
 	// Liquid asset
 	bgrid_ = double_vector(p.nb);
@@ -148,47 +168,29 @@ double_vector Model::get_rb_effective() const
 }
 
 double Model::util(double c) const {
-	return utility(c, p.prefshock, p.riskaver);
+	return HankFunctions::utility(c, p.prefshock, p.riskaver);
 }
 
 double Model::util1(double c) const {
-	return utility1(c, p.prefshock, p.riskaver);
+	return HankFunctions::utility1(c, p.prefshock, p.riskaver);
 }
 
 double Model::util1inv(double u) const {
-	return utility1inv(u, p.prefshock, p.riskaver);
+	return HankFunctions::utility1inv(u, p.prefshock, p.riskaver);
 }
 
 double Model::labdisutil(double h, double chi) const {
-	return labor_disutility(h, p.frisch, chi);
+	return HankFunctions::labor_disutility(h, p.frisch, chi);
 }
 
 double Model::labdisutil1(double h, double chi) const {
-	return labor_disutility1(h, p.frisch, chi);
+	return HankFunctions::labor_disutility1(h, p.frisch, chi);
 }
 
 double Model::labdisutil1inv(double du, double chi) const {
-	return labor_disutility1inv(du, p.frisch, chi);
+	return HankFunctions::labor_disutility1inv(du, p.frisch, chi);
 }
 
 double Model::util1BC(double h, double chi, double bdrift, double netwage, double wagescale) const {
 	return labdisutil1(h, chi) - util1(bdrift + h * netwage) * netwage * wagescale * p.labwedge;
-}
-
-void fix_rounding(double_matrix& mat)
-{
-	for (int i=0; i<mat.rows(); ++i)
-		mat(i,i) = mat(i,i) - mat.row(i).sum();
-}
-
-double_vector compute_grid_deltas(const double_vector& grid, const double_vector& dgrid)
-{
-	int n = grid.size();
-	double_vector deltas(n);
-
-	deltas(0) = 0.5 * dgrid(0);
-	deltas(seq(1,n-2)) = 0.5 * (dgrid(seq(0,last-1)) + dgrid(seq(1,last)));
-	deltas(n-1) = 0.5 * dgrid(last);
-
-	return deltas;
 }

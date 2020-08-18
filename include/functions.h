@@ -3,6 +3,8 @@
 
 #include <cmath>
 
+namespace HankFunctions {
+
 inline double utility(double c, double prefshock, double riskaver) {
 	if (riskaver == 1.0)
 		return prefshock * log(c);
@@ -29,6 +31,8 @@ inline double labor_disutility1(double h, double frisch, double chi) {
 
 inline double labor_disutility1inv(double du, double frisch, double chi) {
 	return pow(du / chi, frisch);
+}
+
 }
 
 #endif

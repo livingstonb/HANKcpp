@@ -12,10 +12,6 @@
 #include <functions.h>
 #include <hank.h>
 
-void fix_rounding(double_matrix& mat);
-
-double_vector compute_grid_deltas(const double_vector& grid, const double_vector& dgrid);
-
 class ModelBase
 {
 	public:
