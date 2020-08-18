@@ -25,11 +25,11 @@ void Parameters::setup(const Options& opts) {
 	switch ( opts.depositCostMode ) {
 		case DepositCostMode::symmetric:
 			// Set kappa_d equal to kappa_w
-			kappafc_d = kappafc_w;
+			kappa_d_fc = kappa_w_fc;
 			std::copy(std::begin(kappa_w), std::end(kappa_w), std::begin(kappa_d));
 			break;
 		case DepositCostMode::no_deposit_cost:
-			kappafc_d = 0;
+			kappa_d_fc = 0;
 			kappa_d[0] = 0;
 			kappa_d[1] = 100; // This is the optimal depost rate, i.e. higher for lower cost
 			kappa_d[2] = 1;

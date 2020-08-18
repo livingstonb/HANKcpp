@@ -6,8 +6,10 @@
 
 class AdjustmentCosts {
 	public:
+		AdjustmentCosts() {}
+
 		AdjustmentCosts(AdjustCostFnRatioMode mode_, bool exponential_costs_,
-			double kappa_w_fc_, double kappa_d_fc_, double kappa_w_[], double kappa_d_[])
+			double kappa_w_fc_, double kappa_d_fc_, const double kappa_w_[], const double kappa_d_[])
 			: mode(mode_), exponential_costs(exponential_costs_),
 				kappa_w_fc(kappa_w_fc_), kappa_d_fc(kappa_d_fc_) {
 

@@ -23,6 +23,9 @@ class ModelBase
 			create_combined_variables(p);
 
 			check_nbl(p);
+
+			adjcosts_ = AdjustmentCosts(p.adjCostRatioMode, p.exponential_adjcosts,
+				p.kappa_w_fc, p.kappa_d_fc, p.kappa_w, p.kappa_d);
 		}
 
 		double_vector bgrid_;
@@ -48,6 +51,8 @@ class ModelBase
 		int nocc_;
 		int nprod_;
 
+		AdjustmentCosts adjcosts_;
+
 		void make_asset_grids(const Parameters& p);
 		void make_occupation_grids(const Parameters& p);
 		void create_income_process(const std::string& income_dir, const Parameters& p);
@@ -61,6 +66,7 @@ class Model : private ModelBase {
 			: ModelBase(p_, income_dir), p(p_), dims({p_.na, p_.nb, p_.ny}) {};
 
 		const Parameters p;
+		const AdjustmentCosts& adjcosts = adjcosts_;
 
 		const double_vector& bgrid = bgrid_;
 		const double_vector& dbgrid = dbgrid_;

@@ -11,6 +11,7 @@ int main () {
 	std::string income_dir = "2point_3_5";
 
 	Options options;
+
 	Parameters params;
 	params.setup(options);
 

@@ -66,7 +66,8 @@ class Parameters {
 		bool scaleDisutilityIdio = false;
 
 		// --- WITHDRAWAL COSTS ---
-		double kappafc_w = 0.0;
+		bool exponential_adjcosts = false;
+		double kappa_w_fc = 0.0;
 		double kappa_w[5] = {
 			0.0, // kappa0_w
 			0.04336, // kappa1_w
@@ -76,7 +77,7 @@ class Parameters {
 		};
 
 		// --- DEPOSIT COSTS --
-		double kappafc_d = 0.2;
+		double kappa_d_fc = 0.2;
 		double kappa_d[5] = {
 			0.0, // kappa0_d
 			0.6, // kappa1_d
