@@ -22,4 +22,5 @@ int main () {
 	HJB hjb(model, iss); 
 	hjb.iterate(iss);
 
+
 }

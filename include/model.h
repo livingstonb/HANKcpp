@@ -24,8 +24,8 @@ class ModelBase
 
 			check_nbl(p);
 
-			adjcosts_ = AdjustmentCosts(p.adjCostRatioMode, p.exponential_adjcosts,
-				p.kappa_w_fc, p.kappa_d_fc, p.kappa_w, p.kappa_d);
+			adjcosts_ = std::move(AdjustmentCosts(p.adjCostRatioMode, p.exponential_adjcosts,
+				p.kappa_w_fc, p.kappa_d_fc, p.kappa_w, p.kappa_d));
 		}
 
 		double_vector bgrid_;
