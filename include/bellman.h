@@ -11,6 +11,11 @@ struct ConUpwind {
 	double c, h, s, Hc;
 };
 
+struct ValueFnDerivatives {
+	static const int StationaryPtOrLimit = -999.9;
+	double VaF, VaB, VbF, VbB;
+};
+
 class HJB {
 	public:
 		HJB(const Model& model_, const SteadyState& ss);
@@ -19,9 +24,7 @@ class HJB {
 
 		void update(const SteadyState& ss);
 
-		void compute_derivatives(
-			double& VaF, double& VbF, double& VaB, double& VbB,
-			int ia, int ib, int iy) const;
+		ValueFnDerivatives compute_derivatives(int ia, int ib, int iy) const;
 
 		ConUpwind optimal_consumption(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
 		ConUpwind optimal_consumption_no_laborsupply(double Vb, double bdrift, double netwage) const;

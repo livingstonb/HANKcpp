@@ -1,11 +1,10 @@
 #include <bellman.h>
 
 namespace {
-	const int STATIONARY_PT_OR_LIMIT = -999.9;
-
 	constexpr bool is_stationary_pt_or_limit(double Vb) {
-		return (Vb <= STATIONARY_PT_OR_LIMIT);
+		return (Vb <= ValueFnDerivatives::StationaryPtOrLimit);
 	}
+
 
 	void check_progress(double vdiff, int freq, int ii, double vtol) {
 	if ( ii == 0 )
@@ -86,11 +85,16 @@ void HJB::iterate(const SteadyState& ss) {
 }
 
 void HJB::update(const SteadyState& ss) {
+	ValueFnDerivatives derivs;
 	ConUpwind upwindB, upwindF, upwindBad;
 	upwindBad.s = 0.0;
 	upwindBad.Hc = -1.0e12;
 
-	double VaF, VaB, VbF, VbB, prof_keep;
+	double prof_keep;
+	boost_array_type<double, 3> c(model.dims);
+	boost_array_type<double, 3> h(model.dims);
+	boost_array_type<double, 3> s(model.dims);
+
 	double gbdrift, gnetwage, idioscale, chi = ss.chi;
 	const double prof_common = p.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
 
@@ -112,7 +116,7 @@ void HJB::update(const SteadyState& ss) {
 	for (int ia=0; ia<p.na; ++ia) {
 		for (int ib=0; ib<p.nb; ++ib) {
 			for (int iy=0; iy<p.ny; ++iy) {
-				compute_derivatives(VaF, VbF, VaB, VbB, ia, ib, iy);
+				derivs = compute_derivatives(ia, ib, iy);
 
 				if ( p.scaleDisutilityIdio )
 					idioscale = model.yprodgrid(iy);
@@ -125,14 +129,14 @@ void HJB::update(const SteadyState& ss) {
 				gnetwage = ss.netwagegrid(iy);
 
 				if ( ib < p.nb - 1 )
-					upwindB = optimal_consumption(VbB, gbdrift, gnetwage, chi, idioscale);
+					upwindB = optimal_consumption(derivs.VbB, gbdrift, gnetwage, chi, idioscale);
 				else
 					upwindB = upwindBad;
 
 				if ( ib > 0 )
-					upwindF = optimal_consumption(VbF, gbdrift, gnetwage, chi, idioscale);
+					upwindF = optimal_consumption(derivs.VbF, gbdrift, gnetwage, chi, idioscale);
 				else
-					upwindF = optimal_consumption(STATIONARY_PT_OR_LIMIT, gbdrift, gnetwage, chi, idioscale);
+					upwindF = optimal_consumption(derivs.StationaryPtOrLimit, gbdrift, gnetwage, chi, idioscale);
 
 
 				V[ia][ib][iy] = 0.9 * V[ia][ib][iy];
@@ -143,30 +147,32 @@ void HJB::update(const SteadyState& ss) {
 
 }
 
-void HJB::compute_derivatives(
-	double& VaF, double& VbF, double& VaB, double& VbB,
-	int ia, int ib, int iy) const {
+ValueFnDerivatives HJB::compute_derivatives(int ia, int ib, int iy) const {
+	ValueFnDerivatives d;
+
 	// Forward derivatives
 	if (ia < p.na - 1) {
-		VaF = (V[ia+1][ib][iy] - V[ia][ib][iy]) / model.dagrid(ia);
-		VaF = std::max(VaF, dVamin);
+		d.VaF = (V[ia+1][ib][iy] - V[ia][ib][iy]) / model.dagrid(ia);
+		d.VaF = std::max(d.VaF, dVamin);
 	}
 
 	if (ib < p.nb - 1) {
-		VbF = (V[ia][ib+1][iy] - V[ia][ib][iy]) / model.dbgrid(ib);
-		VbF = std::max(VbF, dVbmin);
+		d.VbF = (V[ia][ib+1][iy] - V[ia][ib][iy]) / model.dbgrid(ib);
+		d.VbF = std::max(d.VbF, dVbmin);
 	}
 
 	// Backward derivatives
 	if (ia > 0) {
-		VaB = (V[ia][ib][iy] - V[ia-1][ib][iy]) / model.dagrid(ia-1);
-		VaB = std::max(VaB, dVamin);
+		d.VaB = (V[ia][ib][iy] - V[ia-1][ib][iy]) / model.dagrid(ia-1);
+		d.VaB = std::max(d.VaB, dVamin);
 	}
 
 	if (ib > 0) {
-		VbB = (V[ia][ib][iy] - V[ia][ib-1][iy]) / model.dbgrid(ib-1);
-		VbB = std::max(VbB, dVbmin);
+		d.VbB = (V[ia][ib][iy] - V[ia][ib-1][iy]) / model.dbgrid(ib-1);
+		d.VbB = std::max(d.VbB, dVbmin);
 	}
+
+	return d;
 }
 
 ConUpwind HJB::optimal_consumption(double Vb, double bdrift, double netwage, double chi, double idioscale) const {
