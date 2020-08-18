@@ -171,7 +171,14 @@ void HJB::update(const SteadyState& ss) {
 				// No drift
 				upwind0 = optimal_consumption(derivs.StationaryPtOrLimit, gbdrift, gnetwage, ss.chi, idioscale);
 
+				// Update c, s, and h
 				policies.update(ia, ib, iy, upwindF, upwindB, upwind0);
+
+				// Deposit decision
+				if ( (ia < p.na - 1) & (ib > 0) ) {
+					// a forward, b backward
+					
+				}
 
 				V[ia][ib][iy] = 0.9 * V[ia][ib][iy];
 			}

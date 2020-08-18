@@ -21,6 +21,7 @@ class ModelBase
 			make_occupation_grids(p);
 			create_income_process(income_dir, p);
 			create_combined_variables(p);
+
 			check_nbl(p);
 		}
 

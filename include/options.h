@@ -2,8 +2,7 @@
 #define _OPTIONS_H
 
 #include <iostream>
-
-enum class DepositCostMode { custom, symmetric, no_deposit_cost };
+#include <hank.h>
 
 class Options {
 	public:

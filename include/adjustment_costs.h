@@ -2,38 +2,29 @@
 #define _ADJUSTMENT_COSTS_H
 
 #include <math.h>
-
-enum class AdjustCostFnRatioMode { none, linear, max };
+#include <hank.h>
 
 class AdjustmentCosts {
 	public:
 		AdjustmentCosts(AdjustCostFnRatioMode mode_, bool exponential_costs_,
-			double kappa_w_fc_, double kappa_d_fc_,
-			double kappa_w_[], double kappa_d_[])
-			: kappa_w_fc(kappa_w_fc_), kappa_d_fc(kappa_d_fc_),
-				mode(mode_), exponential_costs(exponential_costs_) {
+			double kappa_w_fc_, double kappa_d_fc_, double kappa_w_[], double kappa_d_[])
+			: mode(mode_), exponential_costs(exponential_costs_),
+				kappa_w_fc(kappa_w_fc_), kappa_d_fc(kappa_d_fc_) {
 
 			for (int i=0; i<5; ++i) {
 				kappa_w[i] = kappa_w_[i];
 				kappa_d[i] = kappa_d_[i];
 			}
-
-			switch (mode) {
-				case AdjustCostFnRatioMode::none:
-					scale_factor = [](double, double)
-			}
 		}
 
-
-		std::function<double(double, double)> scale_factor;
-
 		double cost(double d, double a) {
-			double acost;
+			double x, scale, acost;
 
 			if ( d == 0 )
 				return 0;
 
-			x = d * scale_factor(a);
+			scale = scale_factor(a);
+			x = scale * d;
 
 			if ( exponential_costs ) {
 				if ( x > 0 )
@@ -82,7 +73,7 @@ class AdjustmentCosts {
 			return dcost;
 		}
 
-		double cost1inv(double chi, double a) {;}
+		double cost1inv(double chi, double a) {return 0.0;}
 
 		double scale_factor(double a) {
 			double scale;

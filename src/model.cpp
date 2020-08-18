@@ -149,10 +149,12 @@ void ModelBase::create_combined_variables(const Parameters& p) {
 }
 
 void ModelBase::check_nbl(const Parameters& p) const {
-	double nbl = -p.lumptransfer / (p.rborr + p.perfectAnnuityMarkets * p.deathrate);
+	if ( p.borrowing ) {
+		double nbl = -p.lumptransfer / (p.rborr + p.perfectAnnuityMarkets * p.deathrate);
 
-	if (bgrid_(0) < nbl) {
-		throw "Natural borrowing limit violated";
+		if (bgrid_(0) < nbl) {
+			throw "Natural borrowing limit violated";
+		}
 	}
 }
 

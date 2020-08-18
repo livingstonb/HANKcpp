@@ -32,9 +32,6 @@ inline double labor_disutility1inv(double du, double frisch, double chi) {
 	return pow(du / chi, frisch);
 }
 
-// template<AdjustCostFnRatioMode M>
-// double adjust_cost_scale_factor()
-
-// }
+}
 
 #endif

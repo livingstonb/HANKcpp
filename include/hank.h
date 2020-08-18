@@ -28,6 +28,10 @@ typedef boost::multi_array_types::index_range range;
 // Enumerations
 enum class LaborType { none, sep, ghh };
 
+enum class AdjustCostFnRatioMode { none, linear, max };
+
+enum class DepositCostMode { custom, symmetric, no_deposit_cost };
+
 // Declare which type to use for grids
 typedef double_vector grid_type;
 

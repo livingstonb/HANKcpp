@@ -86,6 +86,7 @@ class Parameters {
 		};
 
 		// --- OTHER MODEL PARAMETERS ---
+		bool borrowing = false;
 		// Steady state output gap
 		double ssgap = 0.0;
 		double meanlabeff = 1.0;
