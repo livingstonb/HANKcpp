@@ -11,6 +11,7 @@
 #include <utilities.h>
 #include <functions.h>
 #include <hank.h>
+#include <adjustment_costs.h>
 
 class ModelBase
 {

@@ -2,11 +2,14 @@
 #define _PARAMETERS_H
 
 #include <iostream>
+#include <options.h>
 #include <hank.h>
 
 class Parameters {
 	public:
-		Parameters();
+		Parameters() {}
+
+		void setup(const Options& opts);
 
 		bool Borrowing = true;
 
@@ -62,6 +65,26 @@ class Parameters {
 		double labwedge = 1.0;
 		bool scaleDisutilityIdio = false;
 
+		// --- WITHDRAWAL COSTS ---
+		double kappafc_w = 0.0;
+		double kappa_w[5] = {
+			0.0, // kappa0_w
+			0.04336, // kappa1_w
+			0.40176, // kappa2_w
+			0.03 * 2.92 / 4.0, // kappa3_w
+			0.0 // kappa4_w
+		};
+
+		// --- DEPOSIT COSTS --
+		double kappafc_d = 0.2;
+		double kappa_d[5] = {
+			0.0, // kappa0_d
+			0.6, // kappa1_d
+			1.0, // kappa2_d
+			-1.0e10, // unused but will be set equal to kappa3_w
+			0.0 // kappa4_d
+		};
+
 		// --- OTHER MODEL PARAMETERS ---
 		// Steady state output gap
 		double ssgap = 0.0;
@@ -77,6 +100,7 @@ class Parameters {
 		double lumptransfer = 0.05;
 		bool prodispshock = false;
 		bool prodDispScaleDisutility = true;
+		AdjustCostFnRatioMode adjCostRatioMode = AdjustCostFnRatioMode::max;
 
 		// --- OTHER SOLUTION PARAMETERS ---
 		double cmin = 1.0e-5;

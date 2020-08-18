@@ -20,10 +20,10 @@ all: $(MAIN) $(OBJECTS) $(EXECUTABLE)
 $(EXECUTABLE): $(MAIN) $(OBJECTS)
 	$(CC) $(MAIN) $(OBJECTS) -o $@ -lcblas
 
-$(OBJECTS): $(OBJDIR)/%.o: $(SOURCEDIR)/%.cpp include/%.h
+$(OBJECTS): $(OBJDIR)/%.o: $(SOURCEDIR)/%.cpp include/*.h
 	$(CC) $(CFLAGS) $< -o $@ -fopenmp
 
-$(MAIN): $(OBJDIR)/%.o: $(SOURCEDIR)/%.cpp
+$(MAIN): $(OBJDIR)/%.o: $(SOURCEDIR)/%.cpp include/*.h
 	$(CC) $(CFLAGS) $< -o $@ -fopenmp
 
 clean:
