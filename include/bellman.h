@@ -9,6 +9,7 @@
 
 struct ConUpwind {
 	double c, h, s, Hc;
+	bool valid = false;
 };
 
 struct ValueFnDerivatives {

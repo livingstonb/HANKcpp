@@ -55,6 +55,31 @@ namespace {
 		return V;
 	}
 
+	class Policies {
+		public:
+			Policies(const boost_array_shape<double, 3>& dims) : c(dims), h(dims), s(dims) {};
+
+			boost_array_type<double, 3> c, h, s;
+
+			void update(int ia, int ib, int iy, const ConUpwind& uwF, const ConUpwind& uwB, const ConUpwind& uw0) {
+				bool not_backward = (!uwB.valid) | (uwF.Hc >= uwB.Hc);
+				bool not_forward = (!uwF.valid) | (uwB.Hc >= uwF.Hc);
+				bool forward_better_than_nothing = uwF.Hc >= uw0.Hc;
+				bool backward_better_than_nothing = uwB.Hc >= uw0.Hc;
+
+				ConUpwind uw_selected;
+				if ( uwF.valid & not_backward & forward_better_than_nothing )
+					uw_selected = uwF;
+				else if ( uwB.valid & not_forward & backward_better_than_nothing )
+					uw_selected = uwB;
+				else
+					uw_selected = uw0;
+
+				c[ia][ib][iy] = uw_selected.c;
+				h[ia][ib][iy] = uw_selected.h;
+				s[ia][ib][iy] = uw_selected.s;
+			}
+	};
 }
 
 HJB::HJB(const Model& model_, const SteadyState& ss) : model(model_), p(model_.p), V(model.dims) {
@@ -84,24 +109,25 @@ void HJB::iterate(const SteadyState& ss) {
 	}
 }
 
+
+
 void HJB::update(const SteadyState& ss) {
 	ValueFnDerivatives derivs;
-	ConUpwind upwindB, upwindF, upwindBad;
+
+	ConUpwind upwindB, upwindF, upwind0, upwindBad;
 	upwindBad.s = 0.0;
 	upwindBad.Hc = -1.0e12;
 
-	double prof_keep;
-	boost_array_type<double, 3> c(model.dims);
-	boost_array_type<double, 3> h(model.dims);
-	boost_array_type<double, 3> s(model.dims);
+	Policies policies(model.dims);
 
-	double gbdrift, gnetwage, idioscale, chi = ss.chi;
+	double gbdrift, gnetwage, idioscale;
 	const double prof_common = p.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
 
 	bool labor_is_separable = (p.laborsupply == LaborType::sep);
 	const bool scale_wrt_ss = (!p.scaleDisutilityIdio) & p.prodispshock
 		& p.prodDispScaleDisutility & labor_is_separable;
 
+	double prof_keep;
 	if ( p.taxHHProfitIncome )
 		prof_keep = 1.0 - p.labtax;
 	else
@@ -128,19 +154,26 @@ void HJB::update(const SteadyState& ss) {
 				gbdrift = bdrift(ib) + prof_common + profW(iy);
 				gnetwage = ss.netwagegrid(iy);
 
+				// Upwinding forward
 				if ( ib < p.nb - 1 )
-					upwindB = optimal_consumption(derivs.VbB, gbdrift, gnetwage, chi, idioscale);
+					upwindF = optimal_consumption(derivs.VbF, gbdrift, gnetwage, ss.chi, idioscale);
 				else
-					upwindB = upwindBad;
+					upwindF = upwindBad;
+				upwindF.valid = ( upwindF.s > 0.0 );
 
+				// Upwinding backward
 				if ( ib > 0 )
-					upwindF = optimal_consumption(derivs.VbF, gbdrift, gnetwage, chi, idioscale);
+					upwindB = optimal_consumption(derivs.VbB, gbdrift, gnetwage, ss.chi, idioscale);
 				else
-					upwindF = optimal_consumption(derivs.StationaryPtOrLimit, gbdrift, gnetwage, chi, idioscale);
+					upwindB = optimal_consumption(derivs.StationaryPtOrLimit, gbdrift, gnetwage, ss.chi, idioscale);
+				upwindB.valid = ( upwindB.s < 0.0 );
 
+				// No drift
+				upwind0 = optimal_consumption(derivs.StationaryPtOrLimit, gbdrift, gnetwage, ss.chi, idioscale);
+
+				policies.update(ia, ib, iy, upwindF, upwindB, upwind0);
 
 				V[ia][ib][iy] = 0.9 * V[ia][ib][iy];
-
 			}
 		}
 	}
