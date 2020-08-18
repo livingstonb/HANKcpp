@@ -28,7 +28,10 @@ class HJB {
 			double& VaF, double& VbF, double& VaB, double& VbB,
 			int ia, int ib, int iy) const;
 
-		ConUpwind optimal_consumption(double, double, double) const;
+		ConUpwind optimal_consumption(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
+		ConUpwind optimal_consumption_no_laborsupply(double Vb, double bdrift, double netwage) const;
+		ConUpwind optimal_consumption_sep_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
+		ConUpwind optimal_consumption_ghh_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
 
 		const Model& model;
 

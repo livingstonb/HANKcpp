@@ -5,17 +5,12 @@
 #include <string>
 #include <vector>
 #include <cmath>
-#include <fstream>
 #include <boost/algorithm/string.hpp>
 
 #include <parameters.h>
 #include <utilities.h>
 #include <functions.h>
 #include <hank.h>
-
-std::vector<double> read_matrix(const std::string& file_loc);
-
-std::size_t find_multiple(const std::string& line, int pos);
 
 void fix_rounding(double_matrix& mat);
 
@@ -25,7 +20,8 @@ class ModelBase
 {
 	public:
 		ModelBase(const Parameters p, const std::string& income_dir) {
-			make_grids(p);
+			make_asset_grids(p);
+			make_occupation_grids(p);
 			create_income_process(income_dir, p);
 			create_combined_variables(p);
 			check_nbl(p);
@@ -54,7 +50,8 @@ class ModelBase
 		int nocc_;
 		int nprod_;
 
-		void make_grids(const Parameters& p);
+		void make_asset_grids(const Parameters& p);
+		void make_occupation_grids(const Parameters& p);
 		void create_income_process(const std::string& income_dir, const Parameters& p);
 		void create_combined_variables(const Parameters& p);
 		void check_nbl(const Parameters& p) const;
@@ -96,9 +93,11 @@ class Model : private ModelBase {
 
 		double_vector get_rb_effective() const;
 		double util(double c) const;
-		double util1(double u) const;
+		double util1(double c) const;
+		double util1inv(double u) const;
 		double labdisutil(double h, double chi) const;
 		double labdisutil1(double u, double chi) const;
+		double labdisutil1inv(double du, double chi) const;
 		double util1BC(double h, double chi, double bdrift, double netwage, double wagescale) const;
 };
 

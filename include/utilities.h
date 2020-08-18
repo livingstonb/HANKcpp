@@ -11,7 +11,10 @@
 // #include <mkl_lapack.h>
 // #include <mkl_lapacke.h>
 #include <assert.h>
+#include <fstream>
 #include <hank.h>
+
+class Parameters;
 
 template<typename T>
 void linspace(double x, double y, int n, T& cont) {
@@ -24,11 +27,9 @@ void powerSpacedGrid(double low, double high, double curv, grid_type& grid);
 
 void adjustPowerSpacedGrid(grid_type& grid);
 
-// template <typename T, typename F>
-// void apply(T& vec, F func) {
-// 	std::for_each(vec.begin(), vec.end(), func);
-// }
+std::vector<double> read_matrix(const std::string& file_loc);
 
+std::size_t find_multiple(const std::string& line, int pos);
 
 template<typename T>
 void printvec(const T& vec) {
@@ -43,55 +44,6 @@ void printvec(const T& vec) {
 // 	return cblas_ddot(vec1.size(), vec1.data(), 1, vec2.data(), 1);
 // }
 
-template<typename V>
-std::pair<std::vector<double>,std::vector<double>> occupationGrid(const V& p)
-{
-	std::vector<double> occgrid(p.nocc);
-	std::vector<double> occdist(p.nocc);
-	if (p.nocc == 1) {
-		std::fill(occgrid.begin(), occgrid.end(), 0.0);
-		std::fill(occdist.begin(), occdist.end(), 1.0);
-	}
-	else {
-		// S_N / (S_N + S_Y)
-		double lshareNY = (1.0 - p.alpha_N) * p.drs_N
-			/ ((p.elast - 1.0) * (1.0 - p.alpha_Y) * p.drs_Y + (1.0 - p.alpha_N) * p.drs_N);
-
-		if (lshareNY == 0.0) {
-			// No labor income accrues to N-type
-			std::fill(occgrid.begin(), occgrid.end(), 0.0);
-			std::fill(occdist.begin(), occdist.end(), 1.0 / p.nocc);
-		}
-		else if (lshareNY == 1.0) {
-			// All labor income accrues to N-type
-			std::fill(occgrid.begin(), occgrid.end(), 1.0);
-			std::fill(occdist.begin(), occdist.end(), 1.0 / p.nocc);
-		}
-		else {
-			// Equally spaced in [0, 1], midpoints of intervals
-			double lwidth = 1.0 / p.nocc;
-			occgrid[0] = 0.5 * lwidth;
-			occgrid[p.nocc-1] = 1.0 - 0.5 * lwidth;
-			if (p.nocc >= 2) {
-				for (int i=1; i<p.nocc-1; ++i) {
-					occgrid[i] = occgrid[i-1] + lwidth;
-				}
-			}
-
-			// Distribution has CDF x ^ par. Choose par to target mean a
-			double lWNtoWY = 1.5;
-			double lmeanocc = lshareNY / (lshareNY + (1.0 - lshareNY) * lWNtoWY);
-			double lpar = lmeanocc / (1.0 - lmeanocc);
-			for (int i=0; i<p.nocc; ++i) {
-				occdist[i] = pow(occgrid[i] + 0.5 * lwidth, lpar)
-					- pow(occgrid[i] - 0.5 * lwidth, lpar);
-			}
-		}
-	}
-
-	auto pair = std::make_pair(occgrid, occdist);
-	return pair;
-}
 
 template<typename T>
 double_vector vector2eigenv(const T& vec)

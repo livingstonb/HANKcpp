@@ -53,6 +53,9 @@ class SteadyState {
 
 		// Labor disutility
 		double chi;
+
+		// Productivity grid
+		double_vector yprodgrid;
 };
 
 

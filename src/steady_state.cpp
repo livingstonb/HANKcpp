@@ -26,6 +26,8 @@ SteadyState::SteadyState(const Model& model_) : model(model_), p(model_.p) {
 		+ wage_N * model.occdist.dot(model.occgrid);
 
 	chi = lmeanwage * p.meanlabeff / (pow(0.7, -p.riskaver) * pow(p.hourtarget, 1.0/p.frisch));
+
+	yprodgrid = model_.yprodgrid;
 }
 
 void SteadyState::update() {

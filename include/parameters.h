@@ -49,13 +49,18 @@ class Parameters {
 		double tfp_N = 1.0;
 		double depreciation = 0.07 / 4.0;
 
-		// --- OTHER FIRM-SIDE PARAMETERS --
+		// --- OTHER FIRM-SIDE PARAMETERS ---
 		double taxHHProfitIncome = 1.0;
 		double profdistfracA = 0.333; // Fraction of profits to illiquid equity (set to alpha)
 		double profdistfracB = 0.0;
 		double profdistfracW = 0.667;
 		double profdistfracL = 0.0;
 		double priceadjcost = 100.0;
+
+		// --- LABOR MARKET PARAMETERS ---
+		bool imposeMaxHours = true;
+		double labwedge = 1.0;
+		bool scaleDisutilityIdio = false;
 
 		// --- OTHER MODEL PARAMETERS ---
 		// Steady state output gap
@@ -70,8 +75,8 @@ class Parameters {
 		double corptax = 0.0;
 		double labtax = 0.30;
 		double lumptransfer = 0.05;
-		bool imposeMaxHours = true;
-		double labwedge = 1.0;
+		bool prodispshock = false;
+		bool prodDispScaleDisutility = true;
 
 		// --- OTHER SOLUTION PARAMETERS ---
 		double cmin = 1.0e-5;

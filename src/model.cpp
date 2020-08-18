@@ -1,6 +1,6 @@
 #include <model.h>
 
-void ModelBase::make_grids(const Parameters& p) {
+void ModelBase::make_asset_grids(const Parameters& p) {
 	// Liquid asset
 	bgrid_ = double_vector(p.nb);
 	powerSpacedGrid(p.bmin, p.bmax, p.bcurv, bgrid_);
@@ -15,12 +15,53 @@ void ModelBase::make_grids(const Parameters& p) {
 
 	dagrid_ = agrid_(seq(1,last)) - agrid_(seq(0,last-1));
 	adelta_ = compute_grid_deltas(agrid_, dagrid_);
+}
 
-	// Occupations
-	auto occgrids = occupationGrid(p);
-	occgrid_ = vector2eigenv(occgrids.first);
-	occdist_ = vector2eigenv(occgrids.second);
-	nocc_ = occgrid_.size();
+void ModelBase::make_occupation_grids(const Parameters& p) {
+	occgrid_ = double_vector(p.nocc);
+	occdist_ = double_vector(p.nocc);
+	nocc_ = p.nocc;
+
+	if (p.nocc == 1) {
+		std::fill(occgrid_.begin(), occgrid_.end(), 0.0);
+		std::fill(occdist_.begin(), occdist_.end(), 1.0);
+	}
+	else {
+		// S_N / (S_N + S_Y)
+		double lshareNY = (1.0 - p.alpha_N) * p.drs_N
+			/ ((p.elast - 1.0) * (1.0 - p.alpha_Y) * p.drs_Y + (1.0 - p.alpha_N) * p.drs_N);
+
+		if (lshareNY == 0.0) {
+			// No labor income accrues to N-type
+			std::fill(occgrid_.begin(), occgrid_.end(), 0.0);
+			std::fill(occdist_.begin(), occdist_.end(), 1.0 / p.nocc);
+		}
+		else if (lshareNY == 1.0) {
+			// All labor income accrues to N-type
+			std::fill(occgrid_.begin(), occgrid_.end(), 1.0);
+			std::fill(occdist_.begin(), occdist_.end(), 1.0 / p.nocc);
+		}
+		else {
+			// Equally spaced in [0, 1], midpoints of intervals
+			double lwidth = 1.0 / p.nocc;
+			occgrid_[0] = 0.5 * lwidth;
+			occgrid_[p.nocc-1] = 1.0 - 0.5 * lwidth;
+			if (p.nocc >= 2) {
+				for (int i=1; i<p.nocc-1; ++i) {
+					occgrid_[i] = occgrid_[i-1] + lwidth;
+				}
+			}
+
+			// Distribution has CDF x ^ par. Choose par to target mean a
+			double lWNtoWY = 1.5;
+			double lmeanocc = lshareNY / (lshareNY + (1.0 - lshareNY) * lWNtoWY);
+			double lpar = lmeanocc / (1.0 - lmeanocc);
+			for (int i=0; i<p.nocc; ++i) {
+				occdist_[i] = pow(occgrid_[i] + 0.5 * lwidth, lpar)
+					- pow(occgrid_[i] - 0.5 * lwidth, lpar);
+			}
+		}
+	}
 }
 
 void ModelBase::create_income_process(
@@ -114,6 +155,10 @@ double Model::util1(double c) const {
 	return utility1(c, p.prefshock, p.riskaver);
 }
 
+double Model::util1inv(double u) const {
+	return utility1inv(u, p.prefshock, p.riskaver);
+}
+
 double Model::labdisutil(double h, double chi) const {
 	return labor_disutility(h, p.frisch, chi);
 }
@@ -122,58 +167,12 @@ double Model::labdisutil1(double h, double chi) const {
 	return labor_disutility1(h, p.frisch, chi);
 }
 
+double Model::labdisutil1inv(double du, double chi) const {
+	return labor_disutility1inv(du, p.frisch, chi);
+}
+
 double Model::util1BC(double h, double chi, double bdrift, double netwage, double wagescale) const {
 	return labdisutil1(h, chi) - util1(bdrift + h * netwage) * netwage * wagescale * p.labwedge;
-}
-
-std::vector<double> read_matrix(const std::string& file_loc)
-{
-	std::string line, word;
-	std::ifstream yfile;
-	std::size_t current, previous;
-	yfile.open(file_loc.data(), std::ios::in);
-
-	std::vector<double> out;
-
-	while ( getline(yfile, line) ) {
-		previous = 0;
-    	current = find_multiple(line, 0);
-    	if (current != std::string::npos) {
-	    	while (current != std::string::npos) {
-	    		if (current > 0) {
-		    		word = line.substr(previous, current - previous);
-		    		out.push_back(std::stod(word));
-			    }
-
-			    previous = current + 1;
-		    	current = find_multiple(line, previous);
-		    }
-
-		    word = line.substr(previous, current - previous);
-		    out.push_back(std::stod(word));
-		}
-		else {
-			out.push_back(std::stod(line));
-		}
-	}
-	yfile.close();
-
-	return out;
-}
-
-std::size_t find_multiple(const std::string& line, int pos)
-{
-	std::size_t t1, t2;
-
-	t1 = line.find("  ", pos);
-	t2 = line.find(" -", pos);
-
-	if ((t1 < t2) & (t1 != std::string::npos)) {
-		return t1;
-	}
-	else {
-		return t2;
-	}
 }
 
 void fix_rounding(double_matrix& mat)
