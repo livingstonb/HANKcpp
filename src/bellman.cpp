@@ -118,9 +118,13 @@ void HJB::update(const SteadyState& ss) {
 	upwindBad.s = 0.0;
 	upwindBad.Hc = -1.0e12;
 
+	DepositUpwind depositFB, depositBF, depositBad;
+	depositBad.Hd = -1.0e12;
+
 	Policies policies(model.dims);
 
-	double gbdrift, gnetwage, idioscale;
+	double gbdrift, gnetwage, idioscale, illiq;
+	bool worth_adjusting;
 	const double prof_common = p.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
 
 	bool labor_is_separable = (p.laborsupply == LaborType::sep);
@@ -154,12 +158,15 @@ void HJB::update(const SteadyState& ss) {
 				gbdrift = bdrift(ib) + prof_common + profW(iy);
 				gnetwage = ss.netwagegrid(iy);
 
+				// CONSUMPTION UPWINDING
+
 				// Upwinding forward
-				if ( ib < p.nb - 1 )
+				if ( ib < p.nb - 1 ) {
 					upwindF = optimal_consumption(derivs.VbF, gbdrift, gnetwage, ss.chi, idioscale);
+					upwindF.valid = ( upwindF.s > 0.0 );
+				}
 				else
 					upwindF = upwindBad;
-				upwindF.valid = ( upwindF.s > 0.0 );
 
 				// Upwinding backward
 				if ( ib > 0 )
@@ -174,11 +181,25 @@ void HJB::update(const SteadyState& ss) {
 				// Update c, s, and h
 				policies.update(ia, ib, iy, upwindF, upwindB, upwind0);
 
-				// Deposit decision
+				// DEPOSIT UPWINDING
+				illiq = model.agrid(ia);
+
+				// Deposit decision: a forward, b backward
 				if ( (ia < p.na - 1) & (ib > 0) ) {
-					// a forward, b backward
-					
+					depositFB = optimal_deposits(derivs.VaF, derivs.VaB, illiq);
+					depositFB.valid = ( (depositFB.d > 0) & (depositFB.Hd > 0) );
 				}
+				else
+					depositFB = depositBad;
+
+				// Deposit decision: a backward, b forward
+				if ( (ia > 0) & (ib < p.nb - 1) ) {
+					depositBF = optimal_deposits(derivs.VaB, derivs.VbF, illiq);
+					worth_adjusting = ( depositBF.d > -model.adjcosts.cost(depositBF.d, illiq) );
+					depositBF.valid = ( worth_adjusting & (depositBF.Hd > 0) );
+				}
+				else
+					depositBF = depositBad;
 
 				V[ia][ib][iy] = 0.9 * V[ia][ib][iy];
 			}
@@ -326,4 +347,12 @@ ConUpwind HJB::optimal_consumption_ghh_labor(double Vb, double bdrift, double ne
 	return upwind;
 }
 
+DepositUpwind HJB::optimal_deposits(double Va, double Vb, double a) const {
+	DepositUpwind dupwind;
 
+	dupwind.d = model.adjcosts.cost1inv(Va / Vb - 1.0, a);
+	dupwind.d = fmin(dupwind.d, p.dmax);
+
+	dupwind.Hd = Va * dupwind.d - Vb * (dupwind.d + model.adjcosts.cost(dupwind.d, a));
+	return dupwind;
+}

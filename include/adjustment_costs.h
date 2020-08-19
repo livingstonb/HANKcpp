@@ -59,6 +59,26 @@ class AdjustmentCosts {
 				return -kappa_w[0] - pow(-x / kappa_w[1], kappa_w[2]);
 		}
 
+		double cost_deriv_inv_exponential(double chi, double a) const {
+			double scale = scale_factor(a);
+			if ( chi == 0 )
+				return 0;
+			else if ( chi > 0 )
+				return (1 / kappa_d[4]) * log(1 + chi) / scale;
+			else
+				return (1 / kappa_w[4]) * log(1 + chi) / scale;
+		}
+
+		double cost_deriv_inv_other(double chi, double a) const {
+			double scale = scale_factor(a);
+			if ( (chi >= -kappa_w[0]) & (chi <= kappa_d[0]) )
+				return 0;
+			else if ( chi > kappa_d[0] )
+				return kappa_d[1] * pow(chi - kappa_d[0], 1 / kappa_d[2]) / scale;
+			else
+				return -kappa_w[1] * pow(-chi - kappa_w[0], 1 /kappa_w[2]) / scale;
+		}
+
 	public:
 		AdjustmentCosts() = default;
 
@@ -75,17 +95,18 @@ class AdjustmentCosts {
 			if ( exponential_costs ) {
 				cost = [this](double d, double a) {return cost_fn_exponential(d, a);};
 				cost1 = [this](double d, double a) {return cost_deriv_exponential(d, a);};
+				cost1inv = [this](double chi, double a) {return cost_deriv_inv_exponential(chi, a);};
 			}
 			else {
 				cost = [this](double d, double a) {return cost_fn_other(d, a);};
 				cost1 = [this](double d, double a) {return cost_deriv_other(d, a);};
+				cost1inv = [this](double chi, double a) {return cost_deriv_inv_other(chi, a);};
 			}
 		}
 		
 		std::function<double(double, double)> cost;
 		std::function<double(double, double)> cost1;
-
-		double cost1inv(double chi, double a) {return 0.0;}
+		std::function<double(double, double)> cost1inv;
 
 		double scale_factor(double a) const {
 			double scale = 0.0;

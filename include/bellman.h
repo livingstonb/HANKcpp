@@ -26,10 +26,6 @@ class HJB {
 	public:
 		HJB(const Model& model_, const SteadyState& ss);
 
-		struct NoLaborSupply {};
-		struct SepLabor {};
-		struct GHHLabor {};
-
 		void iterate(const SteadyState& ss);
 
 		void update(const SteadyState& ss);
@@ -40,6 +36,8 @@ class HJB {
 		ConUpwind optimal_consumption_no_laborsupply(double Vb, double bdrift, double netwage) const;
 		ConUpwind optimal_consumption_sep_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
 		ConUpwind optimal_consumption_ghh_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
+
+		DepositUpwind optimal_deposits(double Va, double Vb, double a) const;
 
 		const Model& model;
 
