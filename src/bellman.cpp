@@ -13,18 +13,17 @@ namespace {
 		std::cout << "Iteration " << ii << ", diff = " << vdiff << '\n';
 	}
 
-		if ( vdiff <= vtol )
-			std::cout << "Converged after " << ii << " iterations." << '\n';
+	if ( vdiff <= vtol )
+		std::cout << "Converged after " << ii << " iterations." << '\n';
 	}
 
 	boost_array_type<double, 3> make_value_guess(const Model& model, const SteadyState& ss) {
 		const Parameters& p = model.p;
 
-		boost_array_type<double, 3> V(model.dims);
+		boost3d V(model.dims);
 		double lc, u, llabdisutil = 0.0;
 		const double sep_constant = 1.0 / 3.0;
-		double_array wageexpr;
-		double_array bdriftnn;
+		double_array wageexpr, bdriftnn;
 
 		bdriftnn = model.get_rb_effective().array() * model.bgrid.array();
 		bdriftnn = bdriftnn.max(0.0);
@@ -214,23 +213,23 @@ ValueFnDerivatives HJB::compute_derivatives(int ia, int ib, int iy) const {
 	// Forward derivatives
 	if (ia < p.na - 1) {
 		d.VaF = (V[ia+1][ib][iy] - V[ia][ib][iy]) / model.dagrid(ia);
-		d.VaF = std::max(d.VaF, dVamin);
+		d.VaF = fmax(d.VaF, dVamin);
 	}
 
 	if (ib < p.nb - 1) {
 		d.VbF = (V[ia][ib+1][iy] - V[ia][ib][iy]) / model.dbgrid(ib);
-		d.VbF = std::max(d.VbF, dVbmin);
+		d.VbF = fmax(d.VbF, dVbmin);
 	}
 
 	// Backward derivatives
 	if (ia > 0) {
 		d.VaB = (V[ia][ib][iy] - V[ia-1][ib][iy]) / model.dagrid(ia-1);
-		d.VaB = std::max(d.VaB, dVamin);
+		d.VaB = fmax(d.VaB, dVamin);
 	}
 
 	if (ib > 0) {
 		d.VbB = (V[ia][ib][iy] - V[ia][ib-1][iy]) / model.dbgrid(ib-1);
-		d.VbB = std::max(d.VbB, dVbmin);
+		d.VbB = fmax(d.VbB, dVbmin);
 	}
 
 	return d;
@@ -301,7 +300,7 @@ ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift, double ne
 	}
 
 	if ( p.imposeMaxHours )
-		upwind.h = std::min(upwind.h, 1.0);
+		upwind.h = fmin(upwind.h, 1.0);
 
 	double labdisutil = idioscale * model.labdisutil(upwind.h, chi);
 
@@ -326,7 +325,7 @@ ConUpwind HJB::optimal_consumption_ghh_labor(double Vb, double bdrift, double ne
 
 	upwind.h = model.labdisutil1inv(p.labwedge * netwage / idioscale, chi);
 	if ( p.imposeMaxHours )
-		upwind.h = std::max(upwind.h, 1.0);
+		upwind.h = fmax(upwind.h, 1.0);
 
 	double labdisutil = idioscale * model.labdisutil(upwind.h, chi);
 
