@@ -47,6 +47,8 @@ class ModelBase
 		double_vector yoccgrid_;
 		double_vector ydist_;
 		double_matrix ymarkov_;
+		double_matrix ymarkovdiag_;
+		double_matrix ymarkovoff_;
 
 		int nocc_;
 		int nprod_;
@@ -87,6 +89,8 @@ class Model : private ModelBase {
 		const double_vector& yoccgrid = yoccgrid_;
 		const double_vector& ydist = ydist_;
 		const double_matrix& ymarkov = ymarkov_;
+		const double_matrix& ymarkovdiag = ymarkovdiag_;
+		const double_matrix& ymarkovoff = ymarkovoff_;
 
 		const int nb = p.nb;
 		const int na = p.na;
@@ -94,6 +98,7 @@ class Model : private ModelBase {
 		const int nprod = nprod_;
 		const int ntot = p.nb * p.na * nocc_ * nprod_;
 		const boost_array_shape<double, 3> dims;
+		const double prodmarkovscale = 1.0;
 
 		double_vector get_rb_effective() const;
 		double util(double c) const;

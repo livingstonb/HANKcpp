@@ -125,6 +125,7 @@ void ModelBase::create_combined_variables(const Parameters& p) {
 	}
 
 	ymarkov_ = double_matrix::Zero(ny, ny);
+	ymarkovdiag_ = double_matrix::Zero(ny, ny);
 	yprodgrid_ = double_vector(ny);
 	yoccgrid_ = double_vector(ny);
 	ydist_ = double_vector(ny);
@@ -144,6 +145,11 @@ void ModelBase::create_combined_variables(const Parameters& p) {
 				ymarkov_(iy,iy2) = prodmarkov_(ip,ip2);
 		}
 	}
+
+	for (int iy=0; iy<ny; ++iy)
+		ymarkovdiag_(iy,iy) = ymarkov_(iy,iy);
+	
+	ymarkovoff_ = ymarkov_ - ymarkovdiag_;
 
 	profsharegrid_ = yprodgrid_.array() / p.meanlabeff;
 }

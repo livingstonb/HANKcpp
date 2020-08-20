@@ -5,7 +5,6 @@ namespace {
 		return (Vb <= ValueFnDerivatives::StationaryPtOrLimit);
 	}
 
-
 	void check_progress(double vdiff, int freq, int ii, double vtol) {
 	if ( ii == 0 )
 		return;
@@ -54,32 +53,70 @@ namespace {
 		return V;
 	}
 
-	class Policies {
+	class Drifts {
 		public:
-			Policies(const boost_array_shape<double, 3>& dims) : c(dims), h(dims), s(dims) {};
-
-			boost_array_type<double, 3> c, h, s;
-
-			void update(int ia, int ib, int iy, const ConUpwind& uwF, const ConUpwind& uwB, const ConUpwind& uw0) {
-				bool not_backward = (!uwB.valid) | (uwF.Hc >= uwB.Hc);
-				bool not_forward = (!uwF.valid) | (uwB.Hc >= uwF.Hc);
-				bool forward_better_than_nothing = uwF.Hc >= uw0.Hc;
-				bool backward_better_than_nothing = uwB.Hc >= uw0.Hc;
-
-				ConUpwind uw_selected;
-				if ( uwF.valid & not_backward & forward_better_than_nothing )
-					uw_selected = uwF;
-				else if ( uwB.valid & not_forward & backward_better_than_nothing )
-					uw_selected = uwB;
-				else
-					uw_selected = uw0;
-
-				c[ia][ib][iy] = uw_selected.c;
-				h[ia][ib][iy] = uw_selected.h;
-				s[ia][ib][iy] = uw_selected.s;
+			Drifts() {}
+			Drifts(double s, double d, double areturn, double acost, bool kfe) {
+				if ( kfe ) {
+					adriftB = fmin(d + areturn, 0.0);
+					adriftF = fmax(d + areturn, 0.0);
+					bdriftB = fmin(s - d - acost, 0.0);
+					bdriftF = fmax(s - d - acost, 0.0);
+				}
+				else {
+					adriftB = fmin(d, 0.0) + fmin(areturn, 0.0);
+					adriftF = fmax(d, 0.0) + fmax(areturn, 0.0);
+					bdriftB = fmin(-d - acost, 0) + fmin(s, 0.0);
+					bdriftF = fmax(-d - acost, 0) + fmax(s, 0.0);
+				}
 			}
+			double adriftB, adriftF, bdriftB, bdriftF;
 	};
 }
+
+class Policies {
+	public:
+		Policies(const boost_array_shape<double, 3>& dims) : c(dims), h(dims), s(dims), d(dims), u(dims) {};
+
+		boost_array_type<double, 3> c, h, s, d, u;
+
+		void update_c(int ia, int ib, int iy, const ConUpwind& uwF, const ConUpwind& uwB, const ConUpwind& uw0) {
+			bool not_backward = (!uwB.valid) | (uwF.Hc >= uwB.Hc);
+			bool not_forward = (!uwF.valid) | (uwB.Hc >= uwF.Hc);
+			bool forward_better_than_nothing = uwF.Hc >= uw0.Hc;
+			bool backward_better_than_nothing = uwB.Hc >= uw0.Hc;
+
+			ConUpwind uw_selected;
+			if ( uwF.valid & not_backward & forward_better_than_nothing )
+				uw_selected = uwF;
+			else if ( uwB.valid & not_forward & backward_better_than_nothing )
+				uw_selected = uwB;
+			else
+				uw_selected = uw0;
+
+			c[ia][ib][iy] = uw_selected.c;
+			h[ia][ib][iy] = uw_selected.h;
+			s[ia][ib][iy] = uw_selected.s;
+		}
+
+		void update_d(int ia, int ib, int iy, const DepositUpwind& uFB,
+			const DepositUpwind& uBF, const DepositUpwind& uBB) {
+			bool chooseFB = uFB.valid & uFB.at_least_as_good_as(uBF) & uFB.at_least_as_good_as(uBB);
+			bool chooseBF = uBF.valid & uBF.at_least_as_good_as(uFB) & uBF.at_least_as_good_as(uBB);
+			bool chooseBB = uBB.valid & uFB.at_least_as_good_as(uBF) & uBB.at_least_as_good_as(uFB);
+
+			if ( chooseFB )
+				d[ia][ib][iy] = uFB.d;
+			else if ( chooseBF )
+				d[ia][ib][iy] = uBF.d;
+			else if ( chooseBB )
+				d[ia][ib][iy] = uBB.d;
+			else if ( (!uFB.valid) & (!uBF.valid) & (!uBB.valid) )
+				d[ia][ib][iy] = 0;
+			else
+				throw "Error while upwinding deposits";
+		}
+};
 
 HJB::HJB(const Model& model_, const SteadyState& ss) : model(model_), p(model_.p), V(model.dims) {
 	V = make_value_guess(model, ss);
@@ -96,7 +133,8 @@ void HJB::iterate(const SteadyState& ss) {
 	lastV = reshape_array(V, {model.ntot, 1, 1});
 
 	while ( (ii < maxiter) & (lVdiff > vtol) ) {
-		update(ss);
+		auto policies = update_policies(ss);
+		update_value_fn(ss, policies);
 
 		newV = reshape_array(V, {model.ntot, 1, 1});
 		lVdiff = (boost2eigen(lastV) - boost2eigen(newV)).lpNorm<Eigen::Infinity>();
@@ -110,7 +148,7 @@ void HJB::iterate(const SteadyState& ss) {
 
 
 
-void HJB::update(const SteadyState& ss) {
+Policies HJB::update_policies(const SteadyState& ss) {
 	ValueFnDerivatives derivs;
 	double chi = ss.chi;
 
@@ -118,7 +156,7 @@ void HJB::update(const SteadyState& ss) {
 	upwindBad.s = 0.0;
 	upwindBad.Hc = -1.0e12;
 
-	DepositUpwind depositFB, depositBF, depositBad;
+	DepositUpwind depositFB, depositBF, depositBB, depositBad;
 	depositBad.Hd = -1.0e12;
 
 	Policies policies(model.dims);
@@ -140,7 +178,6 @@ void HJB::update(const SteadyState& ss) {
 	double_vector profW = prof_keep * p.profdistfracW
 			* (1.0 - p.corptax) * ss.profit * model.profsharegrid.array();
 
-	double_vector adrift = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
 	double_vector bdrift = model.get_rb_effective().array() * model.bgrid.array();
 
 	std::function<ConUpwind(double, double, double, double)> opt_c;
@@ -198,14 +235,14 @@ void HJB::update(const SteadyState& ss) {
 				upwind0 = opt_c(derivs.StationaryPtOrLimit, gbdrift, gnetwage, idioscale);
 
 				// Update c, s, and h
-				policies.update(ia, ib, iy, upwindF, upwindB, upwind0);
+				policies.update_c(ia, ib, iy, upwindF, upwindB, upwind0);
 
 				// DEPOSIT UPWINDING
 				illiq = model.agrid(ia);
 
 				// Deposit decision: a forward, b backward
 				if ( (ia < p.na - 1) & (ib > 0) ) {
-					depositFB = optimal_deposits(derivs.VaF, derivs.VaB, illiq);
+					depositFB = optimal_deposits(derivs.VaF, derivs.VbB, illiq);
 					depositFB.valid = ( (depositFB.d > 0) & (depositFB.Hd > 0) );
 				}
 				else
@@ -214,7 +251,7 @@ void HJB::update(const SteadyState& ss) {
 				// Deposit decision: a backward, b forward
 				if ( (ia > 0) & (ib < p.nb - 1) ) {
 					depositBF = optimal_deposits(derivs.VaB, derivs.VbF, illiq);
-					worth_adjusting = ( depositBF.d > -model.adjcosts.cost(depositBF.d, illiq) );
+					worth_adjusting = ( depositBF.d <= -model.adjcosts.cost(depositBF.d, illiq) );
 					depositBF.valid = ( worth_adjusting & (depositBF.Hd > 0) );
 				}
 				else
@@ -228,13 +265,70 @@ void HJB::update(const SteadyState& ss) {
 						derivs.VbB = model.util1(upwindB.c - labdisutil / p.labwedge);
 					else
 						derivs.VbB = model.util1(upwindB.c);
+
+					depositBB = optimal_deposits(derivs.VaB, derivs.VbB, illiq);
+					worth_adjusting = ( depositBB.d > -model.adjcosts.cost(depositBB.d, illiq) );
+					depositBB.valid = ( worth_adjusting & (depositBB.d <= 0) & (depositBB.Hd > 0));
 				}
+				else
+					depositBB = depositBad;
+
+				// Update d
+				policies.update_d(ia, ib, iy, depositFB, depositBF, depositBB);
+
+				// Update u
+				labdisutil = idioscale * model.labdisutil(policies.h[ia][ib][iy], chi);
+				if ( p.laborsupply == LaborType::none )
+					policies.u[ia][ib][iy] = model.util(policies.c[ia][ib][iy]);
+				if ( p.laborsupply == LaborType::sep )
+					policies.u[ia][ib][iy] = model.util(policies.c[ia][ib][iy]) - labdisutil / p.labwedge;
+				else
+					policies.u[ia][ib][iy] = model.util(policies.c[ia][ib][iy] - labdisutil / p.labwedge);
 
 				V[ia][ib][iy] = 0.9 * V[ia][ib][iy];
 			}
 		}
 	}
+	return policies;
+}
 
+void HJB::update_value_fn(const SteadyState& ss, const Policies& policies) {
+	double_vector bvec(model.ntot);
+	double_vector ycol, vcol;
+	boost3d::index_gen indices;
+	boost1d vcol_boost = new_array<double, 1>({p.ny});
+	double d, s, acost, areturn;
+	Drifts drifts;
+	bool kfe = false;
+
+	double_vector adriftvec = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
+	double_vector bdriftvec = model.get_rb_effective().array() * model.bgrid.array();
+
+	int ii = 0;
+	for ( int iy=0; iy<p.ny; ++iy ) {
+		triplet_list Aentries;
+		Aentries.reserve(5 * p.na * p.nb);
+		ycol = model.prodmarkovscale * model.ymarkovoff.row(iy);
+
+		for (int ia=0; ia<p.na; ++ia) {
+			for (int ib=0; ib<p.nb; ++ib) {
+				d = policies.d[ia][ib][iy];
+				s = policies.d[ia][ib][iy];
+				acost = model.adjcosts.cost(d, model.agrid(ia));
+				areturn = adriftvec(ia);
+
+				// Vector of constants
+				vcol_boost = V[indices[ia][ib][range()]];
+				vcol = boost2eigen(vcol_boost);
+				bvec(ii) = delta * policies.u[ia][ib][iy] + V[ia][ib][iy] + delta * ycol.dot(vcol);
+
+				// Compute drifts
+				drifts = Drifts(s, d, areturn, acost, kfe);
+
+				++ii;
+			}
+		}
+	}
 }
 
 ValueFnDerivatives HJB::compute_derivatives(int ia, int ib, int iy) const {

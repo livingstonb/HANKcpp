@@ -15,6 +15,10 @@ struct ConUpwind {
 struct DepositUpwind {
 	double d, Hd;
 	bool valid = false;
+
+	bool at_least_as_good_as(const DepositUpwind& du) const {
+		return ( (!du.valid) | (Hd >= du.Hd) );
+	}
 };
 
 struct ValueFnDerivatives {
@@ -22,13 +26,17 @@ struct ValueFnDerivatives {
 	double VaF, VaB, VbF, VbB;
 };
 
+class Policies;
+
 class HJB {
 	public:
 		HJB(const Model& model_, const SteadyState& ss);
 
 		void iterate(const SteadyState& ss);
 
-		void update(const SteadyState& ss);
+		Policies update_policies(const SteadyState& ss);
+
+		void update_value_fn(const SteadyState& ss, const Policies& policies);
 
 		ValueFnDerivatives compute_derivatives(int ia, int ib, int iy) const;
 
@@ -48,6 +56,7 @@ class HJB {
 		int maxiter = 500;
 		int dispfreq = 50;
 		double vtol = 1.0e-8;
+		double delta = 1.0e6;
 
 		double dVamin = 1.0e-8;
 		double dVbmin = 1.0e-8;
