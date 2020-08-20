@@ -7,6 +7,8 @@
 #include <model.h>
 #include <steady_state.h>
 #include <upwinding.h>
+#include <hank.h>
+#include <utilities.h>
 
 struct ValueFnDerivatives {
 	static const int StationaryPtOrLimit = -999.9;

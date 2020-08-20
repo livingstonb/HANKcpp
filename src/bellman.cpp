@@ -6,14 +6,14 @@ namespace {
 	}
 
 	void check_progress(double vdiff, int freq, int ii, double vtol) {
-	if ( ii == 0 )
-		return;
-	else if ( (ii == 1) | (ii % freq == 0) ) {
-		std::cout << "Iteration " << ii << ", diff = " << vdiff << '\n';
-	}
+		if ( ii == 0 )
+			return;
+		else if ( (ii == 1) | (ii % freq == 0) ) {
+			std::cout << "Iteration " << ii << ", diff = " << vdiff << '\n';
+		}
 
-	if ( vdiff <= vtol )
-		std::cout << "Converged after " << ii << " iterations." << '\n';
+		if ( vdiff <= vtol )
+			std::cout << "Converged after " << ii << " iterations." << '\n';
 	}
 
 	boost3d make_value_guess(const Model& model, const SteadyState& ss) {
@@ -106,6 +106,7 @@ void HJB::iterate(const SteadyState& ss) {
 		lVdiff = (boost2eigen(lastV) - boost2eigen(newV)).lpNorm<Eigen::Infinity>();
 		lastV = reshape_array(V, {model.ntot, 1, 1});
 
+		std::cout << lVdiff << '\n';
 		check_progress(lVdiff, dispfreq, ii, vtol);
 
 		++ii;
@@ -223,13 +224,14 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 
 				// Deposit decision: a backward, b backward
 				if ( ia > 0 ) {
-					labdisutil = idioscale * model.labdisutil(upwindB.h, chi);
+					if ( ib == 0 ) {
+						labdisutil = idioscale * model.labdisutil(upwindB.h, chi);
 
-					if ( p.laborsupply == LaborType::ghh )
-						derivs.VbB = model.util1(upwindB.c - labdisutil / p.labwedge);
-					else
-						derivs.VbB = model.util1(upwindB.c);
-
+						if ( p.laborsupply == LaborType::ghh )
+							derivs.VbB = model.util1(upwindB.c - labdisutil / p.labwedge);
+						else
+							derivs.VbB = model.util1(upwindB.c);
+					}
 					depositBB = optimal_deposits(model, derivs.VaB, derivs.VbB, illiq);
 					worth_adjusting = ( depositBB.d > -model.adjcosts.cost(depositBB.d, illiq) );
 					depositBB.valid = ( worth_adjusting & (depositBB.d <= 0) & (depositBB.Hd > 0));
@@ -249,7 +251,7 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 				else
 					policies.u[ia][ib][iy] = model.util(policies.c[ia][ib][iy] - labdisutil / p.labwedge);
 
-				V[ia][ib][iy] = 0.9 * V[ia][ib][iy];
+				// V[ia][ib][iy] = 0.9 * V[ia][ib][iy];
 			}
 		}
 	}
@@ -288,7 +290,7 @@ Upwinding::ConUpwind HJB::optimal_consumption_no_laborsupply(double Vb, double b
 	Upwinding::ConUpwind upwind;
 	upwind.h = 1.0;
 
-	if ( is_stationary_pt_or_limit(Vb)) {
+	if ( !is_stationary_pt_or_limit(Vb)) {
 		upwind.c = model.util1inv(Vb);
 		upwind.s = bdrift + upwind.h * netwage - upwind.c;
 	}
@@ -308,12 +310,12 @@ Upwinding::ConUpwind HJB::optimal_consumption_no_laborsupply(double Vb, double b
 Upwinding::ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const {
 	Upwinding::ConUpwind upwind;
 
-	if ( is_stationary_pt_or_limit(Vb) ) {
+	if ( !is_stationary_pt_or_limit(Vb) ) {
 		upwind.h = model.labdisutil1inv(p.labwedge * netwage * Vb / idioscale, chi);
 	}
 	else {
 		upwind.s = 0.0;
-		const double hmin = std::max(-bdrift / netwage + 1.0e-5, 0.0);
+		const double hmin = fmax(-bdrift / netwage + 1.0e-5, 0.0);
 		const double wscale = 1.0;
 		const double hmax = ( p.imposeMaxHours ) ? 1 : 100;
 		const double v1_at_min = model.util1BC(hmin, chi, bdrift, netwage, wscale);
@@ -337,7 +339,7 @@ Upwinding::ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift
 
 	double labdisutil = idioscale * model.labdisutil(upwind.h, chi);
 
-	if ( is_stationary_pt_or_limit(Vb) ) {
+	if ( !is_stationary_pt_or_limit(Vb) ) {
 		upwind.c = model.util1inv(Vb);
 		upwind.s = bdrift + upwind.h * netwage - upwind.c;
 	}
@@ -362,7 +364,7 @@ Upwinding::ConUpwind HJB::optimal_consumption_ghh_labor(double Vb, double bdrift
 
 	double labdisutil = idioscale * model.labdisutil(upwind.h, chi);
 
-	if ( is_stationary_pt_or_limit(Vb) ) {
+	if ( !is_stationary_pt_or_limit(Vb) ) {
 		upwind.c = model.util1inv(Vb) + labdisutil / p.labwedge;
 		upwind.s = bdrift + upwind.h * netwage - upwind.c;
 	}
@@ -380,7 +382,7 @@ Upwinding::ConUpwind HJB::optimal_consumption_ghh_labor(double Vb, double bdrift
 }
 
 void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& policies) {
-	double_vector bvec(model.ntot);
+	double_vector bvec(p.nb * p.na);
 	double_vector ycol, vcol;
 	boost3d::index_gen indices;
 	boost1d vcol_boost = new_array<double, 1>({p.ny});
@@ -389,7 +391,10 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 	Drifts drifts;
 	bool kfe = false;
 
+	sparse_matrix ldiagmat, sparseI = speye(p.na * p.nb);
+
 	std::vector<sparse_matrix> A(p.ny);
+	std::vector<sparse_matrix> B(p.ny);
 
 	double_vector adriftvec = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
 	double_vector bdriftvec = model.get_rb_effective().array() * model.bgrid.array();
@@ -402,9 +407,9 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 		Aentries.reserve(5 * p.na * p.nb);
 		ycol = model.prodmarkovscale * model.ymarkovoff.row(iy);
 
-		iab = 0;
 		for (int ia=0; ia<p.na; ++ia) {
 			for (int ib=0; ib<p.nb; ++ib) {
+				iab = to_ab_index(ia, ib);
 				d = policies.d[ia][ib][iy];
 				s = policies.d[ia][ib][iy];
 				acost = model.adjcosts.cost(d, model.agrid(ia));
@@ -458,12 +463,30 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 					val = drifts.bF /  model.dbgrid(ib);
 					Aentries.push_back(triplet_type(iab, to_ab_index(ia, ib+1), val));
 				}
-
-				++iab;
 			}
 		}
 
 		A[iy] = sparse_matrix(p.na * p.nb, p.na * p.nb);
 		A[iy].setFromTriplets(Aentries.begin(), Aentries.end());
+
+		// Construct B matrix = I + delta * (rho * I - A)
+		double ldiag = 1.0 + delta * (p.rho + p.deathrate) - delta * model.prodmarkovscale * model.ymarkovdiag(iy,iy);
+		ldiagmat = sparseI * ldiag;
+		B[iy] = ldiagmat - delta * A[iy];
+
+		sparse_solver solver;
+		solver.compute(B[iy]);
+		if ( solver.info() != Eigen::Success )
+			throw "Sparse solver failure";
+
+		double_vector v_vec = solver.solve(bvec);
+		if ( solver.info() != Eigen::Success )
+			throw "Sparse solver failure";
+
+		for (int ia=0; ia<p.na; ++ia)
+			for (int ib=0; ib<p.nb; ++ib)
+				V[ia][ib][iy] = v_vec[to_ab_index(ia, ib)];
 	}
+
+
 }

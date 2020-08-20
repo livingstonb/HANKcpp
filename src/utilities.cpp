@@ -64,3 +64,15 @@ std::size_t find_multiple(const std::string& line, int pos)
 		return t2;
 	}
 }
+
+sparse_matrix speye(int n) {
+	sparse_matrix mat(n, n);
+	triplet_list trips;
+	trips.reserve(n);
+
+	for (int i=0; i<n; ++i)
+		trips.push_back(triplet_type(i, i, 1.0));
+
+	mat.setFromTriplets(trips.begin(), trips.end());
+	return mat;
+}

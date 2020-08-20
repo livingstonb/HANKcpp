@@ -31,6 +31,8 @@ std::vector<double> read_matrix(const std::string& file_loc);
 
 std::size_t find_multiple(const std::string& line, int pos);
 
+sparse_matrix speye(int n);
+
 template<typename T>
 void printvec(const T& vec) {
 	for (auto x : vec) {

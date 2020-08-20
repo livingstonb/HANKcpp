@@ -4,6 +4,7 @@
 #include <boost/multi_array.hpp>
 #include <Eigen/Core>
 #include <Eigen/SparseCore>
+#include <Eigen/SparseQR>
 
 typedef std::vector<double> vector;
 
@@ -17,6 +18,7 @@ typedef Eigen::ArrayXd double_array;
 typedef Eigen::MatrixXd double_matrix;
 typedef Eigen::Matrix<bool, Eigen::Dynamic, 1> bool_vector;
 typedef Eigen::SparseMatrix<double> sparse_matrix;
+typedef Eigen::SparseQR<sparse_matrix, Eigen::COLAMDOrdering<int>> sparse_solver;
 typedef Eigen::Triplet<double> triplet_type;
 typedef std::vector<triplet_type> triplet_list;
 
