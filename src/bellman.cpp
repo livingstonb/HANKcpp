@@ -58,19 +58,19 @@ namespace {
 			Drifts() {}
 			Drifts(double s, double d, double areturn, double acost, bool kfe) {
 				if ( kfe ) {
-					adriftB = fmin(d + areturn, 0.0);
-					adriftF = fmax(d + areturn, 0.0);
-					bdriftB = fmin(s - d - acost, 0.0);
-					bdriftF = fmax(s - d - acost, 0.0);
+					aB = fmin(d + areturn, 0.0);
+					aF = fmax(d + areturn, 0.0);
+					bB = fmin(s - d - acost, 0.0);
+					bF = fmax(s - d - acost, 0.0);
 				}
 				else {
-					adriftB = fmin(d, 0.0) + fmin(areturn, 0.0);
-					adriftF = fmax(d, 0.0) + fmax(areturn, 0.0);
-					bdriftB = fmin(-d - acost, 0) + fmin(s, 0.0);
-					bdriftF = fmax(-d - acost, 0) + fmax(s, 0.0);
+					aB = fmin(d, 0.0) + fmin(areturn, 0.0);
+					aF = fmax(d, 0.0) + fmax(areturn, 0.0);
+					bB = fmin(-d - acost, 0) + fmin(s, 0.0);
+					bF = fmax(-d - acost, 0) + fmax(s, 0.0);
 				}
 			}
-			double adriftB, adriftF, bdriftB, bdriftF;
+			double aB, aF, bB, bF;
 	};
 }
 
