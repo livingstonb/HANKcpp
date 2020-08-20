@@ -94,8 +94,8 @@ void HJB::iterate(const SteadyState& ss) {
 
 	boost_array_shape<double, 3> flat_dims = {{model.ntot, 1, 1}};
 
-	boost_array_type<double, 3> lastV(flat_dims);
-	boost_array_type<double, 3> newV(flat_dims);
+	boost3d lastV(flat_dims);
+	boost3d newV(flat_dims);
 	lastV = reshape_array(V, {model.ntot, 1, 1});
 
 	while ( (ii < maxiter) & (lVdiff > vtol) ) {
