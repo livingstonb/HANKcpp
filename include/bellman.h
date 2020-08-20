@@ -30,8 +30,6 @@ class HJB {
 		Upwinding::ConUpwind optimal_consumption_sep_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
 		Upwinding::ConUpwind optimal_consumption_ghh_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
 
-		Upwinding::DepositUpwind optimal_deposits(double Va, double Vb, double a) const;
-
 		const Model& model;
 
 		const Parameters& p;

@@ -72,6 +72,16 @@ namespace {
 			}
 			double aB, aF, bB, bF;
 	};
+
+	Upwinding::DepositUpwind optimal_deposits(const Model& model, double Va, double Vb, double a) {
+		Upwinding::DepositUpwind dupwind;
+
+		dupwind.d = model.adjcosts.cost1inv(Va / Vb - 1.0, a);
+		dupwind.d = fmin(dupwind.d, model.p.dmax);
+
+		dupwind.Hd = Va * dupwind.d - Vb * (dupwind.d + model.adjcosts.cost(dupwind.d, a));
+		return dupwind;
+	}
 }
 
 HJB::HJB(const Model& model_, const SteadyState& ss) : model(model_), p(model_.p), V(model.dims) {
@@ -136,7 +146,7 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 
 	std::function<Upwinding::ConUpwind(double, double, double, double)> opt_c;
 	if ( p.laborsupply == LaborType::none ) {
-		opt_c = [this] (double Vb, double bdrift, double netwage, double idioscale) {
+		opt_c = [this] (double Vb, double bdrift, double netwage, double) {
 				return optimal_consumption_no_laborsupply(Vb, bdrift, netwage);
 			};
 		}
@@ -196,7 +206,7 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 
 				// Deposit decision: a forward, b backward
 				if ( (ia < p.na - 1) & (ib > 0) ) {
-					depositFB = optimal_deposits(derivs.VaF, derivs.VbB, illiq);
+					depositFB = optimal_deposits(model, derivs.VaF, derivs.VbB, illiq);
 					depositFB.valid = ( (depositFB.d > 0) & (depositFB.Hd > 0) );
 				}
 				else
@@ -204,7 +214,7 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 
 				// Deposit decision: a backward, b forward
 				if ( (ia > 0) & (ib < p.nb - 1) ) {
-					depositBF = optimal_deposits(derivs.VaB, derivs.VbF, illiq);
+					depositBF = optimal_deposits(model, derivs.VaB, derivs.VbF, illiq);
 					worth_adjusting = ( depositBF.d <= -model.adjcosts.cost(depositBF.d, illiq) );
 					depositBF.valid = ( worth_adjusting & (depositBF.Hd > 0) );
 				}
@@ -220,7 +230,7 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 					else
 						derivs.VbB = model.util1(upwindB.c);
 
-					depositBB = optimal_deposits(derivs.VaB, derivs.VbB, illiq);
+					depositBB = optimal_deposits(model, derivs.VaB, derivs.VbB, illiq);
 					worth_adjusting = ( depositBB.d > -model.adjcosts.cost(depositBB.d, illiq) );
 					depositBB.valid = ( worth_adjusting & (depositBB.d <= 0) & (depositBB.Hd > 0));
 				}
@@ -406,14 +416,4 @@ Upwinding::ConUpwind HJB::optimal_consumption_ghh_labor(double Vb, double bdrift
 		upwind.Hc = -1.0e12;
 
 	return upwind;
-}
-
-Upwinding::DepositUpwind HJB::optimal_deposits(double Va, double Vb, double a) const {
-	Upwinding::DepositUpwind dupwind;
-
-	dupwind.d = model.adjcosts.cost1inv(Va / Vb - 1.0, a);
-	dupwind.d = fmin(dupwind.d, p.dmax);
-
-	dupwind.Hd = Va * dupwind.d - Vb * (dupwind.d + model.adjcosts.cost(dupwind.d, a));
-	return dupwind;
 }
