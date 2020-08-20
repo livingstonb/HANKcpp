@@ -112,6 +112,7 @@ void HJB::iterate(const SteadyState& ss) {
 
 void HJB::update(const SteadyState& ss) {
 	ValueFnDerivatives derivs;
+	double chi = ss.chi;
 
 	ConUpwind upwindB, upwindF, upwind0, upwindBad;
 	upwindBad.s = 0.0;
@@ -122,7 +123,7 @@ void HJB::update(const SteadyState& ss) {
 
 	Policies policies(model.dims);
 
-	double gbdrift, gnetwage, idioscale, illiq;
+	double gbdrift, gnetwage, idioscale, illiq, labdisutil;
 	bool worth_adjusting;
 	const double prof_common = p.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
 
@@ -141,6 +142,25 @@ void HJB::update(const SteadyState& ss) {
 
 	double_vector adrift = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
 	double_vector bdrift = model.get_rb_effective().array() * model.bgrid.array();
+
+	std::function<ConUpwind(double, double, double, double)> opt_c;
+	if ( p.laborsupply == LaborType::none ) {
+		opt_c = [this] (double Vb, double bdrift, double netwage, double idioscale) {
+				return optimal_consumption_no_laborsupply(Vb, bdrift, netwage);
+			};
+		}
+	else if ( p.laborsupply == LaborType::sep ) {
+		opt_c = [this, chi] (double Vb, double bdrift, double netwage, double idioscale) {
+				return optimal_consumption_sep_labor(Vb, bdrift, netwage, chi, idioscale);
+			};
+		}
+	else if ( p.laborsupply == LaborType::ghh ) {
+		opt_c = [this, chi] (double Vb, double bdrift, double netwage, double idioscale) {
+				return optimal_consumption_ghh_labor(Vb, bdrift, netwage, chi, idioscale);
+			};
+		}
+	else
+		throw "Logic error";
 
 	for (int ia=0; ia<p.na; ++ia) {
 		for (int ib=0; ib<p.nb; ++ib) {
@@ -161,7 +181,7 @@ void HJB::update(const SteadyState& ss) {
 
 				// Upwinding forward
 				if ( ib < p.nb - 1 ) {
-					upwindF = optimal_consumption(derivs.VbF, gbdrift, gnetwage, ss.chi, idioscale);
+					upwindF = opt_c(derivs.VbF, gbdrift, gnetwage, idioscale);
 					upwindF.valid = ( upwindF.s > 0.0 );
 				}
 				else
@@ -169,13 +189,13 @@ void HJB::update(const SteadyState& ss) {
 
 				// Upwinding backward
 				if ( ib > 0 )
-					upwindB = optimal_consumption(derivs.VbB, gbdrift, gnetwage, ss.chi, idioscale);
+					upwindB = opt_c(derivs.VbB, gbdrift, gnetwage, idioscale);
 				else
-					upwindB = optimal_consumption(derivs.StationaryPtOrLimit, gbdrift, gnetwage, ss.chi, idioscale);
+					upwindB = opt_c(derivs.StationaryPtOrLimit, gbdrift, gnetwage, idioscale);
 				upwindB.valid = ( upwindB.s < 0.0 );
 
 				// No drift
-				upwind0 = optimal_consumption(derivs.StationaryPtOrLimit, gbdrift, gnetwage, ss.chi, idioscale);
+				upwind0 = opt_c(derivs.StationaryPtOrLimit, gbdrift, gnetwage, idioscale);
 
 				// Update c, s, and h
 				policies.update(ia, ib, iy, upwindF, upwindB, upwind0);
@@ -199,6 +219,16 @@ void HJB::update(const SteadyState& ss) {
 				}
 				else
 					depositBF = depositBad;
+
+				// Deposit decision: a backward, b backward
+				if ( ia > 0 ) {
+					labdisutil = idioscale * model.labdisutil(upwindB.h, chi);
+
+					if ( p.laborsupply == LaborType::ghh )
+						derivs.VbB = model.util1(upwindB.c - labdisutil / p.labwedge);
+					else
+						derivs.VbB = model.util1(upwindB.c);
+				}
 
 				V[ia][ib][iy] = 0.9 * V[ia][ib][iy];
 			}
@@ -233,22 +263,6 @@ ValueFnDerivatives HJB::compute_derivatives(int ia, int ib, int iy) const {
 	}
 
 	return d;
-}
-
-ConUpwind HJB::optimal_consumption(double Vb, double bdrift, double netwage, double chi, double idioscale) const {
-	switch ( p.laborsupply ) {
-		case LaborType::none:
-			return optimal_consumption_no_laborsupply(Vb, bdrift, netwage);
-			break;
-		case LaborType::sep:
-			return optimal_consumption_sep_labor(Vb, bdrift, netwage, chi, idioscale);
-			break;
-		case LaborType::ghh:
-			return optimal_consumption_ghh_labor(Vb, bdrift, netwage, chi, idioscale);
-			break;
-	}
-
-	throw "Logic error";
 }
 
 ConUpwind HJB::optimal_consumption_no_laborsupply(double Vb, double bdrift, double netwage) const {
