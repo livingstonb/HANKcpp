@@ -392,10 +392,9 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 	double_vector adriftvec = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
 	double_vector bdriftvec = model.get_rb_effective().array() * model.bgrid.array();
 
-	int nb = p.nb;
-	auto to_ab_index = [nb](int iia, int iib) { return iia + nb * iib; };
+	int na = p.na;
+	auto to_ab_index = [na](int iia, int iib) { return iia + na * iib; };
 
-	int ii = 0;
 	for ( int iy=0; iy<p.ny; ++iy ) {
 		triplet_list Aentries;
 		Aentries.reserve(5 * p.na * p.nb);
@@ -406,41 +405,45 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 			for (int ib=0; ib<p.nb; ++ib) {
 				d = policies.d[ia][ib][iy];
 				s = policies.d[ia][ib][iy];
-				acost = model.adjcosts.cost(d, model.agrid(ia));
+				acost = model.adjcosts.cost(d, model.agrid[ia]);
 				areturn = adriftvec(ia);
 
 				// Vector of constants
 				vcol_boost = V[indices[ia][ib][range()]];
 				vcol = boost2eigen(vcol_boost);
-				bvec(ii) = delta * policies.u[ia][ib][iy] + V[ia][ib][iy] + delta * ycol.dot(vcol);
+				bvec(iab) = delta * policies.u[ia][ib][iy] + V[ia][ib][iy] + delta * ycol.dot(vcol);
 
 				// Compute drifts
 				drifts = Drifts(s, d, areturn, acost, kfe);
 
 				// Matrix entries
-				val = ( ia > 0 ) ? 0.0 : -drifts.aB / model.dagrid(ia-1);
-				if ( val != 0.0 ) {
-					Aentries.push_back(triplet_type(iab, to_ab_index(ia-1, ib), val));
-					++ii;
-				}
+				if ( ia > 0 )
+					val = -drifts.aB / model.dagrid(ia-1);
+				else
+					val = 0.0;
 
-				val = ( ib > 0) ? 0.0 : -drifts.bB / model.dbgrid(ib-1);
-				if ( val != 0.0 ) {
+				if ( val != 0.0 )
+					Aentries.push_back(triplet_type(iab, to_ab_index(ia-1, ib), val));
+
+				if ( ib > 0 )
+					val = -drifts.bB / model.dbgrid(ib-1);
+				else
+					val = 0.0;
+
+				if ( val != 0.0 )
 					Aentries.push_back(triplet_type(iab, to_ab_index(ia, ib-1), val));
-					++ii;
-				}
 
 				// Matrix entries -- diagonal
 				if ( ia == 0 )
 					val1 = -drifts.aF / model.dagrid(ia);
-				else if ( ia == p.na )
-					val1 = drifts.aB / model.dagrid(p.na-1);
+				else if ( ia == p.na - 1 )
+					val1 = drifts.aB / model.dagrid(ia-1);
 				else
 					val1 = drifts.aB / model.dagrid(ia-1) - drifts.aF / model.dagrid(ia);
 
 				if ( ib == 0 )
 					val2 = -drifts.bF / model.dbgrid(ib);
-				else if ( ib == p.nb )
+				else if ( ib == p.nb - 1 )
 					val2 = drifts.bB / model.dbgrid(ib-1);
 				else
 					val2 = drifts.bB / model.dbgrid(ib-1) - drifts.bF / model.dbgrid(ib);

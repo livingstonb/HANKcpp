@@ -25,7 +25,7 @@ void ModelBase::make_asset_grids(const Parameters& p) {
 	bgrid_ = double_vector(p.nb);
 	powerSpacedGrid(p.bmin, p.bmax, p.bcurv, bgrid_);
 
-	dbgrid_ = bgrid_(seq(1,last)) - bgrid_(seq(0,last-1));
+	dbgrid_ = bgrid_(seq(1,p.nb-1)) - bgrid_(seq(0,p.nb-2));
 	bdelta_ = compute_grid_deltas(bgrid_, dbgrid_);
 
 	// Illiquid asset
@@ -33,7 +33,7 @@ void ModelBase::make_asset_grids(const Parameters& p) {
 	powerSpacedGrid(p.amin, p.amax, p.acurv, agrid_);
 	adjustPowerSpacedGrid(agrid_);
 
-	dagrid_ = agrid_(seq(1,last)) - agrid_(seq(0,last-1));
+	dagrid_ = agrid_(seq(1,p.na-1)) - agrid_(seq(0,p.na-2));
 	adelta_ = compute_grid_deltas(agrid_, dagrid_);
 }
 

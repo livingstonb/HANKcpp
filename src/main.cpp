@@ -16,7 +16,8 @@ int main () {
 	params.setup(options);
 
 	Model model = Model(params, income_dir);
-	
+
+
 	SteadyState iss(model);
 
 	HJB hjb(model, iss); 
