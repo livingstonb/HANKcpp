@@ -24,11 +24,13 @@ typedef std::vector<triplet_type> triplet_list;
 template <typename T, size_t N>
 using boost_array_type = boost::multi_array<T, N>;
 
-using boost3d = boost_array_type<double, 3>;
-using boost1d = boost_array_type<double, 1>;
-
 template <typename T, size_t N>
 using boost_array_shape = boost::array<typename boost_array_type<T, N>::index, N>;
+
+using boost3d = boost_array_type<double, 3>;
+using boost1d = boost_array_type<double, 1>;
+using boost3dshape = boost_array_shape<double, 3>;
+using boost1dshape = boost_array_shape<double, 1>;
 
 typedef boost::multi_array_types::index_range range;
 

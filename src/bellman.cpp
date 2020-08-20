@@ -16,7 +16,7 @@ namespace {
 		std::cout << "Converged after " << ii << " iterations." << '\n';
 	}
 
-	boost_array_type<double, 3> make_value_guess(const Model& model, const SteadyState& ss) {
+	boost3d make_value_guess(const Model& model, const SteadyState& ss) {
 		const Parameters& p = model.p;
 
 		boost3d V(model.dims);
@@ -74,50 +74,6 @@ namespace {
 	};
 }
 
-class Policies {
-	public:
-		Policies(const boost_array_shape<double, 3>& dims) : c(dims), h(dims), s(dims), d(dims), u(dims) {};
-
-		boost_array_type<double, 3> c, h, s, d, u;
-
-		void update_c(int ia, int ib, int iy, const ConUpwind& uwF, const ConUpwind& uwB, const ConUpwind& uw0) {
-			bool not_backward = (!uwB.valid) | (uwF.Hc >= uwB.Hc);
-			bool not_forward = (!uwF.valid) | (uwB.Hc >= uwF.Hc);
-			bool forward_better_than_nothing = uwF.Hc >= uw0.Hc;
-			bool backward_better_than_nothing = uwB.Hc >= uw0.Hc;
-
-			ConUpwind uw_selected;
-			if ( uwF.valid & not_backward & forward_better_than_nothing )
-				uw_selected = uwF;
-			else if ( uwB.valid & not_forward & backward_better_than_nothing )
-				uw_selected = uwB;
-			else
-				uw_selected = uw0;
-
-			c[ia][ib][iy] = uw_selected.c;
-			h[ia][ib][iy] = uw_selected.h;
-			s[ia][ib][iy] = uw_selected.s;
-		}
-
-		void update_d(int ia, int ib, int iy, const DepositUpwind& uFB,
-			const DepositUpwind& uBF, const DepositUpwind& uBB) {
-			bool chooseFB = uFB.valid & uFB.at_least_as_good_as(uBF) & uFB.at_least_as_good_as(uBB);
-			bool chooseBF = uBF.valid & uBF.at_least_as_good_as(uFB) & uBF.at_least_as_good_as(uBB);
-			bool chooseBB = uBB.valid & uFB.at_least_as_good_as(uBF) & uBB.at_least_as_good_as(uFB);
-
-			if ( chooseFB )
-				d[ia][ib][iy] = uFB.d;
-			else if ( chooseBF )
-				d[ia][ib][iy] = uBF.d;
-			else if ( chooseBB )
-				d[ia][ib][iy] = uBB.d;
-			else if ( (!uFB.valid) & (!uBF.valid) & (!uBB.valid) )
-				d[ia][ib][iy] = 0;
-			else
-				throw "Error while upwinding deposits";
-		}
-};
-
 HJB::HJB(const Model& model_, const SteadyState& ss) : model(model_), p(model_.p), V(model.dims) {
 	V = make_value_guess(model, ss);
 }
@@ -146,20 +102,18 @@ void HJB::iterate(const SteadyState& ss) {
 	}
 }
 
-
-
-Policies HJB::update_policies(const SteadyState& ss) {
+Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 	ValueFnDerivatives derivs;
 	double chi = ss.chi;
 
-	ConUpwind upwindB, upwindF, upwind0, upwindBad;
+	Upwinding::ConUpwind upwindB, upwindF, upwind0, upwindBad;
 	upwindBad.s = 0.0;
 	upwindBad.Hc = -1.0e12;
 
-	DepositUpwind depositFB, depositBF, depositBB, depositBad;
+	Upwinding::DepositUpwind depositFB, depositBF, depositBB, depositBad;
 	depositBad.Hd = -1.0e12;
 
-	Policies policies(model.dims);
+	Upwinding::Policies policies(model.dims);
 
 	double gbdrift, gnetwage, idioscale, illiq, labdisutil;
 	bool worth_adjusting;
@@ -180,7 +134,7 @@ Policies HJB::update_policies(const SteadyState& ss) {
 
 	double_vector bdrift = model.get_rb_effective().array() * model.bgrid.array();
 
-	std::function<ConUpwind(double, double, double, double)> opt_c;
+	std::function<Upwinding::ConUpwind(double, double, double, double)> opt_c;
 	if ( p.laborsupply == LaborType::none ) {
 		opt_c = [this] (double Vb, double bdrift, double netwage, double idioscale) {
 				return optimal_consumption_no_laborsupply(Vb, bdrift, netwage);
@@ -292,7 +246,7 @@ Policies HJB::update_policies(const SteadyState& ss) {
 	return policies;
 }
 
-void HJB::update_value_fn(const SteadyState& ss, const Policies& policies) {
+void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& policies) {
 	double_vector bvec(model.ntot);
 	double_vector ycol, vcol;
 	boost3d::index_gen indices;
@@ -359,8 +313,8 @@ ValueFnDerivatives HJB::compute_derivatives(int ia, int ib, int iy) const {
 	return d;
 }
 
-ConUpwind HJB::optimal_consumption_no_laborsupply(double Vb, double bdrift, double netwage) const {
-	ConUpwind upwind;
+Upwinding::ConUpwind HJB::optimal_consumption_no_laborsupply(double Vb, double bdrift, double netwage) const {
+	Upwinding::ConUpwind upwind;
 	upwind.h = 1.0;
 
 	if ( is_stationary_pt_or_limit(Vb)) {
@@ -380,8 +334,8 @@ ConUpwind HJB::optimal_consumption_no_laborsupply(double Vb, double bdrift, doub
 	return upwind;
 }
 
-ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const {
-	ConUpwind upwind;
+Upwinding::ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const {
+	Upwinding::ConUpwind upwind;
 
 	if ( is_stationary_pt_or_limit(Vb) ) {
 		upwind.h = model.labdisutil1inv(p.labwedge * netwage * Vb / idioscale, chi);
@@ -428,8 +382,8 @@ ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift, double ne
 	return upwind;
 }
 
-ConUpwind HJB::optimal_consumption_ghh_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const {
-	ConUpwind upwind;
+Upwinding::ConUpwind HJB::optimal_consumption_ghh_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const {
+	Upwinding::ConUpwind upwind;
 
 	upwind.h = model.labdisutil1inv(p.labwedge * netwage / idioscale, chi);
 	if ( p.imposeMaxHours )
@@ -454,8 +408,8 @@ ConUpwind HJB::optimal_consumption_ghh_labor(double Vb, double bdrift, double ne
 	return upwind;
 }
 
-DepositUpwind HJB::optimal_deposits(double Va, double Vb, double a) const {
-	DepositUpwind dupwind;
+Upwinding::DepositUpwind HJB::optimal_deposits(double Va, double Vb, double a) const {
+	Upwinding::DepositUpwind dupwind;
 
 	dupwind.d = model.adjcosts.cost1inv(Va / Vb - 1.0, a);
 	dupwind.d = fmin(dupwind.d, p.dmax);

@@ -6,27 +6,12 @@
 
 #include <model.h>
 #include <steady_state.h>
-
-struct ConUpwind {
-	double c, h, s, Hc;
-	bool valid = false;
-};
-
-struct DepositUpwind {
-	double d, Hd;
-	bool valid = false;
-
-	bool at_least_as_good_as(const DepositUpwind& du) const {
-		return ( (!du.valid) | (Hd >= du.Hd) );
-	}
-};
+#include <upwinding.h>
 
 struct ValueFnDerivatives {
 	static const int StationaryPtOrLimit = -999.9;
 	double VaF, VaB, VbF, VbB;
 };
-
-class Policies;
 
 class HJB {
 	public:
@@ -34,18 +19,18 @@ class HJB {
 
 		void iterate(const SteadyState& ss);
 
-		Policies update_policies(const SteadyState& ss);
+		Upwinding::Policies update_policies(const SteadyState& ss);
 
-		void update_value_fn(const SteadyState& ss, const Policies& policies);
+		void update_value_fn(const SteadyState& ss, const Upwinding::Policies& policies);
 
 		ValueFnDerivatives compute_derivatives(int ia, int ib, int iy) const;
 
-		ConUpwind optimal_consumption(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
-		ConUpwind optimal_consumption_no_laborsupply(double Vb, double bdrift, double netwage) const;
-		ConUpwind optimal_consumption_sep_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
-		ConUpwind optimal_consumption_ghh_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
+		Upwinding::ConUpwind optimal_consumption(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
+		Upwinding::ConUpwind optimal_consumption_no_laborsupply(double Vb, double bdrift, double netwage) const;
+		Upwinding::ConUpwind optimal_consumption_sep_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
+		Upwinding::ConUpwind optimal_consumption_ghh_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
 
-		DepositUpwind optimal_deposits(double Va, double Vb, double a) const;
+		Upwinding::DepositUpwind optimal_deposits(double Va, double Vb, double a) const;
 
 		const Model& model;
 
