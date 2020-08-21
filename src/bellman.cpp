@@ -39,8 +39,7 @@ namespace {
 		const double sep_constant = 1.0 / 3.0;
 		double_array wageexpr, bdriftnn;
 
-		bdriftnn = model.get_rb_effective().array() * model.bgrid.array();
-		bdriftnn = bdriftnn.max(0.0);
+		bdriftnn = (p.rb + p.perfectAnnuityMarkets * p.deathrate ) * model.bgrid.array();
 
 		switch ( p.laborsupply ) {
 			case LaborType::sep:
@@ -108,24 +107,25 @@ void HJB::iterate(const SteadyState& ss) {
 	double lVdiff = 1.0;
 
 	boost3dshape flat_dims = {{model.ntot, 1, 1}};
-
 	boost3d lastV(flat_dims);
 	boost3d newV(flat_dims);
-	lastV = reshape_array(V, {model.ntot, 1, 1});
+	lastV = flatten_array3d(V);
 
 	while ( (ii < maxiter) & (lVdiff > vtol) ) {
 		auto policies = update_policies(ss);
 		update_value_fn(ss, policies);
 
-		newV = reshape_array(V, {model.ntot, 1, 1});
-		lVdiff = (boost2eigen(lastV) - boost2eigen(newV)).lpNorm<Eigen::Infinity>();
-		lastV = reshape_array(V, {model.ntot, 1, 1});
+		newV = flatten_array3d(V);
+		lVdiff = boost_inf_norm(lastV, newV);
+		lastV = flatten_array3d(V);
 
-		std::cout << lVdiff << '\n';
 		check_progress(lVdiff, dispfreq, ii, vtol);
 
 		++ii;
 	}
+
+	if ( ii == maxiter )
+		std::cout << "HJB did not converge" << '\n';
 }
 
 Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
@@ -407,7 +407,6 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 	sparse_matrix ldiagmat, sparseI = speye(p.na * p.nb);
 
 	std::vector<sparse_matrix> A(p.ny);
-	std::vector<sparse_matrix> B(p.ny);
 
 	double_vector adriftvec = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
 	double_vector bdriftvec = model.get_rb_effective().array() * model.bgrid.array();
@@ -461,7 +460,8 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 				else
 					val2 = drifts.bB / model.dbgrid(ib-1) - drifts.bF / model.dbgrid(ib);
 
-				Aentries.push_back(triplet_type(iab, iab, val1 + val2));
+				if ( val1 + val2 != 0 )
+					Aentries.push_back(triplet_type(iab, iab, val1 + val2));
 
 				// Matrix entries, ia+1
 				if ( (ia < p.na - 1 ) & (drifts.aF != 0.0) ) {
@@ -483,10 +483,11 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 		// Construct B matrix = I + delta * (rho * I - A)
 		double ldiag = 1.0 + delta * (p.rho + p.deathrate) - delta * model.prodmarkovscale * model.ymarkovdiag(iy,iy);
 		ldiagmat = sparseI * ldiag;
-		B[iy] = ldiagmat - delta * A[iy];
+		sparse_matrix B = ldiagmat - delta * A[iy];
+		B.makeCompressed();
 
 		sparse_solver solver;
-		solver.compute(B[iy]);
+		solver.compute(B);
 		if ( solver.info() != Eigen::Success )
 			throw "Sparse solver failure";
 

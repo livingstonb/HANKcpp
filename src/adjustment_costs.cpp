@@ -65,8 +65,8 @@ double AdjustmentCosts::cost_fn_other(double d, double a) const {
 		kappa = kappa_w.data();
 		fcost = kappa_w_fc;
 	}
-	return fcost + scale * (kappa[0] * fabs(x) + pow(fabs(x), 1.0 + kappa[2])
-							* pow(kappa[1], -kappa[2]) / (1.0 + kappa[2]));
+	return fcost + (kappa[0] * fabs(x) + pow(fabs(x), 1.0 + kappa[2])
+							* pow(kappa[1], -kappa[2]) / (1.0 + kappa[2])) / scale;
 }
 
 double AdjustmentCosts::cost_deriv_exponential(double d, double a) const {

@@ -49,7 +49,7 @@ class HJB {
 
 		boost3d V;
 		int maxiter = 500;
-		int dispfreq = 50;
+		int dispfreq = 1;
 		double vtol = 1.0e-8;
 		double delta = 1.0e6;
 		double dVamin = 1.0e-8;

@@ -2,7 +2,7 @@
 CC=g++
 # MKL=-DMKL_ILP64 -m64 -I/media/hdd/lib/intel/mkl/include
 MKL=
-CFLAGS=-O3 -c -W -Wall -g3  $(MKL) -I$(shell pwd) -I$(shell pwd)/include -I$(shell pwd)/src
+CFLAGS=-O3 -pg -c -W -Wall -g3  $(MKL) -I$(shell pwd) -I$(shell pwd)/include -I$(shell pwd)/src
 SOURCES=parameters model steady_state bellman hank_numerics utilities adjustment_costs upwinding
 SOURCES:=$(addsuffix .cpp, $(SOURCES))
 MAIN=main.cpp
@@ -26,7 +26,7 @@ depend: .depend
 include .depend
 
 $(EXECUTABLE): $(MAIN) $(OBJECTS)
-	$(CC) $(MAIN) $(OBJECTS) -o $@ -lcblas
+	$(CC) $(MAIN) $(OBJECTS) -pg -O2 -o $@ -lcblas
 
 $(OBJECTS): $(OBJDIR)/%.o: $(SOURCEDIR)/%.cpp
 	$(CC) $(CFLAGS) $< -o $@ -fopenmp

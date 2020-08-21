@@ -19,7 +19,8 @@ int main () {
 
 	SteadyState iss(model);
 
-	HJB hjb(model, iss); 
+	HJB hjb(model, iss);
+	// hjb.maxiter = 1;
 	hjb.iterate(iss);
 
 

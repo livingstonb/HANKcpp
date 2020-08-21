@@ -57,4 +57,8 @@ map_type boost2eigen(T& arr)
 	return map;
 }
 
+inline double boost_inf_norm(boost3d& arr1, boost3d& arr2) {
+	return (boost2eigen(arr1) - boost2eigen(arr2)).lpNorm<Eigen::Infinity>();
+}
+
 #endif
