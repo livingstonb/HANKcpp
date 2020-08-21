@@ -1,6 +1,8 @@
 #ifndef _PROCEDURES_H
 #define _PROCEDURES_H
 
+#include <hank.h>
+
 #include <vector>
 #include <iostream>
 #include <algorithm>
@@ -12,7 +14,6 @@
 // #include <mkl_lapacke.h>
 #include <assert.h>
 #include <fstream>
-#include <hank.h>
 
 class Parameters;
 

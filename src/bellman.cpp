@@ -1,6 +1,14 @@
 #include <bellman.h>
+#include <parameters.h>
+#include <model.h>
+#include <upwinding.h>
+#include <steady_state.h>
+#include <HankNumerics.h>
+
+#define TO_INDEX_1D(a, b, na) ((a) + (na) * (b))
 
 namespace {
+
 	constexpr bool is_stationary_pt_or_limit(double Vb) {
 		return (Vb <= ValueFnDerivatives::StationaryPtOrLimit);
 	}
@@ -27,7 +35,7 @@ namespace {
 		bdriftnn = model.get_rb_effective().array() * model.bgrid.array();
 		bdriftnn = bdriftnn.max(0.0);
 
-		switch (p.laborsupply) {
+		switch ( p.laborsupply ) {
 			case LaborType::sep:
 				wageexpr = ss.netwagegrid.array() * sep_constant;
 				llabdisutil = model.labdisutil(sep_constant, ss.chi);
@@ -250,8 +258,6 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 					policies.u[ia][ib][iy] = model.util(policies.c[ia][ib][iy]) - labdisutil / p.labwedge;
 				else
 					policies.u[ia][ib][iy] = model.util(policies.c[ia][ib][iy] - labdisutil / p.labwedge);
-
-				// V[ia][ib][iy] = 0.9 * V[ia][ib][iy];
 			}
 		}
 	}
@@ -400,8 +406,6 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 	double_vector bdriftvec = model.get_rb_effective().array() * model.bgrid.array();
 
 	int na = p.na;
-	auto to_ab_index = [na](int iia, int iib) { return iia + na * iib; };
-
 	for ( int iy=0; iy<p.ny; ++iy ) {
 		triplet_list Aentries;
 		Aentries.reserve(5 * p.na * p.nb);
@@ -409,7 +413,7 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 
 		for (int ia=0; ia<p.na; ++ia) {
 			for (int ib=0; ib<p.nb; ++ib) {
-				iab = to_ab_index(ia, ib);
+				iab = TO_INDEX_1D(ia, ib, p.na);
 				d = policies.d[ia][ib][iy];
 				s = policies.s[ia][ib][iy];
 				acost = model.adjcosts.cost(d, model.agrid(ia));
@@ -426,13 +430,13 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 				// Matrix entries, ia-1
 				if ( (ia > 0) & (drifts.aB != 0.0) ) {
 					val = -drifts.aB / model.dagrid(ia-1);
-					Aentries.push_back(triplet_type(iab, to_ab_index(ia-1, ib), val));
+					Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia-1, ib, na), val));
 				}
 
 				// Matrix entries, ib-1
 				if ( (ib > 0) & (drifts.bB != 0.0) ) {
 					val = -drifts.bB / model.dbgrid(ib-1);
-					Aentries.push_back(triplet_type(iab, to_ab_index(ia, ib-1), val));
+					Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia, ib-1, na), val));
 				}
 
 				// Matrix entries, diagonal
@@ -455,13 +459,13 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 				// Matrix entries, ia+1
 				if ( (ia < p.na - 1 ) & (drifts.aF != 0.0) ) {
 					val = drifts.aF / model.dagrid(ia);
-					Aentries.push_back(triplet_type(iab, to_ab_index(ia+1, ib), val));
+					Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia+1, ib, na), val));
 				}
 				
 				// Matrix entries, ib+1
 				if ( (ib < p.nb - 1) & (drifts.bF != 0.0) ) {
 					val = drifts.bF /  model.dbgrid(ib);
-					Aentries.push_back(triplet_type(iab, to_ab_index(ia, ib+1), val));
+					Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia, ib+1, na), val));
 				}
 			}
 		}
@@ -485,7 +489,7 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 
 		for (int ia=0; ia<p.na; ++ia)
 			for (int ib=0; ib<p.nb; ++ib)
-				V[ia][ib][iy] = v_vec[to_ab_index(ia, ib)];
+				V[ia][ib][iy] = v_vec[TO_INDEX_1D(ia, ib, na)];
 	}
 
 

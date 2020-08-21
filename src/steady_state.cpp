@@ -1,4 +1,6 @@
 #include <steady_state.h>
+#include <parameters.h>
+#include <model.h>
 
 namespace {
 	double marginal_cost(double tfp, double r, double alpha, double wage) {

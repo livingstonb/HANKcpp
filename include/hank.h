@@ -1,14 +1,11 @@
 #ifndef _HANK_H
 #define _HANK_H
 
-#include <boost/multi_array.hpp>
-#include <Eigen/Core>
-#include <Eigen/SparseCore>
-#include <Eigen/SparseQR>
-
+#include <vector>
 typedef std::vector<double> vector;
 
-// Eigen
+// EIGEN INCLUDES
+#include <Eigen/Core>
 using Eigen::all;
 using Eigen::last;
 using Eigen::seq;
@@ -17,12 +14,17 @@ typedef Eigen::VectorXd double_vector;
 typedef Eigen::ArrayXd double_array;
 typedef Eigen::MatrixXd double_matrix;
 typedef Eigen::Matrix<bool, Eigen::Dynamic, 1> bool_vector;
+typedef double_vector grid_type;
+
+#include <Eigen/SparseCore>
+#include <Eigen/SparseQR>
 typedef Eigen::SparseMatrix<double> sparse_matrix;
 typedef Eigen::SparseQR<sparse_matrix, Eigen::COLAMDOrdering<int>> sparse_solver;
 typedef Eigen::Triplet<double> triplet_type;
 typedef std::vector<triplet_type> triplet_list;
 
-// Boost
+// BOOST INCLUDES
+#include <boost/multi_array.hpp>
 template <typename T, size_t N>
 using boost_array_type = boost::multi_array<T, N>;
 
@@ -42,8 +44,5 @@ enum class LaborType { none, sep, ghh };
 enum class AdjustCostFnRatioMode { none, linear, max };
 
 enum class DepositCostMode { custom, symmetric, no_deposit_cost };
-
-// Declare which type to use for grids
-typedef double_vector grid_type;
 
 #endif

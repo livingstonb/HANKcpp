@@ -2,20 +2,22 @@
 #define _BELLMAN_H
 
 #include <algorithm>
-#include <HankNumerics.h>
-
-#include <model.h>
-#include <steady_state.h>
-#include <upwinding.h>
-#include <hank.h>
 #include <utilities.h>
-
-#define TO_INDEX_1D(a, b, na) (a + na * b)
+#include <hank.h>
 
 struct ValueFnDerivatives {
 	static const int StationaryPtOrLimit = -999.9;
 	double VaF, VaB, VbF, VbB;
 };
+
+namespace Upwinding {
+	class ConUpwind;
+	class Policies;
+}
+
+class Model;
+class SteadyState;
+class Parameters;
 
 class HJB {
 	public:

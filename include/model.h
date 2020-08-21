@@ -7,26 +7,15 @@
 #include <cmath>
 #include <boost/algorithm/string.hpp>
 
-#include <parameters.h>
-#include <utilities.h>
-#include <functions.h>
-#include <hank.h>
 #include <adjustment_costs.h>
+#include <hank.h>
+
+class Parameters;
 
 class ModelBase
 {
 	public:
-		ModelBase(const Parameters p, const std::string& income_dir) {
-			make_asset_grids(p);
-			make_occupation_grids(p);
-			create_income_process(income_dir, p);
-			create_combined_variables(p);
-
-			check_nbl(p);
-
-			adjcosts_ = std::move(AdjustmentCosts(p.adjCostRatioMode, p.exponential_adjcosts,
-				p.kappa_w_fc, p.kappa_d_fc, p.kappa_w, p.kappa_d));
-		}
+		ModelBase(const Parameters p, const std::string& income_dir);
 
 		double_vector bgrid_;
 		double_vector dbgrid_;
@@ -64,8 +53,7 @@ class ModelBase
 
 class Model : private ModelBase {
 	public:
-		Model(const Parameters p_, const std::string& income_dir)
-			: ModelBase(p_, income_dir), p(p_), dims({p_.na, p_.nb, p_.ny}) {};
+		Model(const Parameters p_, const std::string& income_dir);
 
 		const Parameters p;
 		const AdjustmentCosts& adjcosts = adjcosts_;
@@ -97,7 +85,7 @@ class Model : private ModelBase {
 		const int nocc = nocc_;
 		const int nprod = nprod_;
 		const int ntot = p.nb * p.na * nocc_ * nprod_;
-		const boost_array_shape<double, 3> dims;
+		const boost3dshape dims;
 		const double prodmarkovscale = 1.0;
 
 		double_vector get_rb_effective() const;

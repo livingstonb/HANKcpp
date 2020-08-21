@@ -1,4 +1,7 @@
+#include <parameters.h>
 #include <model.h>
+#include <utilities.h>
+#include <functions.h>
 
 namespace {
 	void fix_rounding(double_matrix& mat)
@@ -18,6 +21,18 @@ namespace {
 
 		return deltas;
 	}
+}
+
+ModelBase::ModelBase(const Parameters p, const std::string& income_dir) {
+	make_asset_grids(p);
+	make_occupation_grids(p);
+	create_income_process(income_dir, p);
+	create_combined_variables(p);
+
+	check_nbl(p);
+
+	adjcosts_ = std::move(AdjustmentCosts(p.adjCostRatioMode, p.exponential_adjcosts,
+		p.kappa_w_fc, p.kappa_d_fc, p.kappa_w, p.kappa_d));
 }
 
 void ModelBase::make_asset_grids(const Parameters& p) {
@@ -182,6 +197,9 @@ void ModelBase::check_nbl(const Parameters& p) const {
 		}
 	}
 }
+
+Model::Model(const Parameters p_, const std::string& income_dir)
+			: ModelBase(p_, income_dir), p(p_), dims({p_.na, p_.nb, p_.ny}) {};
 
 double_vector Model::get_rb_effective() const
 {
