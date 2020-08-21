@@ -1,4 +1,5 @@
-#include <HankNumerics.h>
+#include <hank_numerics.h>
+#include<math.h>
 
 namespace HankNumerics {
 

@@ -1,7 +1,7 @@
 
 #include <iostream>
 #include <parameters.h>
-#include <options.h>
+#include <hank_types.h>
 #include <model.h>
 #include <steady_state.h>
 #include <bellman.h>

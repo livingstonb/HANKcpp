@@ -3,7 +3,14 @@
 #include <model.h>
 #include <upwinding.h>
 #include <steady_state.h>
-#include <HankNumerics.h>
+#include <hank_numerics.h>
+#include <utilities.h>
+
+#include <hank_eigen_dense.h>
+#include <hank_eigen_sparse.h>
+#include <hank_boost_eigen_routines.h>
+
+#include <algorithm>
 
 #define TO_INDEX_1D(a, b, na) ((a) + (na) * (b))
 

@@ -1,8 +1,7 @@
-#ifndef _RTSEC_H
-#define _RTSEC_H
+#ifndef _HANK_NUMERICS_H
+#define _HANK_NUMERICS_H
 
 #include<functional>
-#include<math.h>
 
 namespace HankNumerics {
 

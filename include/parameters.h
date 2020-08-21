@@ -1,9 +1,9 @@
 #ifndef _PARAMETERS_H
 #define _PARAMETERS_H
 
-#include <iostream>
-#include <options.h>
-#include <hank.h>
+#include <hank_types.h>
+
+class Options;
 
 class Parameters {
 	public:

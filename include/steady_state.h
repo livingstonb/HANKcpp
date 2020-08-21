@@ -1,12 +1,14 @@
 #ifndef _INITIAL_STEADY_STATE_H
 #define _INITIAL_STEADY_STATE_H
 
-#include <iostream>
-#include <options.h>
+#include <hank_eigen_dense.h>
 
+// Forward declarations
 class Model;
+
 class Parameters;
 
+// Provides attributes and methods for steady state computations
 class SteadyState {
 	private:
 		const Model& model;
@@ -23,11 +25,8 @@ class SteadyState {
 		double totoutput;
 
 		// Profits, prices, and dividends
-		double price_W;
-		double grossprofit_W, netprofit_W;
-		double grossprofit_R, netprofit_R;
-		double profit;
-		double dividend_A, dividend_B, equity_A, equity_B;
+		double price_W, grossprofit_W, netprofit_W, grossprofit_R, netprofit_R;
+		double profit, dividend_A, dividend_B, equity_A, equity_B;
 
 		// Production
 		double tfp_N, tfp_Y, mc_N, mc_Y;
@@ -37,8 +36,7 @@ class SteadyState {
 		double_vector netwagegrid;
 
 		// Capital
-		double ra, rcapital;
-		double capital, capital_N, capital_Y;
+		double ra, rcapital, capital, capital_N, capital_Y;
 		double K_totoutput_ratio;
 
 		// Labor disutility

@@ -1,7 +1,8 @@
-#include <parameters.h>
 #include <model.h>
 #include <utilities.h>
 #include <functions.h>
+#include <cmath>
+#include <hank_boost_eigen_routines.h>
 
 namespace {
 	void fix_rounding(double_matrix& mat)
@@ -13,13 +14,29 @@ namespace {
 	double_vector compute_grid_deltas(const double_vector& grid, const double_vector& dgrid)
 	{
 		int n = grid.size();
+		int n_d = n - 1;
 		double_vector deltas(n);
 
 		deltas(0) = 0.5 * dgrid(0);
-		deltas(seq(1,n-2)) = 0.5 * (dgrid(seq(0,last-1)) + dgrid(seq(1,last)));
-		deltas(n-1) = 0.5 * dgrid(last);
+		deltas(seq(1,n-2)) = 0.5 * (dgrid(seq(0,n_d-2)) + dgrid(seq(1,n_d-1)));
+		deltas(n-1) = 0.5 * dgrid(n_d-1);
 
 		return deltas;
+	}
+
+	void powerSpacedGrid(double low, double high, double curv, grid_type& grid) {
+		int n = grid.size();
+		linspace(0.0, 1.0, n, grid);
+
+		for (int i=0; i<n; ++i) {
+			grid[i] = low + (high - low) * pow(grid[i], 1.0 / curv);
+		}
+	}
+
+	void adjustPowerSpacedGrid(grid_type& grid) {
+		if (grid.size() >= 10)
+			for (int i=0; i<9; ++i)
+				grid[i] = (i - 1) * grid[9] / (10.0 - 1.0);
 	}
 }
 

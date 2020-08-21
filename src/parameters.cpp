@@ -1,11 +1,6 @@
 #include <parameters.h>
-
-// namespace {
-// 	void copy_array(const double[]& from, double[]& to, int n) {
-// 		for (int i=0; i<j; ++i)
-// 			to[i] = from[i];
-// 	}
-// }
+#include <algorithm>
+#include <vector>
 
 void Parameters::setup(const Options& opts) {
 	if ( borrowing )
