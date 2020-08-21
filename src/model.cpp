@@ -5,14 +5,12 @@
 #include <hank_boost_eigen_routines.h>
 
 namespace {
-	void fix_rounding(double_matrix& mat)
-	{
+	void fix_rounding(double_matrix& mat) {
 		for (int i=0; i<mat.rows(); ++i)
 			mat(i,i) = mat(i,i) - mat.row(i).sum();
 	}
 
-	double_vector compute_grid_deltas(const double_vector& grid, const double_vector& dgrid)
-	{
+	double_vector compute_grid_deltas(const double_vector& grid, const double_vector& dgrid) {
 		int n = grid.size();
 		int n_d = n - 1;
 		double_vector deltas(n);

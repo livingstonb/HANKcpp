@@ -1,6 +1,5 @@
 #include <adjustment_costs.h>
 #include <math.h>
-#include <hank.h>
 
 AdjustmentCosts::AdjustmentCosts(AdjustCostFnRatioMode mode_, bool exponential_costs_,
 	double kappa_w_fc_, double kappa_d_fc_, const double kappa_w_[], const double kappa_d_[])

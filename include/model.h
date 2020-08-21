@@ -21,9 +21,9 @@ class ModelBase {
 		double_vector agrid_, dagrid_, adelta_;
 		double_vector occgrid_, occdist_;
 		double_vector logprodgrid_, prodgrid_;
-		double_vector proddist_, profsharegrid_, prodmarkov_;
+		double_vector proddist_, profsharegrid_;
 		double_vector yprodgrid_, yoccgrid_, ydist_;
-		double_matrix ymarkov_, ymarkovdiag_, ymarkovoff_;
+		double_matrix prodmarkov_, ymarkov_, ymarkovdiag_, ymarkovoff_;
 
 		int nocc_, nprod_;
 
