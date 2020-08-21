@@ -411,7 +411,7 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 			for (int ib=0; ib<p.nb; ++ib) {
 				iab = to_ab_index(ia, ib);
 				d = policies.d[ia][ib][iy];
-				s = policies.d[ia][ib][iy];
+				s = policies.s[ia][ib][iy];
 				acost = model.adjcosts.cost(d, model.agrid(ia));
 				areturn = adriftvec(ia);
 

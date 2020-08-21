@@ -27,6 +27,7 @@ class Parameters {
 		double bmin = 0.0;
 		double bmax = 50.0;
 		double bcurv = 0.2;
+		double blim = -1.0;
 
 		// Other grid parameters
 		int nprod = 15;
@@ -87,7 +88,7 @@ class Parameters {
 		};
 
 		// --- OTHER MODEL PARAMETERS ---
-		bool borrowing = false;
+		bool borrowing = true;
 		// Steady state output gap
 		double ssgap = 0.0;
 		double meanlabeff = 1.0;

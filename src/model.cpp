@@ -23,7 +23,26 @@ namespace {
 void ModelBase::make_asset_grids(const Parameters& p) {
 	// Liquid asset
 	bgrid_ = double_vector(p.nb);
-	powerSpacedGrid(p.bmin, p.bmax, p.bcurv, bgrid_);
+	if ( !p.borrowing ) {
+		powerSpacedGrid(p.bmin, p.bmax, p.bcurv, bgrid_);
+	}
+	else {
+		double_vector bgridpos(p.nb_pos);
+		powerSpacedGrid(0.0, p.bmax, p.bcurv, bgridpos);
+
+		double nbl = -p.lumptransfer / (p.rborr + p.perfectAnnuityMarkets * p.deathrate);
+		double abl = fmax(nbl + p.cmin, p.blim);
+
+		int nn = static_cast<int>(floor(p.nb_neg / 2.0) + 1);
+		double_vector bgridneg(nn);
+		powerSpacedGrid(abl, (abl+bgridpos[0])/2.0, p.bcurv, bgridneg);
+
+		bgrid_(seq(0, nn-1)) = bgridneg;
+		bgrid_(seq(p.nb_neg, p.nb-1)) = bgridpos;
+		for (int i=nn; i<p.nb_neg; ++i)
+			bgrid_[i] = bgrid_[p.nb_neg] - (bgrid_[p.nb_neg+2-i] - bgrid_[0]);
+	}
+	
 
 	dbgrid_ = bgrid_(seq(1,p.nb-1)) - bgrid_(seq(0,p.nb-2));
 	bdelta_ = compute_grid_deltas(bgrid_, dbgrid_);

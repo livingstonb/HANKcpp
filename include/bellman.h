@@ -10,6 +10,8 @@
 #include <hank.h>
 #include <utilities.h>
 
+#define TO_INDEX_1D(a, b, na) (a + na * b)
+
 struct ValueFnDerivatives {
 	static const int StationaryPtOrLimit = -999.9;
 	double VaF, VaB, VbF, VbB;
