@@ -100,7 +100,7 @@ void HJB::iterate(const SteadyState& ss) {
 	int ii = 0;
 	double lVdiff = 1.0;
 
-	boost_array_shape<double, 3> flat_dims = {{model.ntot, 1, 1}};
+	boost3dshape flat_dims = {{model.ntot, 1, 1}};
 
 	boost3d lastV(flat_dims);
 	boost3d newV(flat_dims);
