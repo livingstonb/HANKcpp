@@ -16,14 +16,21 @@ EXECUTABLE=exec
 
 all: $(MAIN) $(OBJECTS) $(EXECUTABLE)
 
+depend: .depend
+
+.depend: $(SOURCES)
+	rm -f ./.depend
+	$(CC) $(CFLAGS) -MM $^ > ./.depend;
+
+include .depend
 
 $(EXECUTABLE): $(MAIN) $(OBJECTS)
 	$(CC) $(MAIN) $(OBJECTS) -o $@ -lcblas
 
-$(OBJECTS): $(OBJDIR)/%.o: $(SOURCEDIR)/%.cpp include/*.h
+$(OBJECTS): $(OBJDIR)/%.o: $(SOURCEDIR)/%.cpp
 	$(CC) $(CFLAGS) $< -o $@ -fopenmp
 
-$(MAIN): $(OBJDIR)/%.o: $(SOURCEDIR)/%.cpp include/*.h
+$(MAIN): $(OBJDIR)/%.o: $(SOURCEDIR)/%.cpp
 	$(CC) $(CFLAGS) $< -o $@ -fopenmp
 
 clean:
