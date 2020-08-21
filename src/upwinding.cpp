@@ -26,7 +26,7 @@ void Policies::update_d(int ia, int ib, int iy, const DepositUpwind& uFB,
 	const DepositUpwind& uBF, const DepositUpwind& uBB) {
 	bool chooseFB = uFB.valid & uFB.at_least_as_good_as(uBF) & uFB.at_least_as_good_as(uBB);
 	bool chooseBF = uBF.valid & uBF.at_least_as_good_as(uFB) & uBF.at_least_as_good_as(uBB);
-	bool chooseBB = uBB.valid & uFB.at_least_as_good_as(uBF) & uBB.at_least_as_good_as(uFB);
+	bool chooseBB = uBB.valid & uBB.at_least_as_good_as(uBF) & uBB.at_least_as_good_as(uFB);
 
 	if ( chooseFB )
 		d[ia][ib][iy] = uFB.d;

@@ -16,6 +16,7 @@ void Parameters::setup(const Options& opts) {
 
 	rborr = rb + borrwedge;
 
+	kappa_w[1] = pow((1.0-kappa_w[0])* (1.0+kappa_w[2]), -1.0 / kappa_w[2]);
 	kappa_d[3] = kappa_w[3];
 	switch ( opts.depositCostMode ) {
 		case DepositCostMode::symmetric:

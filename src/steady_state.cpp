@@ -18,7 +18,7 @@ namespace {
 		lb = p.targetMeanIll * p.depreciation + price_W * p.alpha_Y * p.drs_Y
 			+ (1.0 - price_W) * p.alpha_N * p.drs_N
 			+ (price_W * (1.0 - p.drs_Y) + (1.0 - price_W) * (1.0 - p.drs_N))
-				* p.profdistfracA;
+				* (1.0 - p.corptax) * p.profdistfracA;
 		lc = -p.targetMeanIll
 			* (price_W * p. alpha_Y * p. drs_Y + (1.0 - price_W) * p.alpha_N * p.drs_N);
 
@@ -51,7 +51,12 @@ SteadyState::SteadyState(const Model& model_) : model(model_), p(model_.p) {
 	double lmeanwage = wage_Y * model.occdist.dot((1.0-model.occgrid.array()).matrix())
 		+ wage_N * model.occdist.dot(model.occgrid);
 
-	chi = lmeanwage * p.meanlabeff / (pow(0.7, -p.riskaver) * pow(p.hourtarget, 1.0/p.frisch));
+	if ( p.laborsupply == LaborType::none )
+		chi = lmeanwage * p.meanlabeff / pow(p.hourtarget, 1.0 / p.frisch);
+	else if ( p.laborsupply == LaborType::sep )
+		chi = lmeanwage * p.meanlabeff / (pow(0.7, -p.riskaver) * pow(p.hourtarget, 1.0/p.frisch));
+	else
+		chi = 0.0;
 
 	yprodgrid = model_.yprodgrid;
 }
@@ -63,7 +68,7 @@ void SteadyState::update() {
 
 	// Wholesalers
 	capital_Y = price_W * p.alpha_Y * p.drs_Y * output / rcapital;
-	tfp_Y = output / pow((pow(capital_Y, p.alpha_Y) * pow(labor_Y, 1.0-p.alpha_Y)), p.drs_Y);
+	tfp_Y = output / pow(pow(capital_Y, p.alpha_Y) * pow(labor_Y, 1.0-p.alpha_Y), p.drs_Y);
 
 	if ( (p.alpha_Y  == 1.0) | (p.drs_Y == 0.0) )
 		wage_Y = 0;
@@ -83,7 +88,7 @@ void SteadyState::update() {
 	else
 		wage_N = grossprofit_R * (1.0 - p.alpha_N) * p.drs_N * varieties / labor_N;
 
-	mc_Y = marginal_cost(tfp_N, rcapital, p.alpha_N, wage_N);
+	mc_N = marginal_cost(tfp_N, rcapital, p.alpha_N, wage_N);
 
 	ra = rcapital - p.depreciation;
 	dividend_A = p.profdistfracA * profit * (1.0 - p.corptax);
