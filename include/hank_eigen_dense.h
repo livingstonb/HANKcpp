@@ -1,7 +1,7 @@
 #ifndef HANK_EIGEN_DENSE
 #define HANK_EIGEN_DENSE
 
-#define NDEBUG
+#include <hank_config.h>
 #include <Eigen/Core>
 
 using Eigen::seq;

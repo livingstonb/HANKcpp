@@ -1,6 +1,7 @@
 #ifndef _PROCEDURES_H
 #define _PROCEDURES_H
 
+#include <hank_config.h>
 #include <vector>
 #include <iostream>
 #include <algorithm>

@@ -1,7 +1,7 @@
 
 CC=g++
-# MKL=-DMKL_ILP64 -m64 -I/media/hdd/lib/intel/mkl/include
-MKL=
+MKL=-DMKL_ILP64 -m64 -I/media/hdd/lib/intel/mkl/include -L/media/hdd/lib/intel/mkl/lib/intel64
+SSFLAGS=-I/media/hdd/lib/SuiteSparse/include -L/media/hdd/lib/SuiteSparse/lib
 CFLAGS=-O3 -pg -c -W -Wall -g3  $(MKL) -I$(shell pwd) -I$(shell pwd)/include -I$(shell pwd)/src
 SOURCES=parameters model steady_state bellman hank_numerics utilities adjustment_costs upwinding
 SOURCES:=$(addsuffix .cpp, $(SOURCES))
@@ -26,13 +26,13 @@ depend: .depend
 include .depend
 
 $(EXECUTABLE): $(MAIN) $(OBJECTS)
-	$(CC) $(MAIN) $(OBJECTS) -pg -O2 -o $@ -lcblas
+	$(CC) $(MAIN) $(OBJECTS) $(MKL) $(SSFLAGS) -pg -O2 -o $@  -lumfpack -lsuitesparseconfig
 
-$(OBJECTS): $(OBJDIR)/%.o: $(SOURCEDIR)/%.cpp
-	$(CC) $(CFLAGS) $< -o $@ -fopenmp
+$(OBJECTS): $(OBJDIR)/%.o: $(SOURCEDIR)/%.cpp include/%.h
+	$(CC) $(CFLAGS) $(MKL) -I/media/hdd/lib/SuiteSparse/include $< -o $@   #-fopenmp
 
 $(MAIN): $(OBJDIR)/%.o: $(SOURCEDIR)/%.cpp
-	$(CC) $(CFLAGS) $< -o $@ -fopenmp
+	$(CC) $(CFLAGS) $(MKL) -I/media/hdd/lib/SuiteSparse/include $< -o $@ #-fopenmp
 
 clean:
 	rm build/*

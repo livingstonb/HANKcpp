@@ -6,6 +6,7 @@
 #include <steady_state.h>
 #include <bellman.h>
 #include <adjustment_costs.h>
+#include <utilities.h>
 
 int main () {
 	std::string income_dir = "2point_3_5";
@@ -13,14 +14,19 @@ int main () {
 	Options options;
 
 	Parameters params;
+	params.rho = 0.1;
+	params.drs_N = 0.8;
+	params.drs_Y = 0.9;
 	params.setup(options);
 
 	Model model = Model(params, income_dir);
+	std::cout << model.bgrid.size() << '\n';
+	std::cout << model.get_rb_effective().size() << '\n';
 
 	SteadyState iss(model);
 
 	HJB hjb(model, iss);
-	// hjb.maxiter = 1;
+	// // hjb.maxiter = 1;
 	hjb.iterate(iss);
 
 

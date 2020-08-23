@@ -1,6 +1,7 @@
 #include <parameters.h>
 #include <algorithm>
 #include <vector>
+#include <math.h>
 
 void Parameters::setup(const Options& opts) {
 	if ( borrowing )
@@ -12,17 +13,15 @@ void Parameters::setup(const Options& opts) {
 	naby = na * nb * ny;
 	nab = na * nb;
 
-	profdistfracA = alpha_Y;
-
 	rborr = rb + borrwedge;
 
-	kappa_w[1] = pow((1.0-kappa_w[0])* (1.0+kappa_w[2]), -1.0 / kappa_w[2]);
+	kappa_w[1] = pow((1.0-kappa_w[0]) * (1.0+kappa_w[2]), -1.0 / kappa_w[2]);
 	kappa_d[3] = kappa_w[3];
 	switch ( opts.depositCostMode ) {
 		case DepositCostMode::symmetric:
 			// Set kappa_d equal to kappa_w
 			kappa_d_fc = kappa_w_fc;
-			std::copy(std::begin(kappa_w), std::end(kappa_w), std::begin(kappa_d));
+			kappa_d = kappa_w;
 			break;
 		case DepositCostMode::no_deposit_cost:
 			kappa_d_fc = 0;

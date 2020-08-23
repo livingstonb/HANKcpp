@@ -1,6 +1,7 @@
 #ifndef _ADJUSTMENT_COSTS_H
 #define _ADJUSTMENT_COSTS_H
 
+#include <hank_config.h>
 #include <functional>
 #include <array>
 #include <hank_types.h>
@@ -25,13 +26,19 @@ class AdjustmentCosts {
 		AdjustmentCosts() = default;
 
 		AdjustmentCosts(AdjustCostFnRatioMode mode_, bool exponential_costs_,
-			double kappa_w_fc_, double kappa_d_fc_, const double kappa_w_[], const double kappa_d_[]);
+			double kappa_w_fc_, double kappa_d_fc_, const std::array<double, 5>& kappa_w_,
+			const std::array<double, 5>& kappa_d_);
 		
-		std::function<double(double, double)> cost, cost1, cost1inv;
 		double scale_factor(double a) const;
+
+		std::function<double(double, double)> cost, cost1, cost1inv;
+
 		AdjustCostFnRatioMode mode;
+
 		bool exponential_costs;
+
 		double kappa_w_fc, kappa_d_fc;
+
 		std::array<double, 5> kappa_w, kappa_d;
 };
 

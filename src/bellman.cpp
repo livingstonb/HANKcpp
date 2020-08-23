@@ -39,7 +39,7 @@ namespace {
 		const double sep_constant = 1.0 / 3.0;
 		double_array wageexpr, bdriftnn;
 
-		bdriftnn = (p.rb + p.perfectAnnuityMarkets * p.deathrate ) * model.bgrid.array();
+		bdriftnn = model.get_rb_effective().array() * model.bgrid.array();
 
 		switch ( p.laborsupply ) {
 			case LaborType::sep:
@@ -145,9 +145,9 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 	bool worth_adjusting;
 	const double prof_common = p.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
 
-	bool labor_is_separable = (p.laborsupply == LaborType::sep);
+	bool labor_is_ghh = (p.laborsupply == LaborType::ghh);
 	const bool scale_wrt_ss = (!p.scaleDisutilityIdio) & p.prodispshock
-		& p.prodDispScaleDisutility & labor_is_separable;
+		& p.prodDispScaleDisutility & labor_is_ghh;
 
 	double prof_keep;
 	if ( p.taxHHProfitIncome )
@@ -329,22 +329,23 @@ Upwinding::ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift
 	else {
 		upwind.s = 0.0;
 		const double hmin = fmax(-bdrift / netwage + 1.0e-5, 0.0);
-		const double wscale = 1.0;
 		const double hmax = ( p.imposeMaxHours ) ? 1 : 100;
-		const double v1_at_min = model.util1BC(hmin, chi, bdrift, netwage, wscale);
-		const double v1_at_max = model.util1BC(hmax, chi, bdrift, netwage, wscale);
+		const double v1_at_min = model.util1BC(hmin, chi, bdrift, netwage, idioscale);
+		const double v1_at_max = model.util1BC(hmax, chi, bdrift, netwage, idioscale);
 
-		if ( v1_at_max <= 0.0 )
-			upwind.h = hmax;
-		else if ( v1_at_min >= 0.0 )
-			upwind.h = hmin;
-		else {
+		if ( (v1_at_max > 0) & (v1_at_min < 0) ) {
 			std::function<double(double)> objective = [=] (double h) {
-				return model.util1BC(h, chi, bdrift, netwage, wscale);
+				return model.util1BC(h, chi, bdrift, netwage, idioscale);
 			};
 			const double facc = 1.0e-8;
 			upwind.h = HankNumerics::rtsec(objective, hmin, hmax, facc);
 		}
+		else if ( v1_at_max <= 0.0 )
+			upwind.h = hmax;
+		else if ( v1_at_min >= 0.0 )
+			upwind.h = hmin;
+		else
+			throw "Logic error";
 	}
 
 	if ( p.imposeMaxHours )

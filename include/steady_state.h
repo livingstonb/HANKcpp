@@ -1,6 +1,7 @@
 #ifndef _INITIAL_STEADY_STATE_H
 #define _INITIAL_STEADY_STATE_H
 
+#include <hank_config.h>
 #include <hank_eigen_dense.h>
 
 // Forward declarations

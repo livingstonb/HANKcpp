@@ -1,6 +1,7 @@
 #ifndef _HANK_BOOST_EIGEN_ROUTINES_H
 #define _HANK_BOOST_EIGEN_ROUTINES_H
 
+#include <hank_config.h>
 #include <hank_eigen_dense.h>
 #include <hank_boost.h>
 

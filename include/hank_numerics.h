@@ -1,6 +1,7 @@
 #ifndef _HANK_NUMERICS_H
 #define _HANK_NUMERICS_H
 
+#include <hank_config.h>
 #include<functional>
 
 namespace HankNumerics {

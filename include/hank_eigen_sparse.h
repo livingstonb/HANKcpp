@@ -1,14 +1,22 @@
 #ifndef HANK_EIGEN_SPARSE
 #define HANK_EIGEN_SPARSE
 
-#define NDEBUG
+#include <hank_config.h>
 #include <Eigen/SparseCore>
-#include <Eigen/SparseLU>
 #include <vector>
 
 using sparse_matrix = Eigen::SparseMatrix<double>;
 
-using sparse_solver = Eigen::SparseLU<sparse_matrix, Eigen::COLAMDOrdering<int>>;
+#if HANK_EIGEN_SPARSE_SOLVER == 0
+	#include <Eigen/SparseQR>
+	using sparse_solver = Eigen::SparseQR<sparse_matrix, Eigen::COLAMDOrdering<int>>;
+#elif HANK_EIGEN_SPARSE_SOLVER == 1
+	#include <Eigen/SparseLU>
+	using sparse_solver = Eigen::SparseLU<sparse_matrix, Eigen::COLAMDOrdering<int>>;
+#elif HANK_EIGEN_SPARSE_SOLVER == 2
+	#include <Eigen/UmfPackSupport>
+	using sparse_solver = Eigen::UmfPackLU<sparse_matrix>;
+#endif
 
 using triplet_type = Eigen::Triplet<double>;
 

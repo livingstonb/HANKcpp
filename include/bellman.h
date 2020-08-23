@@ -1,6 +1,7 @@
 #ifndef _BELLMAN_H
 #define _BELLMAN_H
 
+#include <hank_config.h>
 #include <hank_boost.h>
 
 // Forward declarations

@@ -1,6 +1,8 @@
 #ifndef _PARAMETERS_H
 #define _PARAMETERS_H
 
+#include <hank_config.h>
+#include <array>
 #include <hank_types.h>
 
 class Options;
@@ -17,7 +19,7 @@ class Parameters {
 		// agrid
 		int na = 40;
 		double amin = 0.0;
-		double acurv = 0.2;
+		double acurv = 0.15;
 		double amax = 100.0;
 
 		// bgrid
@@ -26,7 +28,8 @@ class Parameters {
 		int nb;
 		double bmin = 0.0;
 		double bmax = 50.0;
-		double bcurv = 0.2;
+		double bcurv = 0.35;
+		double bcurv_neg = 0.4;
 		double blim = -1.0;
 
 		// Other grid parameters
@@ -69,7 +72,7 @@ class Parameters {
 		// --- WITHDRAWAL COSTS ---
 		bool exponential_adjcosts = false;
 		double kappa_w_fc = 0.0;
-		double kappa_w[5] = {
+		std::array<double, 5> kappa_w = {
 			0.0, // kappa0_w
 			0.04336, // kappa1_w
 			0.40176, // kappa2_w
@@ -79,7 +82,7 @@ class Parameters {
 
 		// --- DEPOSIT COSTS --
 		double kappa_d_fc = 0.2;
-		double kappa_d[5] = {
+		std::array<double, 5> kappa_d = {
 			0.0, // kappa0_d
 			0.6, // kappa1_d
 			1.0, // kappa2_d

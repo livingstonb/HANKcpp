@@ -1,6 +1,7 @@
 #ifndef _MODEL_H
 #define _MODEL_H
 
+#include <hank_config.h>
 #include <string>
 #include <vector>
 #include <boost/algorithm/string.hpp>

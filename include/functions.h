@@ -1,6 +1,7 @@
 #ifndef _HANK_FUNCTIONS_H
 #define _HANK_FUNCTIONS_H
 
+#include <hank_config.h>
 #include <cmath>
 
 namespace HankFunctions {

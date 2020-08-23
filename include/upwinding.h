@@ -1,6 +1,7 @@
 #ifndef _UPWINDING_H
 #define _UPWINDING_H
 
+#include <hank_config.h>
 #include <hank_boost.h>
 
 namespace Upwinding {

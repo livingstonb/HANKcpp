@@ -32,9 +32,9 @@ namespace {
 	}
 
 	void adjustPowerSpacedGrid(grid_type& grid) {
-		if (grid.size() >= 10)
+		if (grid.size() > 10)
 			for (int i=0; i<9; ++i)
-				grid[i] = (i - 1) * grid[9] / (10.0 - 1.0);
+				grid[i] = i * grid[9] / (10.0 - 1.0);
 	}
 }
 
@@ -65,12 +65,12 @@ void ModelBase::make_asset_grids(const Parameters& p) {
 
 		int nn = static_cast<int>(floor(p.nb_neg / 2.0) + 1);
 		double_vector bgridneg(nn);
-		powerSpacedGrid(abl, (abl+bgridpos[0])/2.0, p.bcurv, bgridneg);
+		powerSpacedGrid(abl, (abl+bgridpos[0])/2.0, p.bcurv_neg, bgridneg);
 
 		bgrid_(seq(0, nn-1)) = bgridneg;
 		bgrid_(seq(p.nb_neg, p.nb-1)) = bgridpos;
 		for (int i=nn; i<p.nb_neg; ++i)
-			bgrid_[i] = bgrid_[p.nb_neg] - (bgrid_[p.nb_neg+2-i] - bgrid_[0]);
+			bgrid_[i] = bgrid_[p.nb_neg] - (bgrid_[p.nb_neg-i] - bgrid_[0]);
 	}
 	
 
@@ -252,5 +252,5 @@ double Model::labdisutil1inv(double du, double chi) const {
 }
 
 double Model::util1BC(double h, double chi, double bdrift, double netwage, double wagescale) const {
-	return labdisutil1(h, chi) - util1(bdrift + h * netwage) * netwage * wagescale * p.labwedge;
+	return labdisutil1(h, chi) - util1(bdrift + h * netwage) * netwage * p.labwedge / wagescale;
 }

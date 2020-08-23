@@ -2,14 +2,10 @@
 #include <math.h>
 
 AdjustmentCosts::AdjustmentCosts(AdjustCostFnRatioMode mode_, bool exponential_costs_,
-	double kappa_w_fc_, double kappa_d_fc_, const double kappa_w_[], const double kappa_d_[])
+	double kappa_w_fc_, double kappa_d_fc_, const std::array<double, 5>& kappa_w_,
+	const std::array<double, 5>& kappa_d_)
 	: mode(mode_), exponential_costs(exponential_costs_),
-		kappa_w_fc(kappa_w_fc_), kappa_d_fc(kappa_d_fc_) {
-
-	for (int i=0; i<5; ++i) {
-		kappa_w[i] = kappa_w_[i];
-		kappa_d[i] = kappa_d_[i];
-	}
+		kappa_w_fc(kappa_w_fc_), kappa_d_fc(kappa_d_fc_), kappa_w(kappa_w_), kappa_d(kappa_d_) {
 
 	if ( exponential_costs ) {
 		cost = [this](double d, double a) {return cost_fn_exponential(d, a);};
