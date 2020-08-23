@@ -19,6 +19,8 @@ using boost1dshape = boost_array_shape<double, 1>;
 
 using range = boost::multi_array_types::index_range;
 
+using boost_index = boost3d::index_gen;
+
 template<typename T, size_t N>
 boost_array_type<T, N> new_array(const boost_array_shape<T, N>& shape) {
 	boost_array_type<T, N> arr(shape);

@@ -8,4 +8,4 @@ build
 exec
 *.sublime-*
 .depend
-
+gmon.out

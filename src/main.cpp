@@ -5,6 +5,7 @@
 #include <model.h>
 #include <steady_state.h>
 #include <bellman.h>
+#include <stationary_dist.h>
 #include <adjustment_costs.h>
 #include <utilities.h>
 
@@ -20,14 +21,16 @@ int main () {
 	params.setup(options);
 
 	Model model = Model(params, income_dir);
-	std::cout << model.bgrid.size() << '\n';
-	std::cout << model.get_rb_effective().size() << '\n';
+	// std::cout << model.bgrid.size() << '\n';
+	// std::cout << model.get_rb_effective().size() << '\n';
 
 	SteadyState iss(model);
 
 	HJB hjb(model, iss);
 	// // hjb.maxiter = 1;
-	hjb.iterate(iss);
+	// hjb.iterate(iss);
 
+	StationaryDist sdist;
+	sdist.compute(model, hjb);
 
 }

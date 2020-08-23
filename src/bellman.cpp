@@ -398,7 +398,7 @@ Upwinding::ConUpwind HJB::optimal_consumption_ghh_labor(double Vb, double bdrift
 void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& policies) {
 	double_vector bvec(p.nb * p.na);
 	double_vector ycol, vcol;
-	boost3d::index_gen indices;
+	boost_index indices;
 	boost1d vcol_boost = new_array<double, 1>({p.ny});
 	double d, s, acost, areturn, val, val1, val2;
 	int iab;

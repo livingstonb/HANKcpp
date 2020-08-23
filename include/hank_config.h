@@ -3,7 +3,7 @@
 
 // CONFIG OPTIONS
 // Turn off Eigen debugging, set to 1 for performance
-#define HANK_TURN_OFF_EIGEN_DEBUG 1
+#define HANK_TURN_OFF_EIGEN_DEBUG 0
 
 // Sparse linear solver
 // 0 - QR
