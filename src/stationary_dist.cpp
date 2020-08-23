@@ -28,19 +28,20 @@ namespace {
 		const Parameters& p = model.p;
 		double gmass, p_y;
 		double_matrix gmat = double_matrix::Zero(p.na * p.nb, p.ny);
+		gmat.set_dims_3d({p.na, p.nb, p.ny});
 
 		for (int iy=0; iy<p.ny; ++iy) {
 			p_y = model.ydist(iy);
 			if ( (p.deathrate == 0.0) & p.borrowing )
-				gmat(TO_INDEX_1D(0, 1, p.na), iy) = p_y;
+				gmat.as3d(0, 1, iy) = p_y;
 			else if ( (p.deathrate == 0.0) & !p.borrowing ) {
-				gmat(TO_INDEX_1D(0, p.nb_neg+1, p.na), iy) = p_y;
-				gmat(TO_INDEX_1D(1, p.nb_neg+1, p.na), iy) = p_y;
+				gmat.as3d(0, p.nb_neg+1, iy) = p_y;
+				gmat.as3d(1, p.nb_neg+1, iy) = p_y;
 			}
 			else if ( p.borrowing )
 				gmat(0, iy) = p_y;
 			else
-				gmat(TO_INDEX_1D(0, p.nb_neg, p.na), iy) = p_y;
+				gmat.as3d(0, p.nb_neg, iy) = p_y;
 
 			gmass = (gmat.col(iy).cwiseProduct(abdelta)).sum();
 			gmat.col(iy) = p_y * gmat.col(iy) / gmass;
