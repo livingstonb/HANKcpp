@@ -42,9 +42,6 @@ DistributionStatistics::DistributionStatistics(const Parameters& p, const Model&
 	std::vector<double> density_copy = sdist.density;
 	grids.pmass = map_type(density_copy.data(), p.na * p.nb, p.ny).array().colwise() * abdelta.array();
 	grids.pmass1d = map_type_vec(grids.pmass.data(), p.na * p.nb * p.ny);
-	// grids.pmass = double_matrix(vdensity.colwise() * abdelta.array());
-	// grids.pmass1d = double_vector(eflatten(grids.pmass));
-
 	compute_moments(model, hjb.optimal_decisions, grids);
 }
 

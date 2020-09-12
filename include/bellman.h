@@ -3,7 +3,6 @@
 
 #include <hank_config.h>
 #include <hank_boost.h>
-#include <hank_eigen_sparse.h>
 #include <upwinding.h>
 
 // Forward declarations
@@ -23,6 +22,28 @@ struct ValueFnDerivatives {
 	static const int StationaryPtOrLimit = -999.9;
 	double VaF, VaB, VbF, VbB;
 };
+
+namespace Bellman {
+	class Drifts {
+		public:
+			Drifts() {}
+			Drifts(double s, double d, double areturn, double acost, bool kfe) {
+				if ( kfe ) {
+					aB = fmin(d + areturn, 0.0);
+					aF = fmax(d + areturn, 0.0);
+					bB = fmin(s - d - acost, 0.0);
+					bF = fmax(s - d - acost, 0.0);
+				}
+				else {
+					aB = fmin(d, 0.0) + fmin(areturn, 0.0);
+					aF = fmax(d, 0.0) + fmax(areturn, 0.0);
+					bB = fmin(-d - acost, 0) + fmin(s, 0.0);
+					bF = fmax(-d - acost, 0) + fmax(s, 0.0);
+				}
+			}
+			double aB, aF, bB, bF;
+	};
+}
 
 // Class for solving the HJB
 class HJB {
@@ -45,10 +66,6 @@ class HJB {
 		HJB(const Model& model_, const SteadyState& ss);
 
 		void iterate(const SteadyState& ss);
-
-		sparse_matrix construct_A_matrix(const SteadyState& ss, const Upwinding::Policies& policies, int iy, bool kfe) const;
-
-		sparse_matrix get_A_matrix_KFE(const SteadyState& ss, int iy) const;
 
 		const Model& model;
 

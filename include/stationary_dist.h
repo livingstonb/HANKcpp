@@ -17,9 +17,13 @@ class StationaryDist {
 		void compute(const Model& model, const SteadyState& ss, const HJB& hjb);
 
 		std::vector<double> density;
+
 		int dispfreq = 1;
+
 		double delta = 1.0e6;
+
 		double gtol = 1.0e-12;
+
 		int maxiter = 2000;
 };
 

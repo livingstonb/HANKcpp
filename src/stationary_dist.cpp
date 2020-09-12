@@ -2,8 +2,10 @@
 #include <hank_eigen_dense.h>
 #include <hank_eigen_sparse.h>
 #include <model.h>
+#include <steady_state.h>
 #include <bellman.h>
 #include <parameters.h>
+#include <transition_matrix.h>
 #include <iostream>
 #include <assert.h>
 #include <cmath>
@@ -33,7 +35,9 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 	std::vector<sparse_matrix> B(p.ny);
 	std::vector<sparse_solver> spsolvers(p.ny);
 	for (int iy=0; iy<p.ny; ++iy) {
-		sparse_matrix A = hjb.get_A_matrix_KFE(ss, iy);
+		// sparse_matrix A = hjb.get_A_matrix_KFE(ss, iy);
+		sparse_matrix A = get_kfe_transition_matrix(p, model, ss.ra,
+			hjb.optimal_decisions, iy);
 
 		B[iy] = A.transpose();
 

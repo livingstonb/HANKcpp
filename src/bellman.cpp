@@ -9,6 +9,7 @@
 #include <hank_eigen_dense.h>
 #include <hank_eigen_sparse.h>
 #include <hank_boost_eigen_routines.h>
+#include <transition_matrix.h>
 
 #include <algorithm>
 
@@ -66,26 +67,6 @@ namespace {
 
 		return V;
 	}
-
-	class Drifts {
-		public:
-			Drifts() {}
-			Drifts(double s, double d, double areturn, double acost, bool kfe) {
-				if ( kfe ) {
-					aB = fmin(d + areturn, 0.0);
-					aF = fmax(d + areturn, 0.0);
-					bB = fmin(s - d - acost, 0.0);
-					bF = fmax(s - d - acost, 0.0);
-				}
-				else {
-					aB = fmin(d, 0.0) + fmin(areturn, 0.0);
-					aF = fmax(d, 0.0) + fmax(areturn, 0.0);
-					bB = fmin(-d - acost, 0) + fmin(s, 0.0);
-					bF = fmax(-d - acost, 0) + fmax(s, 0.0);
-				}
-			}
-			double aB, aF, bB, bF;
-	};
 
 	Upwinding::DepositUpwind optimal_deposits(const Model& model, double Va, double Vb, double a) {
 		Upwinding::DepositUpwind dupwind;
@@ -404,7 +385,7 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 	boost_index indices;
 	boost1d vcol_boost = new_array<double, 1>({p.ny});
 	int iab;
-	Drifts drifts;
+	Bellman::Drifts drifts;
 	bool kfe = false;
 
 	sparse_matrix ldiagmat, sparseI = speye(p.na * p.nb);
@@ -428,7 +409,8 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 			}
 		}
 
-		sparse_matrix A = construct_A_matrix(ss, policies, iy, kfe);
+		// sparse_matrix A = construct_A_matrix(ss, policies, iy, kfe);
+		sparse_matrix A = construct_transition_matrix(p, model, ss.ra, policies, iy, kfe);
 
 		// Construct B matrix = I + delta * (rho * I - A)
 		double ldiag = 1.0 + delta * (p.rho + p.deathrate) - delta * model.prodmarkovscale * model.ymarkovdiag(iy,iy);
@@ -449,81 +431,4 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 			for (int ib=0; ib<p.nb; ++ib)
 				V[ia][ib][iy] = v_vec[TO_INDEX_1D(ia, ib, na)];
 	}
-}
-
-sparse_matrix HJB::get_A_matrix_KFE(const SteadyState& ss, int iy) const {
-	bool kfe = true;
-	return construct_A_matrix(ss, optimal_decisions, iy, kfe);
-}
-
-sparse_matrix HJB::construct_A_matrix(const SteadyState& ss, const Upwinding::Policies& policies, int iy, bool kfe) const {
-	boost_index indices;
-	double d, s, acost, areturn, val, val1, val2;
-	int iab;
-	Drifts drifts;
-
-	double_vector adriftvec = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
-
-	int na = p.na;
-	triplet_list Aentries;
-	Aentries.reserve(5 * p.na * p.nb);
-
-	for (int ia=0; ia<p.na; ++ia) {
-		for (int ib=0; ib<p.nb; ++ib) {
-			iab = TO_INDEX_1D(ia, ib, p.na);
-			d = policies.d[ia][ib][iy];
-			s = policies.s[ia][ib][iy];
-			acost = model.adjcosts.cost(d, model.agrid(ia));
-			areturn = adriftvec(ia);
-
-			// Compute drifts
-			drifts = Drifts(s, d, areturn, acost, kfe);
-
-			// Matrix entries, ia-1
-			if ( (ia > 0) & (drifts.aB != 0.0) ) {
-				val = -drifts.aB / model.dagrid(ia-1);
-				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia-1, ib, na), val));
-			}
-
-			// Matrix entries, ib-1
-			if ( (ib > 0) & (drifts.bB != 0.0) ) {
-				val = -drifts.bB / model.dbgrid(ib-1);
-				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia, ib-1, na), val));
-			}
-
-			// Matrix entries, diagonal
-			if ( ia == 0 )
-				val1 = -drifts.aF / model.dagrid(ia);
-			else if ( ia == p.na - 1 )
-				val1 = drifts.aB / model.dagrid(ia-1);
-			else
-				val1 = drifts.aB / model.dagrid(ia-1) - drifts.aF / model.dagrid(ia);
-
-			if ( ib == 0 )
-				val2 = -drifts.bF / model.dbgrid(ib);
-			else if ( ib == p.nb - 1 )
-				val2 = drifts.bB / model.dbgrid(ib-1);
-			else
-				val2 = drifts.bB / model.dbgrid(ib-1) - drifts.bF / model.dbgrid(ib);
-
-			if ( val1 + val2 != 0 )
-				Aentries.push_back(triplet_type(iab, iab, val1 + val2));
-
-			// Matrix entries, ia+1
-			if ( (ia < p.na - 1 ) & (drifts.aF != 0.0) ) {
-				val = drifts.aF / model.dagrid(ia);
-				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia+1, ib, na), val));
-			}
-			
-			// Matrix entries, ib+1
-			if ( (ib < p.nb - 1) & (drifts.bF != 0.0) ) {
-				val = drifts.bF /  model.dbgrid(ib);
-				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia, ib+1, na), val));
-			}
-		}
-	}
-
-	sparse_matrix A = sparse_matrix(p.na * p.nb, p.na * p.nb);
-	A.setFromTriplets(Aentries.begin(), Aentries.end());
-	return A;
 }
