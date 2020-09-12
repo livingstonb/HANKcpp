@@ -20,16 +20,15 @@ int main () {
 	params.rho = 0.01;
 	params.drs_N = 0.8;
 	params.drs_Y = 0.9;
+	params.na = 30;
+	params.nb_pos = 30;
 	params.setup(options);
 
 	Model model = Model(params, income_dir);
-	// std::cout << model.bgrid.size() << '\n';
-	// std::cout << model.get_rb_effective().size() << '\n';
 
 	SteadyState iss(model);
 
 	HJB hjb(model, iss);
-	// // hjb.maxiter = 1;
 	hjb.iterate(iss);
 
 	StationaryDist sdist;
@@ -38,4 +37,6 @@ int main () {
 	DistributionStatistics stats(params, model, hjb, sdist);
 
 	std::cout << "E[NW] = " << stats.Enetworth << '\n';
+	std::cout << "E[h] = " << stats.Ehours << '\n';
+	// std::cout << stats.pmass.sum() << '\n';
 }

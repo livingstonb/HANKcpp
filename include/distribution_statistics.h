@@ -1,9 +1,7 @@
 #ifndef _DISTRIBUTION_STATISTICS_H
 #define _DISTRIBUTION_STATISTICS_H
 
-#include <vector>
-#include <hank_eigen_dense.h>
-
+// Forward declarations
 class Parameters;
 
 class Model;
@@ -12,15 +10,13 @@ class HJB;
 
 class StationaryDist;
 
-class DistGrids {
-	public:
-		double_matrix networth;
-};
+class DistGrids;
 
 namespace Upwinding {
 	class Policies;
 }
 
+// Class for distribution statistics
 class DistributionStatistics {
 	public:
 		DistributionStatistics(const Parameters& p, const Model& model,
@@ -29,11 +25,7 @@ class DistributionStatistics {
 		void compute_moments(const Model& model,
 			const Upwinding::Policies& policies, const DistGrids& grids);
 
-		DistGrids grids;
-		double_matrix pmass;
-		double_vector pmass1d;
-		double Ehours;
-		double Ea, Eb, Enetworth;
+		double Ehours, Ea, Eb, Enetworth;
 };
 
 #endif

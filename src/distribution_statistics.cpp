@@ -8,6 +8,14 @@
 
 #define TO_INDEX_1D(a, b, na) ((a) + (na) * (b))
 
+class DistGrids {
+	public:
+		DistGrids(int nz, int ny) : networth(nz, ny), pmass(nz, ny), pmass1d(nz) {}
+		double_matrix networth;
+		double_matrix pmass;
+		double_vector pmass1d;
+};
+
 namespace {
 	double expectation(const double_matrix& arr1, const double_matrix& arr2) {
 		return (arr1.array() * arr2.array()).sum();
@@ -18,27 +26,30 @@ DistributionStatistics::DistributionStatistics(const Parameters& p, const Model&
 	const HJB& hjb, const StationaryDist& sdist) {
 
 	int iab;
-	grids.networth = double_matrix(p.na * p.nb, p.ny);
+	DistGrids grids(p.na * p.nb, p.ny);
 	double_vector abdelta(p.na * p.nb);
 	for (int ia=0; ia<p.na; ++ia) {
-
 		for (int ib=0; ib<p.nb; ++ib) {
 			iab = TO_INDEX_1D(ia, ib, p.na);
-			abdelta(TO_INDEX_1D(ia, ib, p.na)) = model.adelta(ia) * model.bdelta(ib);
+			abdelta(iab) = model.adelta(ia) * model.bdelta(ib);
 
 			for (int iy=0; iy<p.ny; ++iy) {
-				grids.networth(iab, iy) = model.bgrid(ib) + model.agrid(ia);
+				grids.networth(iab, iy) =  model.agrid(ia) + model.bgrid(ib);
 			}
 		}
 	}
 
-	pmass = sdist.density.array().colwise() * abdelta.array();
-	pmass1d = eflatten(pmass);
+	std::vector<double> density_copy = sdist.density;
+	grids.pmass = map_type(density_copy.data(), p.na * p.nb, p.ny).array().colwise() * abdelta.array();
+	grids.pmass1d = map_type_vec(grids.pmass.data(), p.na * p.nb * p.ny);
+	// grids.pmass = double_matrix(vdensity.colwise() * abdelta.array());
+	// grids.pmass1d = double_vector(eflatten(grids.pmass));
+
 	compute_moments(model, hjb.optimal_decisions, grids);
 }
 
 void DistributionStatistics::compute_moments(const Model& model,
 	const Upwinding::Policies& policies, const DistGrids& grids) {
-	Ehours = boost_dot(policies.h, pmass1d);
-	Enetworth = expectation(grids.networth, pmass);
+	Ehours = boost_dot(policies.h, grids.pmass1d);
+	Enetworth = expectation(grids.networth, grids.pmass);
 }
