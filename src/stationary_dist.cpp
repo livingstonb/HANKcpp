@@ -63,10 +63,9 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 				throw "Sparse solver failure";
 		}
 
-		diff = (gmat - gmat_update).array().abs().maxCoeff();
-		gmat = gmat_update;
-
+		diff = (gmat - gmat_update).cwiseAbs().maxCoeff();
 		check_progress(diff, dispfreq, ii, gtol);
+		gmat = gmat_update;
 		++ii;
 	}
 
@@ -74,7 +73,7 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 		std::cout << "KFE did not converge" << '\n';
 
 	double pmass = (gmat.array().colwise() * abdelta.array()).matrix().sum();
-	assert(abs(1.0 - pmass) < 1.0e-9);
+	assert(abs(1.0 - pmass) < 1.0e-6);
 }
 
 	
@@ -89,16 +88,23 @@ namespace {
 
 		for (int iy=0; iy<p.ny; ++iy) {
 			p_y = model.ydist(iy);
-			if ( (p.deathrate == 0.0) & p.borrowing )
-				gmat.as3d(0, 1, iy) = p_y;
-			else if ( (p.deathrate == 0.0) & !p.borrowing ) {
-				gmat.as3d(0, p.nb_neg+1, iy) = p_y;
-				gmat.as3d(1, p.nb_neg+1, iy) = p_y;
+			if ( (p.deathrate == 0.0) & !p.borrowing ) {
+				// gmat.as3d(0, 1, iy) = p_y;
+				gmat(TO_INDEX_1D(0, 1, p.na), iy) = p_y;
 			}
-			else if ( p.borrowing )
+			else if ( (p.deathrate == 0.0) & p.borrowing ) {
+				// gmat.as3d(0, p.nb_neg+1, iy) = p_y;
+				// gmat.as3d(1, p.nb_neg+1, iy) = p_y;
+				gmat(TO_INDEX_1D(0, p.nb_neg+1, p.na), iy) = p_y;
+				gmat(TO_INDEX_1D(1, p.nb_neg+1, p.na), iy) = p_y;
+			}
+			else if ( p.borrowing ) {
+				// gmat.as3d(0, p.nb_neg, iy) = p_y;
+				gmat(TO_INDEX_1D(0, p.nb_neg, p.na), iy) = p_y;
+			}
+			else {
 				gmat(0, iy) = p_y;
-			else
-				gmat.as3d(0, p.nb_neg, iy) = p_y;
+			}
 
 			gmass = (gmat.col(iy).cwiseProduct(abdelta)).sum();
 			gmat.col(iy) = p_y * gmat.col(iy) / gmass;
@@ -109,7 +115,7 @@ namespace {
 
 	void check_progress(double gdiff, int freq, int ii, double gtol) {
 		if ( ii == 0 )
-			return;
+			std::cout << "Iteration " << ii << ", diff = " << gdiff << '\n';
 		else if ( (ii == 1) | (ii % freq == 0) ) {
 			std::cout << "Iteration " << ii << ", diff = " << gdiff << '\n';
 		}
