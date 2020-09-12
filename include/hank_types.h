@@ -13,6 +13,7 @@ class Options {
 		bool calibrateDiscountRate = false;
 		bool equilibriumR = true;
 		DepositCostMode depositCostMode = DepositCostMode::symmetric;
+		bool fast = false;
 };
 
 #endif

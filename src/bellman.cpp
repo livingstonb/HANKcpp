@@ -98,7 +98,7 @@ namespace {
 	}
 }
 
-HJB::HJB(const Model& model_, const SteadyState& ss) : model(model_), p(model_.p), V(model.dims) {
+HJB::HJB(const Model& model_, const SteadyState& ss) : model(model_), p(model_.p), V(model.dims), optimal_decisions(model.dims) {
 	V = make_value_guess(model, ss);
 }
 
@@ -111,8 +111,9 @@ void HJB::iterate(const SteadyState& ss) {
 	boost3d newV(flat_dims);
 	lastV = flatten_array3d(V);
 
+	Upwinding::Policies policies(model.dims);
 	while ( (ii < maxiter) & (lVdiff > vtol) ) {
-		auto policies = update_policies(ss);
+		policies = update_policies(ss);
 		update_value_fn(ss, policies);
 
 		newV = flatten_array3d(V);
@@ -126,6 +127,8 @@ void HJB::iterate(const SteadyState& ss) {
 
 	if ( ii == maxiter )
 		std::cout << "HJB did not converge" << '\n';
+
+	optimal_decisions = policies;
 }
 
 Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
@@ -400,14 +403,11 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 	double_vector ycol, vcol;
 	boost_index indices;
 	boost1d vcol_boost = new_array<double, 1>({p.ny});
-	double d, s, acost, areturn, val, val1, val2;
 	int iab;
 	Drifts drifts;
 	bool kfe = false;
 
 	sparse_matrix ldiagmat, sparseI = speye(p.na * p.nb);
-
-	std::vector<sparse_matrix> A(p.ny);
 
 	double_vector adriftvec = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
 	double_vector bdriftvec = model.get_rb_effective().array() * model.bgrid.array();
@@ -415,76 +415,25 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 	int na = p.na;
 	for ( int iy=0; iy<p.ny; ++iy ) {
 		triplet_list Aentries;
-		Aentries.reserve(5 * p.na * p.nb);
 		ycol = model.prodmarkovscale * model.ymarkovoff.row(iy);
 
 		for (int ia=0; ia<p.na; ++ia) {
 			for (int ib=0; ib<p.nb; ++ib) {
 				iab = TO_INDEX_1D(ia, ib, p.na);
-				d = policies.d[ia][ib][iy];
-				s = policies.s[ia][ib][iy];
-				acost = model.adjcosts.cost(d, model.agrid(ia));
-				areturn = adriftvec(ia);
 
 				// Vector of constants
 				vcol_boost = V[indices[ia][ib][range()]];
 				vcol = boost2eigen(vcol_boost);
 				bvec(iab) = delta * policies.u[ia][ib][iy] + V[ia][ib][iy] + delta * ycol.dot(vcol);
-
-				// Compute drifts
-				drifts = Drifts(s, d, areturn, acost, kfe);
-
-				// Matrix entries, ia-1
-				if ( (ia > 0) & (drifts.aB != 0.0) ) {
-					val = -drifts.aB / model.dagrid(ia-1);
-					Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia-1, ib, na), val));
-				}
-
-				// Matrix entries, ib-1
-				if ( (ib > 0) & (drifts.bB != 0.0) ) {
-					val = -drifts.bB / model.dbgrid(ib-1);
-					Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia, ib-1, na), val));
-				}
-
-				// Matrix entries, diagonal
-				if ( ia == 0 )
-					val1 = -drifts.aF / model.dagrid(ia);
-				else if ( ia == p.na - 1 )
-					val1 = drifts.aB / model.dagrid(ia-1);
-				else
-					val1 = drifts.aB / model.dagrid(ia-1) - drifts.aF / model.dagrid(ia);
-
-				if ( ib == 0 )
-					val2 = -drifts.bF / model.dbgrid(ib);
-				else if ( ib == p.nb - 1 )
-					val2 = drifts.bB / model.dbgrid(ib-1);
-				else
-					val2 = drifts.bB / model.dbgrid(ib-1) - drifts.bF / model.dbgrid(ib);
-
-				if ( val1 + val2 != 0 )
-					Aentries.push_back(triplet_type(iab, iab, val1 + val2));
-
-				// Matrix entries, ia+1
-				if ( (ia < p.na - 1 ) & (drifts.aF != 0.0) ) {
-					val = drifts.aF / model.dagrid(ia);
-					Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia+1, ib, na), val));
-				}
-				
-				// Matrix entries, ib+1
-				if ( (ib < p.nb - 1) & (drifts.bF != 0.0) ) {
-					val = drifts.bF /  model.dbgrid(ib);
-					Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia, ib+1, na), val));
-				}
 			}
 		}
 
-		A[iy] = sparse_matrix(p.na * p.nb, p.na * p.nb);
-		A[iy].setFromTriplets(Aentries.begin(), Aentries.end());
+		sparse_matrix A = construct_A_matrix(ss, policies, iy, kfe);
 
 		// Construct B matrix = I + delta * (rho * I - A)
 		double ldiag = 1.0 + delta * (p.rho + p.deathrate) - delta * model.prodmarkovscale * model.ymarkovdiag(iy,iy);
 		ldiagmat = sparseI * ldiag;
-		sparse_matrix B = ldiagmat - delta * A[iy];
+		sparse_matrix B = ldiagmat - delta * A;
 		B.makeCompressed();
 
 		sparse_solver solver;
@@ -500,6 +449,81 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 			for (int ib=0; ib<p.nb; ++ib)
 				V[ia][ib][iy] = v_vec[TO_INDEX_1D(ia, ib, na)];
 	}
+}
 
+sparse_matrix HJB::get_A_matrix_KFE(const SteadyState& ss, int iy) const {
+	bool kfe = true;
+	return construct_A_matrix(ss, optimal_decisions, iy, kfe);
+}
 
+sparse_matrix HJB::construct_A_matrix(const SteadyState& ss, const Upwinding::Policies& policies, int iy, bool kfe) const {
+	boost_index indices;
+	double d, s, acost, areturn, val, val1, val2;
+	int iab;
+	Drifts drifts;
+
+	double_vector adriftvec = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
+
+	int na = p.na;
+	triplet_list Aentries;
+	Aentries.reserve(5 * p.na * p.nb);
+
+	for (int ia=0; ia<p.na; ++ia) {
+		for (int ib=0; ib<p.nb; ++ib) {
+			iab = TO_INDEX_1D(ia, ib, p.na);
+			d = policies.d[ia][ib][iy];
+			s = policies.s[ia][ib][iy];
+			acost = model.adjcosts.cost(d, model.agrid(ia));
+			areturn = adriftvec(ia);
+
+			// Compute drifts
+			drifts = Drifts(s, d, areturn, acost, kfe);
+
+			// Matrix entries, ia-1
+			if ( (ia > 0) & (drifts.aB != 0.0) ) {
+				val = -drifts.aB / model.dagrid(ia-1);
+				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia-1, ib, na), val));
+			}
+
+			// Matrix entries, ib-1
+			if ( (ib > 0) & (drifts.bB != 0.0) ) {
+				val = -drifts.bB / model.dbgrid(ib-1);
+				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia, ib-1, na), val));
+			}
+
+			// Matrix entries, diagonal
+			if ( ia == 0 )
+				val1 = -drifts.aF / model.dagrid(ia);
+			else if ( ia == p.na - 1 )
+				val1 = drifts.aB / model.dagrid(ia-1);
+			else
+				val1 = drifts.aB / model.dagrid(ia-1) - drifts.aF / model.dagrid(ia);
+
+			if ( ib == 0 )
+				val2 = -drifts.bF / model.dbgrid(ib);
+			else if ( ib == p.nb - 1 )
+				val2 = drifts.bB / model.dbgrid(ib-1);
+			else
+				val2 = drifts.bB / model.dbgrid(ib-1) - drifts.bF / model.dbgrid(ib);
+
+			if ( val1 + val2 != 0 )
+				Aentries.push_back(triplet_type(iab, iab, val1 + val2));
+
+			// Matrix entries, ia+1
+			if ( (ia < p.na - 1 ) & (drifts.aF != 0.0) ) {
+				val = drifts.aF / model.dagrid(ia);
+				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia+1, ib, na), val));
+			}
+			
+			// Matrix entries, ib+1
+			if ( (ib < p.nb - 1) & (drifts.bF != 0.0) ) {
+				val = drifts.bF /  model.dbgrid(ib);
+				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia, ib+1, na), val));
+			}
+		}
+	}
+
+	sparse_matrix A = sparse_matrix(p.na * p.nb, p.na * p.nb);
+	A.setFromTriplets(Aentries.begin(), Aentries.end());
+	return A;
 }

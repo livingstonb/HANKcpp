@@ -4,6 +4,13 @@
 #include <math.h>
 
 void Parameters::setup(const Options& opts) {
+
+	if ( opts.fast ) {
+		nb_pos = 10;
+		nb_neg = 5;
+		na = 10;
+	}
+
 	if ( borrowing )
 		nb = nb_pos + nb_neg;
 	else

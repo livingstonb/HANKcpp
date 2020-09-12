@@ -20,6 +20,9 @@ EXECUTABLE=exec
 
 all: $(MAIN) $(OBJECTS) $(EXECUTABLE)
 
+debug: all
+	gdb ./exec
+
 depend: .depend
 
 .depend: $(SOURCES)

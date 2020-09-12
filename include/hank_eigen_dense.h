@@ -8,6 +8,8 @@ using Eigen::seq;
 
 typedef Eigen::Map<Eigen::MatrixXd> map_type;
 
+typedef Eigen::Map<Eigen::VectorXd> map_type_vec;
+
 typedef Eigen::VectorXd double_vector;
 
 typedef Eigen::ArrayXd double_array;

@@ -5,14 +5,18 @@
 #include <bellman.h>
 #include <parameters.h>
 #include <iostream>
+#include <assert.h>
+#include <cmath>
 
 #define TO_INDEX_1D(a, b, na) ((a) + (na) * (b))
 
 namespace {
 	double_matrix make_dist_guess(const Model& model, const double_vector& abdelta);
+
+	void check_progress(double vdiff, int freq, int ii, double vtol);
 }
 
-void StationaryDist::compute(const Model& model, const HJB& hjb, const std::vector<sparse_matrix>& A) {
+void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJB& hjb) {
 	const Parameters& p = model.p;
 	double_vector abdelta(p.na * p.nb);
 	for (int ia=0; ia<p.na; ++ia)
@@ -25,29 +29,52 @@ void StationaryDist::compute(const Model& model, const HJB& hjb, const std::vect
 
 	double_matrix gmat = make_dist_guess(model, abdelta);
 	double_matrix gmat_update(p.na * p.nb, p.ny);
+
+	std::vector<sparse_matrix> B(p.ny);
+	std::vector<sparse_solver> spsolvers(p.ny);
 	for (int iy=0; iy<p.ny; ++iy) {
-		sparse_matrix B = A[iy].transpose();
+		sparse_matrix A = hjb.get_A_matrix_KFE(ss, iy);
+
+		B[iy] = A.transpose();
 
 		// Adjust A' matrix for non-linearly spaced grids
-		B = inv_abdelta.asDiagonal() * B;
-		B = B * abdelta.asDiagonal();
+		B[iy] = inv_abdelta.asDiagonal() * B[iy];
+		B[iy] = -delta * B[iy] * abdelta.asDiagonal();
+		B[iy] = B[iy] + speye(p.na * p.nb) * (1.0 + delta * p.deathrate - delta * model.ymarkovdiag(iy,iy));
+		B[iy].makeCompressed();
 
-		B = -delta * B;
-		B = B + speye(p.ny) * (1.0 + delta * p.deathrate - delta * model.ymarkovdiag(iy,iy));
-		B.makeCompressed();
+		spsolvers[iy].compute(B[iy]);
+		if ( spsolvers[iy].info() != Eigen::Success )
+				throw "Sparse solver failure";
 
-		double_vector lgmat = gmat * lmat(iy,Eigen::all);
-		lgmat(iabx) = lgmat(iabx) + delta * p.deathrate * gmat(Eigen::all,iy).dot(abdelta);
-
-		sparse_solver solver;
-		solver.compute(B);
-		if ( solver.info() != Eigen::Success )
-			throw "Sparse solver failure";
-
-		gmat_update.col(iy) = solver.solve(lgmat);
-		if ( solver.info() != Eigen::Success )
-			throw "Sparse solver failure";
 	}
+
+	double diff = 1.0e10;
+	int ii = 0;
+	while ( (diff > gtol) & (ii < maxiter) ) {
+		for (int iy=0; iy<p.ny; ++iy) {
+			double_vector yvec_temp = lmat(iy,Eigen::all);
+			map_type_vec yvec(yvec_temp.data(), yvec_temp.size());
+			double_vector lgmat = gmat * yvec;
+			lgmat(iabx) = lgmat(iabx) + delta * p.deathrate * gmat(Eigen::all,iy).dot(abdelta) / abdelta(iabx);
+
+			gmat_update.col(iy) = spsolvers[iy].solve(lgmat);
+			if ( spsolvers[iy].info() != Eigen::Success )
+				throw "Sparse solver failure";
+		}
+
+		diff = (gmat - gmat_update).array().abs().maxCoeff();
+		gmat = gmat_update;
+
+		check_progress(diff, dispfreq, ii, gtol);
+		++ii;
+	}
+
+	if ( ii == maxiter )
+		std::cout << "KFE did not converge" << '\n';
+
+	double pmass = (gmat.array().colwise() * abdelta.array()).matrix().sum();
+	assert(abs(1.0 - pmass) < 1.0e-9);
 }
 
 	
@@ -78,5 +105,16 @@ namespace {
 		}
 
 		return gmat;
+	}
+
+	void check_progress(double gdiff, int freq, int ii, double gtol) {
+		if ( ii == 0 )
+			return;
+		else if ( (ii == 1) | (ii % freq == 0) ) {
+			std::cout << "Iteration " << ii << ", diff = " << gdiff << '\n';
+		}
+
+		if ( gdiff <= gtol )
+			std::cout << "Converged after " << ii << " iterations." << '\n';
 	}
 }

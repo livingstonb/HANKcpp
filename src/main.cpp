@@ -13,6 +13,7 @@ int main () {
 	std::string income_dir = "2point_3_5";
 
 	Options options;
+	options.fast = false;
 
 	Parameters params;
 	params.rho = 0.1;
@@ -31,6 +32,6 @@ int main () {
 	hjb.iterate(iss);
 
 	StationaryDist sdist;
-	// sdist.compute(model, hjb);
+	sdist.compute(model, iss, hjb);
 
 }

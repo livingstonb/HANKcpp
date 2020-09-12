@@ -3,6 +3,8 @@
 
 #include <hank_config.h>
 #include <hank_boost.h>
+#include <hank_eigen_sparse.h>
+#include <upwinding.h>
 
 // Forward declarations
 namespace Upwinding {
@@ -44,6 +46,10 @@ class HJB {
 
 		void iterate(const SteadyState& ss);
 
+		sparse_matrix construct_A_matrix(const SteadyState& ss, const Upwinding::Policies& policies, int iy, bool kfe) const;
+
+		sparse_matrix get_A_matrix_KFE(const SteadyState& ss, int iy) const;
+
 		const Model& model;
 
 		const Parameters& p;
@@ -55,6 +61,7 @@ class HJB {
 		double delta = 1.0e6;
 		double dVamin = 1.0e-8;
 		double dVbmin = 1.0e-8;
+		Upwinding::Policies optimal_decisions;
 };
 
 #endif

@@ -6,11 +6,16 @@ class Model;
 
 class HJB;
 
+class SteadyState;
+
 class StationaryDist {
 	public:
 		StationaryDist() {}
 
-		void compute(const Model& model, const HJB& hjb, const std::vector<sparse_matrix>& A);
+		void compute(const Model& model, const SteadyState& ss, const HJB& hjb);
 
+		int dispfreq = 1;
 		double delta = 1.0e6;
+		double gtol = 1.0e-12;
+		int maxiter = 2000;
 };
