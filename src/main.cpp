@@ -17,11 +17,12 @@ int main () {
 	options.fast = false;
 
 	Parameters params;
-	params.rho = 0.01;
+	params.rho = 0.02;
 	params.drs_N = 0.8;
 	params.drs_Y = 0.9;
-	params.na = 30;
-	params.nb_pos = 30;
+	params.na = 25;
+	params.nb_pos = 25;
+	params.rb = 0.001 / 4.0;
 	params.setup(options);
 
 	Model model = Model(params, income_dir);
@@ -35,8 +36,5 @@ int main () {
 	sdist.compute(model, iss, hjb);
 
 	DistributionStatistics stats(params, model, hjb, sdist);
-
-	std::cout << "E[NW] = " << stats.Enetworth << '\n';
-	std::cout << "E[h] = " << stats.Ehours << '\n';
-	// std::cout << stats.pmass.sum() << '\n';
+	stats.print();
 }

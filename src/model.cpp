@@ -2,7 +2,6 @@
 #include <utilities.h>
 #include <functions.h>
 #include <cmath>
-#include <hank_boost_eigen_routines.h>
 
 namespace {
 	void fix_rounding(double_matrix& mat) {

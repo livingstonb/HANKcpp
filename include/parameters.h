@@ -40,7 +40,7 @@ class Parameters {
 		int nab;
 
 		// --- PREFERENCES ---
-		double elast = 1.1;
+		double elast = 10;
 		double frisch = 1.0;
 		double riskaver = 1.0;
 		double rho = 0.01444;
@@ -48,19 +48,19 @@ class Parameters {
 		LaborType laborsupply = LaborType::sep;
 
 		// --- PRODUCTION PARAMETERS ---
-		double drs_Y = 1.0;
+		double drs_Y = 0.9;
 		double alpha_Y = 0.333;
 		double tfp_Y = 1.0;
-		double drs_N = 0.0;
+		double drs_N = 0.5;
 		double alpha_N = 0.333;
 		double tfp_N = 1.0;
-		double depreciation = 0.07 / 4.0;
+		double depreciation = 0.05 / 4.0;
 
 		// --- OTHER FIRM-SIDE PARAMETERS ---
 		bool taxHHProfitIncome = true;
-		double profdistfracA = 0.333; // Fraction of profits to illiquid equity (set to alpha)
+		double profdistfracA = 1.0; // Fraction of profits to illiquid equity (set to alpha)
 		double profdistfracB = 0.0;
-		double profdistfracW = 0.667;
+		double profdistfracW = 0.0;
 		double profdistfracL = 0.0;
 		double priceadjcost = 100.0;
 
@@ -75,8 +75,8 @@ class Parameters {
 		std::array<double, 5> kappa_w = {
 			0.0, // kappa0_w
 			0.04336, // kappa1_w
-			0.40176, // kappa2_w
-			0.03 * 2.92 / 4.0, // kappa3_w
+			0.15, // kappa2_w
+			0.01, // kappa3_w
 			0.0 // kappa4_w
 		};
 

@@ -39,4 +39,29 @@ inline double_vector to_eigenv(const StdVector3d<double>& vec) {
 	return out;
 }
 
+template<typename T>
+double_vector vector2eigenv(const T& vec)
+{
+	double_vector out(vec.size());
+
+	for (size_t i=0; i<vec.size(); ++i)
+		out[i] = vec[i];	
+
+	return out;
+}
+
+template<typename T>
+double_matrix vector2eigenm(const T& vec, int n, int m)
+{
+	double_matrix out(n, m);
+
+	assert(vec.size() == static_cast<size_t>(m * n));
+
+	for (int i=0; i<n; ++i)
+		for (int j=0; j<m; ++j)
+			out(i, j) = vec[i*m + j];	
+
+	return out;
+}
+
 #endif

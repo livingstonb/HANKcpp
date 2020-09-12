@@ -8,7 +8,6 @@
 
 #include <hank_eigen_dense.h>
 #include <hank_eigen_sparse.h>
-#include <hank_boost_eigen_routines.h>
 #include <transition_matrix.h>
 
 #include <algorithm>
