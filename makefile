@@ -24,7 +24,7 @@ depend: .depend
 
 .depend: $(SOURCES)
 	rm -f ./.depend
-	$(CC) $(CFLAGS) -MM $^ > ./.depend;
+	$(CC) $(CFLAGS) $(MKL) $(SSFLAGS) -MM $^ > ./.depend;
 
 include .depend
 

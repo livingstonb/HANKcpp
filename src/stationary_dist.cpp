@@ -28,7 +28,8 @@ namespace {
 		const Parameters& p = model.p;
 		double gmass, p_y;
 		double_matrix gmat = double_matrix::Zero(p.na * p.nb, p.ny);
-		gmat.set_dims_3d({p.na, p.nb, p.ny});
+		std::vector<int> vdims = {p.na, p.nb, p.ny};
+		gmat.set_dims_3d(vdims.data(), 3);
 
 		for (int iy=0; iy<p.ny; ++iy) {
 			p_y = model.ydist(iy);

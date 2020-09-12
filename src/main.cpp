@@ -28,7 +28,7 @@ int main () {
 
 	HJB hjb(model, iss);
 	// // hjb.maxiter = 1;
-	// hjb.iterate(iss);
+	hjb.iterate(iss);
 
 	StationaryDist sdist;
 	sdist.compute(model, hjb);
