@@ -1,6 +1,7 @@
 #include <steady_state.h>
 #include <parameters.h>
 #include <model.h>
+#include <hank_eigen_dense.h>
 
 namespace {
 	double marginal_cost(double tfp, double r, double alpha, double wage) {
@@ -58,7 +59,9 @@ SteadyState::SteadyState(const Model& model_) : model(model_), p(model_.p) {
 	else
 		chi = 0.0;
 
-	yprodgrid = model_.yprodgrid;
+	yprodgrid.resize(p.ny);
+	for (int iy=0; iy<p.ny; ++iy)
+		yprodgrid[iy] = model_.yprodgrid(iy);
 }
 
 void SteadyState::update() {
@@ -96,6 +99,8 @@ void SteadyState::update() {
 	dividend_B = p.profdistfracB * profit * (1.0 - p.corptax);
 	equity_B = dividend_B / p.rb;
 
-	netwagegrid = (1.0 - p.labtax) * model.yprodgrid.array()
-		* (wage_N * model.yoccgrid.array() + wage_Y * (1.0 - model.yoccgrid.array()));
+	netwagegrid.resize(p.ny);
+	for (int iy=0; iy<p.ny; ++iy)
+		netwagegrid[iy] = (1.0 - p.labtax) * model.yprodgrid(iy)
+			* (wage_N * model.yoccgrid(iy) + wage_Y * (1.0 - model.yoccgrid(iy)));
 }

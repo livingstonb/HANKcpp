@@ -2,7 +2,7 @@
 #define _BELLMAN_H
 
 #include <hank_config.h>
-#include <hank_boost.h>
+#include <hank_types.h>
 #include <upwinding.h>
 
 // Forward declarations
@@ -71,7 +71,7 @@ class HJB {
 
 		const Parameters& p;
 
-		boost3d V;
+		StdVector3d<double> V;
 		int maxiter = 500;
 		int dispfreq = 1;
 		double vtol = 1.0e-8;

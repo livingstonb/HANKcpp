@@ -3,6 +3,7 @@
 
 #include <hank_config.h>
 #include <Eigen/Core>
+#include <hank_types.h>
 
 using Eigen::seq;
 
@@ -24,6 +25,18 @@ inline double_vector eflatten(const double_matrix& arr) {
 	const Eigen::Map<const double_vector> arr_map(arr.data(), arr.size());
 	double_vector flattened = arr_map;
 	return flattened;
+}
+
+inline double_vector to_eigenv(const std::vector<double>& vec) {
+	std::vector<double> vcopy = vec;
+	double_vector out = map_type_vec(vcopy.data(), vcopy.size());
+	return out;
+}
+
+inline double_vector to_eigenv(const StdVector3d<double>& vec) {
+	std::vector<double> vcopy = vec.vector;
+	double_vector out = map_type_vec(vcopy.data(), vcopy.size());
+	return out;
 }
 
 #endif

@@ -32,10 +32,10 @@ namespace {
 			std::cout << "Converged after " << ii << " iterations." << '\n';
 	}
 
-	boost3d make_value_guess(const Model& model, const SteadyState& ss) {
+	StdVector3d<double> make_value_guess(const Model& model, const SteadyState& ss) {
 		const Parameters& p = model.p;
 
-		boost3d V(model.dims);
+		StdVector3d<double> V(p.na, p.nb, p.ny);
 		double lc, u, llabdisutil = 0.0;
 		const double sep_constant = 1.0 / 3.0;
 		double_array wageexpr, bdriftnn;
@@ -44,14 +44,14 @@ namespace {
 
 		switch ( p.laborsupply ) {
 			case LaborType::sep:
-				wageexpr = ss.netwagegrid.array() * sep_constant;
+				wageexpr = vector2eigenv(ss.netwagegrid).array() * sep_constant;
 				llabdisutil = model.labdisutil(sep_constant, ss.chi);
 				break;
 			case LaborType::none:
-				wageexpr = ss.netwagegrid.array();
+				wageexpr = vector2eigenv(ss.netwagegrid).array();
 				break;
 			case LaborType::ghh:
-				wageexpr = ss.netwagegrid.array().pow(1 + p.frisch);
+				wageexpr = vector2eigenv(ss.netwagegrid).array().pow(1 + p.frisch);
 				break;
 		}
 
@@ -60,7 +60,7 @@ namespace {
 				for (int iy=0; iy<p.ny; ++iy) {
 					lc = wageexpr(iy) + p.lumptransfer + bdriftnn(ib);
 					u = model.util(lc);
-					V[ia][ib][iy] = (u - llabdisutil) / (p.rho + p.deathrate);
+					V(ia,ib,iy) = (u - llabdisutil) / (p.rho + p.deathrate);
 				}
 			}
 		}
@@ -79,7 +79,7 @@ namespace {
 	}
 }
 
-HJB::HJB(const Model& model_, const SteadyState& ss) : model(model_), p(model_.p), V(model.dims), optimal_decisions(model.dims) {
+HJB::HJB(const Model& model_, const SteadyState& ss) : model(model_), p(model_.p), V(p.na, p.nb, p.ny), optimal_decisions(model.dims) {
 	V = make_value_guess(model, ss);
 }
 
@@ -87,19 +87,15 @@ void HJB::iterate(const SteadyState& ss) {
 	int ii = 0;
 	double lVdiff = 1.0;
 
-	boost3dshape flat_dims = {{model.ntot, 1, 1}};
-	boost3d lastV(flat_dims);
-	boost3d newV(flat_dims);
-	lastV = flatten_array3d(V);
-
+	double_vector lastV = to_eigenv(V);
 	Upwinding::Policies policies(model.dims);
 	while ( (ii < maxiter) & (lVdiff > vtol) ) {
 		policies = update_policies(ss);
 		update_value_fn(ss, policies);
 
-		newV = flatten_array3d(V);
-		lVdiff = boost_inf_norm(lastV, newV);
-		lastV = flatten_array3d(V);
+		double_vector newV = to_eigenv(V);
+		lVdiff = (lastV - newV).lpNorm<Eigen::Infinity>();
+		lastV = to_eigenv(V);
 
 		check_progress(lVdiff, dispfreq, ii, vtol);
 
@@ -171,12 +167,12 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 				if ( p.scaleDisutilityIdio )
 					idioscale = model.yprodgrid(iy);
 				else if ( scale_wrt_ss )
-					idioscale = model.yprodgrid(iy) / ss.yprodgrid(iy);
+					idioscale = model.yprodgrid(iy) / ss.yprodgrid[iy];
 				else
 					idioscale = 1.0;
 
 				gbdrift = bdrift(ib) + prof_common + profW(iy);
-				gnetwage = ss.netwagegrid(iy);
+				gnetwage = ss.netwagegrid[iy];
 
 				// CONSUMPTION UPWINDING
 
@@ -260,23 +256,23 @@ ValueFnDerivatives HJB::compute_derivatives(int ia, int ib, int iy) const {
 
 	// Forward derivatives
 	if (ia < p.na - 1) {
-		d.VaF = (V[ia+1][ib][iy] - V[ia][ib][iy]) / model.dagrid(ia);
+		d.VaF = (V(ia+1,ib,iy) - V(ia,ib,iy)) / model.dagrid(ia);
 		d.VaF = fmax(d.VaF, dVamin);
 	}
 
 	if (ib < p.nb - 1) {
-		d.VbF = (V[ia][ib+1][iy] - V[ia][ib][iy]) / model.dbgrid(ib);
+		d.VbF = (V(ia,ib+1,iy) - V(ia,ib,iy)) / model.dbgrid(ib);
 		d.VbF = fmax(d.VbF, dVbmin);
 	}
 
 	// Backward derivatives
 	if (ia > 0) {
-		d.VaB = (V[ia][ib][iy] - V[ia-1][ib][iy]) / model.dagrid(ia-1);
+		d.VaB = (V(ia,ib,iy) - V(ia-1,ib,iy)) / model.dagrid(ia-1);
 		d.VaB = fmax(d.VaB, dVamin);
 	}
 
 	if (ib > 0) {
-		d.VbB = (V[ia][ib][iy] - V[ia][ib-1][iy]) / model.dbgrid(ib-1);
+		d.VbB = (V(ia,ib,iy) - V(ia,ib-1,iy)) / model.dbgrid(ib-1);
 		d.VbB = fmax(d.VbB, dVbmin);
 	}
 
@@ -381,9 +377,8 @@ Upwinding::ConUpwind HJB::optimal_consumption_ghh_labor(double Vb, double bdrift
 
 void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& policies) {
 	double_vector bvec(p.nb * p.na);
-	double_vector ycol, vcol;
+	double_vector ycol, vcol(p.ny);
 	boost_index indices;
-	boost1d vcol_boost = new_array<double, 1>({p.ny});
 	int iab;
 	Bellman::Drifts drifts;
 	bool kfe = false;
@@ -402,10 +397,11 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 			for (int ib=0; ib<p.nb; ++ib) {
 				iab = TO_INDEX_1D(ia, ib, p.na);
 
-				// Vector of constants
-				vcol_boost = V[indices[ia][ib][range()]];
-				vcol = boost2eigen(vcol_boost);
-				bvec(iab) = delta * policies.u[ia][ib][iy] + V[ia][ib][iy] + delta * ycol.dot(vcol);
+				// Vector of constants, bvec
+				for (int iy2=0; iy2<p.ny; ++iy2)
+					vcol[iy2] = V(ia,ib,iy2);
+
+				bvec(iab) = delta * policies.u[ia][ib][iy] + V(ia,ib,iy) + delta * ycol.dot(vcol);
 			}
 		}
 
@@ -429,6 +425,6 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 
 		for (int ia=0; ia<p.na; ++ia)
 			for (int ib=0; ib<p.nb; ++ib)
-				V[ia][ib][iy] = v_vec[TO_INDEX_1D(ia, ib, na)];
+				V(ia,ib,iy) = v_vec[TO_INDEX_1D(ia, ib, na)];
 	}
 }

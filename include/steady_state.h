@@ -2,7 +2,7 @@
 #define _INITIAL_STEADY_STATE_H
 
 #include <hank_config.h>
-#include <hank_eigen_dense.h>
+#include <vector>
 
 // Forward declarations
 class Model;
@@ -34,7 +34,7 @@ class SteadyState {
 
 		// Labor market
 		double labor_Y, labor_N, wage_N, wage_Y;
-		double_vector netwagegrid;
+		std::vector<double> netwagegrid;
 
 		// Capital
 		double ra, rcapital, capital, capital_N, capital_Y;
@@ -44,7 +44,7 @@ class SteadyState {
 		double chi;
 
 		// Productivity grid
-		double_vector yprodgrid;
+		std::vector<double> yprodgrid;
 };
 
 
