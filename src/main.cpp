@@ -31,6 +31,6 @@ int main () {
 	hjb.iterate(iss);
 
 	StationaryDist sdist;
-	sdist.compute(model, hjb);
+	// sdist.compute(model, hjb);
 
 }

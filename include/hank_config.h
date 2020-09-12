@@ -16,4 +16,6 @@
 	#define NDEBUG
 #endif
 
+#define EIGEN_MATRIXBASE_PLUGIN "matrix_base_addons.h"
+
 #endif

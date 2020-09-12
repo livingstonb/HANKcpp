@@ -2,8 +2,6 @@
 #define HANK_EIGEN_DENSE
 
 #include <hank_config.h>
-
-#define EIGEN_MATRIXBASE_PLUGIN "matrix_base_addons.h"
 #include <Eigen/Core>
 
 using Eigen::seq;

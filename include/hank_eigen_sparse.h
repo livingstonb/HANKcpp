@@ -22,7 +22,7 @@ using triplet_type = Eigen::Triplet<double>;
 
 using triplet_list = std::vector<triplet_type>;
 
-sparse_matrix speye(int n) {
+inline sparse_matrix speye(int n) {
 	sparse_matrix mat(n, n);
 	triplet_list trips;
 	trips.reserve(n);

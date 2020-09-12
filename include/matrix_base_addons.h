@@ -12,6 +12,7 @@ void set_dims_3d(const int* dims, int n) {
 	if ( n >= 3 )
 		subdim2 = dims[2];
 }
+
 inline Scalar as3d(uint i, uint j, uint k) const {
 	return this->operator()(i + subdim0 * j, k);
 }
