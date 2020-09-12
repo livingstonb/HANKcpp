@@ -238,13 +238,13 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 				policies.update_d(ia, ib, iy, depositFB, depositBF, depositBB);
 
 				// Update u
-				labdisutil = idioscale * model.labdisutil(policies.h[ia][ib][iy], chi);
+				labdisutil = idioscale * model.labdisutil(policies.h(ia,ib,iy), chi);
 				if ( p.laborsupply == LaborType::none )
-					policies.u[ia][ib][iy] = model.util(policies.c[ia][ib][iy]);
+					policies.u(ia,ib,iy) = model.util(policies.c(ia,ib,iy));
 				if ( p.laborsupply == LaborType::sep )
-					policies.u[ia][ib][iy] = model.util(policies.c[ia][ib][iy]) - labdisutil / p.labwedge;
+					policies.u(ia,ib,iy) = model.util(policies.c(ia,ib,iy)) - labdisutil / p.labwedge;
 				else
-					policies.u[ia][ib][iy] = model.util(policies.c[ia][ib][iy] - labdisutil / p.labwedge);
+					policies.u(ia,ib,iy) = model.util(policies.c(ia,ib,iy) - labdisutil / p.labwedge);
 			}
 		}
 	}
@@ -378,7 +378,6 @@ Upwinding::ConUpwind HJB::optimal_consumption_ghh_labor(double Vb, double bdrift
 void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& policies) {
 	double_vector bvec(p.nb * p.na);
 	double_vector ycol, vcol(p.ny);
-	boost_index indices;
 	int iab;
 	Bellman::Drifts drifts;
 	bool kfe = false;
@@ -401,7 +400,7 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 				for (int iy2=0; iy2<p.ny; ++iy2)
 					vcol[iy2] = V(ia,ib,iy2);
 
-				bvec(iab) = delta * policies.u[ia][ib][iy] + V(ia,ib,iy) + delta * ycol.dot(vcol);
+				bvec(iab) = delta * policies.u(ia,ib,iy) + V(ia,ib,iy) + delta * ycol.dot(vcol);
 			}
 		}
 

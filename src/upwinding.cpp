@@ -1,6 +1,5 @@
 #include <upwinding.h>
 
-
 namespace Upwinding {
 
 void Policies::update_c(int ia, int ib, int iy, const ConUpwind& uwF, const ConUpwind& uwB, const ConUpwind& uw0) {
@@ -17,9 +16,9 @@ void Policies::update_c(int ia, int ib, int iy, const ConUpwind& uwF, const ConU
 	else
 		uw_selected = uw0;
 
-	c[ia][ib][iy] = uw_selected.c;
-	h[ia][ib][iy] = uw_selected.h;
-	s[ia][ib][iy] = uw_selected.s;
+	c(ia,ib,iy) = uw_selected.c;
+	h(ia,ib,iy) = uw_selected.h;
+	s(ia,ib,iy) = uw_selected.s;
 }
 
 void Policies::update_d(int ia, int ib, int iy, const DepositUpwind& uFB,
@@ -29,13 +28,13 @@ void Policies::update_d(int ia, int ib, int iy, const DepositUpwind& uFB,
 	bool chooseBB = uBB.valid & uBB.at_least_as_good_as(uBF) & uBB.at_least_as_good_as(uFB);
 
 	if ( chooseFB )
-		d[ia][ib][iy] = uFB.d;
+		d(ia,ib,iy) = uFB.d;
 	else if ( chooseBF )
-		d[ia][ib][iy] = uBF.d;
+		d(ia,ib,iy) = uBF.d;
 	else if ( chooseBB )
-		d[ia][ib][iy] = uBB.d;
+		d(ia,ib,iy) = uBB.d;
 	else if ( (!uFB.valid) & (!uBF.valid) & (!uBB.valid) )
-		d[ia][ib][iy] = 0;
+		d(ia,ib,iy) = 0;
 	else
 		throw "Error while upwinding deposits";
 }

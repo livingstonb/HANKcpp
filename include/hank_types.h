@@ -23,18 +23,30 @@ class StdVector3d {
 	public:
 		StdVector3d() {}
 
-		StdVector3d(int n0, int n1, int n2) : dims({n0, n1, n2}), vector(n0 * n1 * n2) {}
+		StdVector3d(int n0, int n1, int n2) : shape({n0, n1, n2}), vector(n0 * n1 * n2) {}
 
-		int dims[3];
+		StdVector3d(const std::vector<int> dims_) {
+			int n = 1;
+			for (int i=0; i<dims_.size(); ++i) {
+				shape[i] = dims_[i];
+
+				if ( shape[i] > 0 )
+					n *= shape[i];
+			}
+
+			vector.resize(n);
+		}
+
+		int shape[3];
 
 		std::vector<T> vector;
 
 		T operator()(int i, int j, int k) const {
-			return vector[i + dims[0] * j + dims[0] * dims[1] * k];
+			return vector[i + shape[0] * j + shape[0] * shape[1] * k];
 		}
 
 		T& operator()(int i, int j, int k) {
-			return vector[i + dims[0] * j + dims[0] * dims[1] * k];
+			return vector[i + shape[0] * j + shape[0] * shape[1] * k];
 		}
 
 		int size() const {return vector.size();}

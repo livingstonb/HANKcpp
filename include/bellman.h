@@ -4,6 +4,7 @@
 #include <hank_config.h>
 #include <hank_types.h>
 #include <upwinding.h>
+#include <math.h>
 
 // Forward declarations
 namespace Upwinding {

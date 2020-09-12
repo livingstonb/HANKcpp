@@ -2,7 +2,7 @@
 #define _UPWINDING_H
 
 #include <hank_config.h>
-#include <hank_boost.h>
+#include <hank_types.h>
 
 namespace Upwinding {
 
@@ -22,9 +22,9 @@ struct DepositUpwind {
 
 class Policies {
 	public:
-		Policies(const boost3dshape& dims) : c(dims), h(dims), s(dims), d(dims), u(dims) {};
+		Policies(const std::vector<int> dims) : c(dims), h(dims), s(dims), d(dims), u(dims) {};
 
-		boost3d c, h, s, d, u;
+		StdVector3d<double> c, h, s, d, u;
 
 		void update_c(int ia, int ib, int iy, const ConUpwind& uwF, const ConUpwind& uwB, const ConUpwind& uw0);
 

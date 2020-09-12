@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 #include <boost/algorithm/string.hpp>
-#include <hank_boost.h>
 #include <hank_eigen_dense.h>
 #include <adjustment_costs.h>
 #include <parameters.h>
@@ -72,7 +71,7 @@ class Model : private ModelBase {
 		const int nocc = nocc_;
 		const int nprod = nprod_;
 		const int ntot = p.nb * p.na * nocc_ * nprod_;
-		const boost3dshape dims;
+		const std::vector<int> dims = {p.na, p.nb, p.ny};
 		const double prodmarkovscale = 1.0;
 
 		double_vector get_rb_effective() const;

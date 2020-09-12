@@ -24,8 +24,8 @@ sparse_matrix construct_transition_matrix(const Parameters& p, const Model& mode
 	for (int ia=0; ia<p.na; ++ia) {
 		for (int ib=0; ib<p.nb; ++ib) {
 			iab = TO_INDEX_1D(ia, ib, p.na);
-			d = policies.d[ia][ib][iy];
-			s = policies.s[ia][ib][iy];
+			d = policies.d(ia,ib,iy);
+			s = policies.s(ia,ib,iy);
 			acost = model.adjcosts.cost(d, model.agrid(ia));
 			areturn = adriftvec(ia);
 

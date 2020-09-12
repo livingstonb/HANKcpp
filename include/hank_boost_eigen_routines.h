@@ -3,7 +3,6 @@
 
 #include <hank_config.h>
 #include <hank_eigen_dense.h>
-#include <hank_boost.h>
 
 template<typename T>
 double_vector vector2eigenv(const T& vec)
@@ -58,10 +57,6 @@ map_type boost2eigen(T& arr)
 	return map;
 }
 
-inline double boost_inf_norm(boost3d& arr1, boost3d& arr2) {
-	return (boost2eigen(arr1) - boost2eigen(arr2)).lpNorm<Eigen::Infinity>();
-}
-
 template<typename T, typename V>
 double boost_dot(const T& boost_arr, const V& eigen_arr) {
 	// auto flat = flatten_array3d(boost_arr);
@@ -71,11 +66,11 @@ double boost_dot(const T& boost_arr, const V& eigen_arr) {
 	// 	dotprod += flat[i][0][0] * eigen_arr[i];
 	double dotprod = 0.0;
 
-	auto shape = boost_arr.shape();
+	auto shape = boost_arr.shape;
 	for (int i0=0; i0<shape[0]; ++i0)
 		for (int i1=0; i1<shape[1]; ++i1)
 			for (int i2=0; i2<shape[2]; ++i2)
-				dotprod += boost_arr[i0][i1][i2] * eigen_arr[i0 + shape[0] * i1 + shape[0] * shape[1] * i2];
+				dotprod += boost_arr(i0, i1, i2) * eigen_arr[i0 + shape[0] * i1 + shape[0] * shape[1] * i2];
 
 	return dotprod;
 }
