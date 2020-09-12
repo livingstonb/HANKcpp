@@ -26,7 +26,7 @@ EXECUTABLE=exec
 all: $(OBJECTS) $(MAIN) $(EXECUTABLE)
 
 debug: all
-	gdb ./exec
+	gdb -ex run ./exec
 
 depend: .depend
 
