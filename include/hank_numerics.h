@@ -2,7 +2,7 @@
 #define _HANK_NUMERICS_H
 
 #include <hank_config.h>
-#include<functional>
+#include <functional>
 
 namespace HankNumerics {
 

@@ -50,6 +50,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p, const Model&
 				dist_struct.networth(iab, iy) = model.agrid(ia) + model.bgrid(ib);
 				dist_struct.agrid_ab(iab, iy) = model.agrid(ia);
 				dist_struct.bgrid_ab(iab, iy) = model.bgrid(ib);
+				dist_struct.wage(iab, iy) = model.ypgrodgrid(iy) * 
 			}
 		}
 	}

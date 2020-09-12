@@ -21,7 +21,7 @@ AdjustmentCosts::AdjustmentCosts(AdjustCostFnRatioMode mode_, bool exponential_c
 
 double AdjustmentCosts::scale_factor(double a) const {
 	double scale = 0.0;
-	switch (mode) {
+	switch ( mode ) {
 		case AdjustCostFnRatioMode::none:
 			scale = 1;
 			break;
