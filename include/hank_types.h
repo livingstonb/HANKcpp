@@ -23,7 +23,7 @@ class StdVector3d {
 	public:
 		StdVector3d() {}
 
-		StdVector3d(int n0, int n1, int n2) : shape({n0, n1, n2}), vector(n0 * n1 * n2) {}
+		StdVector3d(int n0, int n1, int n2) : shape{n0, n1, n2}, vector(n0 * n1 * n2) {}
 
 		StdVector3d(const std::vector<int> dims_) {
 			int n = 1;

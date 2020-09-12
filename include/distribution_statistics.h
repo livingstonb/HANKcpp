@@ -36,8 +36,7 @@ class DistributionStatistics {
 		DistributionStatistics(const Parameters& p, const Model& model,
 			const HJB& hjb, const StationaryDist& sdist);
 
-		void compute_moments(const Model& model,
-			const Upwinding::Policies& policies, const DistStruct& grids);
+		void compute_moments(const Upwinding::Policies& policies, const DistStruct& grids);
 
 		void print();
 

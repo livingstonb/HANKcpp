@@ -213,7 +213,7 @@ void ModelBase::check_nbl(const Parameters& p) const {
 }
 
 Model::Model(const Parameters p_, const std::string& income_dir)
-			: ModelBase(p_, income_dir), p(p_), dims({p_.na, p_.nb, p_.ny}) {};
+	: ModelBase(p_, income_dir), p(p_), dims({p_.na, p_.nb, p_.ny}) {};
 
 double_vector Model::get_rb_effective() const {
 	double_vector rb_effective = bgrid;

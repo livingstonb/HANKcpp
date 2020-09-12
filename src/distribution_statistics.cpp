@@ -34,10 +34,6 @@ namespace {
 	double take_expectation(const double_vector& arr1, const double_matrix& arr2) {
 		return arr1.dot(eflatten(arr2));
 	}
-
-	double take_expectation(const double_matrix& arr1, const double_vector& arr2) {
-		return arr2.dot(eflatten(arr1));
-	}
 }
 
 DistributionStatistics::DistributionStatistics(const Parameters& p, const Model& model,
@@ -51,7 +47,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p, const Model&
 			iab = TO_INDEX_1D(ia, ib, p.na);
 			abdelta(iab) = model.adelta(ia) * model.bdelta(ib);
 			for (int iy=0; iy<p.ny; ++iy) {
-				dist_struct.networth(iab, iy) =  model.agrid(ia) + model.bgrid(ib);
+				dist_struct.networth(iab, iy) = model.agrid(ia) + model.bgrid(ib);
 				dist_struct.agrid_ab(iab, iy) = model.agrid(ia);
 				dist_struct.bgrid_ab(iab, iy) = model.bgrid(ib);
 			}
@@ -61,14 +57,14 @@ DistributionStatistics::DistributionStatistics(const Parameters& p, const Model&
 	std::vector<double> density_copy = sdist.density.as_vector();
 	dist_struct.pmass = map_type(density_copy.data(), p.na * p.nb, p.ny).array().colwise() * abdelta.array();
 	dist_struct.pmass1d = map_type_vec(dist_struct.pmass.data(), p.na * p.nb * p.ny);
-	compute_moments(model, hjb.optimal_decisions, dist_struct);
+	compute_moments(hjb.optimal_decisions, dist_struct);
 }
 
-void DistributionStatistics::compute_moments(const Model& model,
+void DistributionStatistics::compute_moments(
 	const Upwinding::Policies& policies, const DistStruct& dist_struct) {
 
 	const double_matrix& pmass = dist_struct.pmass;
-	auto expectation = [=, pmass](const auto& values) {
+	auto expectation = [pmass](const auto& values) {
 		return take_expectation(values, pmass);
 	};
 

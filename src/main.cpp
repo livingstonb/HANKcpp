@@ -20,8 +20,9 @@ int main () {
 	params.rho = 0.02;
 	params.drs_N = 0.8;
 	params.drs_Y = 0.9;
-	params.na = 25;
-	params.nb_pos = 25;
+	// params.na = 25;
+	// params.nb_pos = 25;
+	// params.depreciation = 0.001;
 	params.rb = 0.001 / 4.0;
 	params.setup(options);
 
