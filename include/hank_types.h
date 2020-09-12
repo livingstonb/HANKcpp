@@ -27,7 +27,7 @@ class StdVector3d {
 
 		StdVector3d(const std::vector<int> dims_) {
 			int n = 1;
-			for (int i=0; i<dims_.size(); ++i) {
+			for (unsigned int i=0; i<dims_.size(); ++i) {
 				shape[i] = dims_[i];
 
 				if ( shape[i] > 0 )
@@ -40,6 +40,8 @@ class StdVector3d {
 		int shape[3];
 
 		std::vector<T> vector;
+
+		std::vector<T> as_vector() const {return vector;}
 
 		T operator()(int i, int j, int k) const {
 			return vector[i + shape[0] * j + shape[0] * shape[1] * k];

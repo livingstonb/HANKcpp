@@ -102,10 +102,9 @@ class Parameters {
 		double borrwedge = 0.025;
 		double rborr = -1.0e5; // Will be set to rb + borrwedge
 		double corptax = 0.0;
-		double labtax = 0.30;
+		double labtax = 0.25;
 		double lumptransfer = 0.05;
 		bool prodispshock = false;
-		bool prodDispScaleDisutility = true;
 		AdjustCostFnRatioMode adjCostRatioMode = AdjustCostFnRatioMode::max;
 
 		// --- OTHER SOLUTION PARAMETERS ---

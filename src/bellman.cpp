@@ -113,10 +113,8 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 
 	Upwinding::ConUpwind upwindB, upwindF, upwind0, upwindBad;
 	upwindBad.s = 0.0;
-	upwindBad.Hc = -1.0e12;
 
 	Upwinding::DepositUpwind depositFB, depositBF, depositBB, depositBad;
-	depositBad.Hd = -1.0e12;
 
 	Upwinding::Policies policies(model.dims);
 
@@ -125,8 +123,7 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 	const double prof_common = p.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
 
 	bool labor_is_ghh = (p.laborsupply == LaborType::ghh);
-	const bool scale_wrt_ss = (!p.scaleDisutilityIdio) & p.prodispshock
-		& p.prodDispScaleDisutility & labor_is_ghh;
+	const bool scale_wrt_ss = (!p.scaleDisutilityIdio) & p.prodispshock & labor_is_ghh;
 
 	double prof_keep;
 	if ( p.taxHHProfitIncome )

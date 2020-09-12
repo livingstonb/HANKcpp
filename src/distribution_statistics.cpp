@@ -58,7 +58,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p, const Model&
 		}
 	}
 
-	std::vector<double> density_copy = sdist.density;
+	std::vector<double> density_copy = sdist.density.as_vector();
 	dist_struct.pmass = map_type(density_copy.data(), p.na * p.nb, p.ny).array().colwise() * abdelta.array();
 	dist_struct.pmass1d = map_type_vec(dist_struct.pmass.data(), p.na * p.nb * p.ny);
 	compute_moments(model, hjb.optimal_decisions, dist_struct);

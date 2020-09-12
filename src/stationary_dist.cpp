@@ -35,7 +35,6 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 	std::vector<sparse_matrix> B(p.ny);
 	std::vector<sparse_solver> spsolvers(p.ny);
 	for (int iy=0; iy<p.ny; ++iy) {
-		// sparse_matrix A = hjb.get_A_matrix_KFE(ss, iy);
 		sparse_matrix A = get_kfe_transition_matrix(p, model, ss.ra,
 			hjb.optimal_decisions, iy);
 
@@ -57,10 +56,8 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 	int ii = 0;
 	while ( (diff > gtol) & (ii < maxiter) ) {
 		for (int iy=0; iy<p.ny; ++iy) {
-			double_vector yvec_temp = lmat(iy,Eigen::all);
-			map_type_vec yvec(yvec_temp.data(), yvec_temp.size());
-			double_vector lgmat = gmat * yvec;
-			lgmat(iabx) = lgmat(iabx) + delta * p.deathrate * gmat(Eigen::all,iy).dot(abdelta) / abdelta(iabx);
+			double_vector lgmat = gmat * double_vector(lmat.row(iy));
+			lgmat(iabx) = lgmat(iabx) + delta * p.deathrate * gmat.col(iy).dot(abdelta) / abdelta(iabx);
 
 			gmat_update.col(iy) = spsolvers[iy].solve(lgmat);
 			if ( spsolvers[iy].info() != Eigen::Success )
@@ -75,14 +72,16 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 
 	if ( ii == maxiter )
 		std::cout << "KFE did not converge" << '\n';
+	gmat = gmat.array().max(0.0);
 
 	double pmass = (gmat.array().colwise() * abdelta.array()).matrix().sum();
-	assert(abs(1.0 - pmass) < 1.0e-6);
+	assert( abs(1.0 - pmass) < 1.0e-6 );
 
-	density.resize(gmat.size());
-	for (int iab=0; iab<p.na*p.nb; ++iab)
-		for (int iy=0; iy<p.ny; ++iy)
-			density[iab + p.na * p.nb * iy] = gmat(iab,iy);
+	density = StdVector3d<double>(p.na, p.nb, p.ny);
+	for (int ia=0; ia<p.na; ++ia)
+		for (int ib=0; ib<p.nb; ++ib)
+			for (int iy=0; iy<p.ny; ++iy)
+				density(ia, ib, iy) = gmat(TO_INDEX_1D(ia, ib, p.na), iy);
 }
 
 	
@@ -115,7 +114,7 @@ namespace {
 				gmat(0, iy) = p_y;
 			}
 
-			gmass = (gmat.col(iy).cwiseProduct(abdelta)).sum();
+			gmass = gmat.col(iy).dot(abdelta);
 			gmat.col(iy) = p_y * gmat.col(iy) / gmass;
 		}
 

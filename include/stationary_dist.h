@@ -2,6 +2,7 @@
 #define _STATIONARY_DIST_H
 
 #include <vector>
+#include <hank_types.h>
 
 // Forward declarations
 class Model;
@@ -16,7 +17,7 @@ class StationaryDist {
 
 		void compute(const Model& model, const SteadyState& ss, const HJB& hjb);
 
-		std::vector<double> density;
+		StdVector3d<double> density;
 
 		int dispfreq = 1;
 
