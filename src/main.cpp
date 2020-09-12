@@ -2,6 +2,7 @@
 #include <iostream>
 #include <parameters.h>
 #include <hank_types.h>
+#include <distribution_statistics.h>
 #include <model.h>
 #include <steady_state.h>
 #include <bellman.h>
@@ -16,7 +17,7 @@ int main () {
 	options.fast = false;
 
 	Parameters params;
-	params.rho = 0.1;
+	params.rho = 0.01;
 	params.drs_N = 0.8;
 	params.drs_Y = 0.9;
 	params.setup(options);
@@ -34,4 +35,7 @@ int main () {
 	StationaryDist sdist;
 	sdist.compute(model, iss, hjb);
 
+	DistributionStatistics stats(params, model, hjb, sdist);
+
+	std::cout << "E[NW] = " << stats.Enetworth << '\n';
 }

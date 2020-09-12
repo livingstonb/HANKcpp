@@ -1,6 +1,4 @@
 #include <stationary_dist.h>
-#include <hank_eigen_dense.h>
-#include <hank_eigen_sparse.h>
 #include <model.h>
 #include <bellman.h>
 #include <parameters.h>
@@ -74,6 +72,8 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 
 	double pmass = (gmat.array().colwise() * abdelta.array()).matrix().sum();
 	assert(abs(1.0 - pmass) < 1.0e-6);
+
+	density = gmat;
 }
 
 	

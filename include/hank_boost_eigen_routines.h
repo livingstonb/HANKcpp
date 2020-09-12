@@ -62,4 +62,15 @@ inline double boost_inf_norm(boost3d& arr1, boost3d& arr2) {
 	return (boost2eigen(arr1) - boost2eigen(arr2)).lpNorm<Eigen::Infinity>();
 }
 
+template<typename T, typename V>
+double boost_dot(const T& boost_arr, const V& eigen_arr) {
+	auto flat = flatten_array3d(boost_arr);
+	double dotprod = 0.0;
+
+	for (int i=0; i<flat.num_elements(); ++i)
+		dotprod += flat[i][0][0] * eigen_arr[i];
+
+	return dotprod;
+}
+
 #endif
