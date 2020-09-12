@@ -1,10 +1,13 @@
 
 CC=g++
 # MKLR=/media/hdd/lib/intel/compilers_and_libraries_2020.2.254/linux/mkl
-MKLL=-Wl,--start-group ${MKLROOT}/lib/intel64/libmkl_intel_ilp64.a ${MKLROOT}/lib/intel64/libmkl_sequential.a ${MKLROOT}/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread -lm -ldl
+MKLFLAGS=
+# MKLL=-Wl,--start-group ${MKLROOT}/lib/intel64/libmkl_intel_ilp64.a ${MKLROOT}/lib/intel64/libmkl_sequential.a ${MKLROOT}/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread -lm -ldl
+MKLL=
+LIBS=
 MKL=-I$(MKLR)/include -DMKL_ILP64 -m64 -I/media/hdd/lib/intel/mkl/include -L/media/hdd/lib/intel/mkl/lib/intel64
 SSFLAGS=-I/media/hdd/lib/SuiteSparse/include -L/media/hdd/lib/SuiteSparse/lib
-CFLAGS=-O3 -pg -c -W -Wall -g3  $(MKL) -I$(shell pwd) -I$(shell pwd)/include -I$(shell pwd)/src
+CFLAGS=-O3 -pg -c -W -Wall -g3 -I$(shell pwd) -I$(shell pwd)/include -I$(shell pwd)/src
 SOURCES=parameters model steady_state bellman hank_numerics utilities adjustment_costs \
 	upwinding stationary_dist distribution_statistics transition_matrix
 SOURCES:=$(addsuffix .cpp, $(SOURCES))
@@ -15,6 +18,8 @@ MAIN:=$(OBJDIR)/$(MAIN)
 MAIN:=$(MAIN:.cpp=.o)
 OBJECTS:=$(addprefix $(OBJDIR)/, $(SOURCES:.cpp=.o))
 SOURCES:=$(addprefix $(SOURCEDIR)/, $(SOURCES))
+SPARSEOBJS=transition_matrix.o bellman.o stationary_dist.o
+SPARSEOBJS:=$(addprefix $(OBJDIR)/, $(SPARSEOBJS))
 VPATH=%.cpp src
 EXECUTABLE=exec
 
@@ -32,13 +37,17 @@ depend: .depend
 include .depend
 
 $(EXECUTABLE): $(MAIN) $(OBJECTS)
-	$(CC) $(MAIN) $(OBJECTS) $(MKL) $(SSFLAGS) -pg -O2 -o $@  -lumfpack -lsuitesparseconfig $(MKLL)
+	$(CC) $(MAIN) $(OBJECTS) $(SSFLAGS) -pg -O2 -o $@ -lumfpack -lsuitesparseconfig
 
-$(OBJECTS): $(OBJDIR)/%.o: $(SOURCEDIR)/%.cpp include/%.h
-	$(CC) $(CFLAGS) $(MKL) $(MKLL) -I/media/hdd/lib/SuiteSparse/include $< -o $@   #-fopenmp
+$(SPARSEOBJS): MKLFLAGS=$(MKL) $(MKLL) $(SSFLAGS)
+
+$(SPARSEOBJS): LIBS=-lumfpack -lsuitesparseconfig
+
+$(OBJDIR)/%.o: $(SOURCEDIR)/%.cpp include/%.h
+	$(CC) $(CFLAGS) $(MKLFLAGS) $< -o $@  $(LIBS) #-fopenmp
 
 $(MAIN): $(OBJDIR)/%.o: $(SOURCEDIR)/%.cpp
-	$(CC) $(CFLAGS) $(MKL) $(MKLL) -I/media/hdd/lib/SuiteSparse/include $< -o $@ #-fopenmp
+	$(CC) $(CFLAGS) $< -o $@ #-fopenmp
 
 clean:
 	rm build/*
