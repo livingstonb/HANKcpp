@@ -84,8 +84,6 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 				density(ia, ib, iy) = gmat(TO_INDEX_1D(ia, ib, p.na), iy);
 }
 
-	
-
 namespace {
 	double_matrix make_dist_guess(const Model& model, const double_vector& abdelta) {
 		const Parameters& p = model.p;
@@ -97,21 +95,21 @@ namespace {
 		for (int iy=0; iy<p.ny; ++iy) {
 			p_y = model.ydist(iy);
 			if ( (p.deathrate == 0.0) & !p.borrowing ) {
-				// gmat.as3d(0, 1, iy) = p_y;
-				gmat(TO_INDEX_1D(0, 1, p.na), iy) = p_y;
+				gmat.as3d(0, 1, iy) = p_y;
+				// gmat(TO_INDEX_1D(0, 1, p.na), iy) = p_y;
 			}
 			else if ( (p.deathrate == 0.0) & p.borrowing ) {
-				// gmat.as3d(0, p.nb_neg+1, iy) = p_y;
-				// gmat.as3d(1, p.nb_neg+1, iy) = p_y;
-				gmat(TO_INDEX_1D(0, p.nb_neg+1, p.na), iy) = p_y;
-				gmat(TO_INDEX_1D(1, p.nb_neg+1, p.na), iy) = p_y;
+				gmat.as3d(0, p.nb_neg+1, iy) = p_y;
+				gmat.as3d(1, p.nb_neg+1, iy) = p_y;
+				// gmat(TO_INDEX_1D(0, p.nb_neg+1, p.na), iy) = p_y;
+				// gmat(TO_INDEX_1D(1, p.nb_neg+1, p.na), iy) = p_y;
 			}
 			else if ( p.borrowing ) {
-				// gmat.as3d(0, p.nb_neg, iy) = p_y;
-				gmat(TO_INDEX_1D(0, p.nb_neg, p.na), iy) = p_y;
+				gmat.as3d(0, p.nb_neg, iy) = p_y;
+				// gmat(TO_INDEX_1D(0, p.nb_neg, p.na), iy) = p_y;
 			}
 			else {
-				gmat(0, iy) = p_y;
+				gmat.as3d(0, 0, iy) = p_y;
 			}
 
 			gmass = gmat.col(iy).dot(abdelta);

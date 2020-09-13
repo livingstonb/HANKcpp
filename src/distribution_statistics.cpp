@@ -19,9 +19,9 @@ class DistributionStatistics::DistStruct {
 		DistStruct(int nz, int ny)
 			: networth(nz, ny), pmass(nz, ny),
 				agrid_ab(nz, ny), bgrid_ab(nz, ny),
-				pmass1d(nz) {}
+				wage(nz, ny), pmass1d(nz) {}
 
-		double_matrix networth, pmass, agrid_ab, bgrid_ab;
+		double_matrix networth, pmass, agrid_ab, bgrid_ab, wage;
 
 		double_vector pmass1d;
 };
@@ -50,7 +50,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p, const Model&
 				dist_struct.networth(iab, iy) = model.agrid(ia) + model.bgrid(ib);
 				dist_struct.agrid_ab(iab, iy) = model.agrid(ia);
 				dist_struct.bgrid_ab(iab, iy) = model.bgrid(ib);
-				dist_struct.wage(iab, iy) = model.ypgrodgrid(iy) * 
+				// dist_struct.wage(iab, iy) = model.yprodgrid(iy) * 
 			}
 		}
 	}

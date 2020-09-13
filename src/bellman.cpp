@@ -15,7 +15,6 @@
 #define TO_INDEX_1D(a, b, na) ((a) + (na) * (b))
 
 namespace {
-
 	constexpr bool is_stationary_pt_or_limit(double Vb) {
 		return (Vb <= ValueFnDerivatives::StationaryPtOrLimit);
 	}

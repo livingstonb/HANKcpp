@@ -4,7 +4,6 @@
 #include <bellman.h>
 #include <upwinding.h>
 #include <hank_eigen_dense.h>
-#include <hank_eigen_sparse.h>
 
 #define TO_INDEX_1D(a, b, na) ((a) + (na) * (b))
 

@@ -4,13 +4,9 @@
 #include <hank_config.h>
 #include <string>
 #include <vector>
-#include <boost/algorithm/string.hpp>
 #include <hank_eigen_dense.h>
 #include <adjustment_costs.h>
 #include <parameters.h>
-
-// Forward declarations
-class Parameters;
 
 // Constructs the grids and provides a container with public attribute access
 class ModelBase {

@@ -6,8 +6,6 @@
 #include <array>
 #include <hank_types.h>
 
-enum class AdjustCostFnRatioMode;
-
 class AdjustmentCosts {
 	private:
 		double cost_fn_exponential(double d, double a) const;

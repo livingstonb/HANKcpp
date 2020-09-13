@@ -2,6 +2,7 @@
 #include <utilities.h>
 #include <functions.h>
 #include <cmath>
+#include <boost/algorithm/string.hpp>
 
 namespace {
 	void fix_rounding(double_matrix& mat) {
