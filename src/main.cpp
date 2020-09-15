@@ -5,8 +5,8 @@
 #include <model.h>
 #include <steady_state.h>
 #include <bellman.h>
-// #include <stationary_dist.h>
-// #include <distribution_statistics.h>
+#include <stationary_dist.h>
+#include <distribution_statistics.h>
 #include <adjustment_costs.h>
 #include <utilities.h>
 #include <math.h>
@@ -45,9 +45,9 @@ int main () {
 	HJB hjb(model, iss);
 	hjb.iterate(iss);
 
-// 	StationaryDist sdist;
-// 	sdist.compute(model, iss, hjb);
+	StationaryDist sdist;
+	sdist.compute(model, iss, hjb);
 
-// 	DistributionStatistics stats(params, model, hjb, sdist);
-// 	stats.print();
+	DistributionStatistics stats(params, model, hjb, sdist);
+	stats.print();
 }
