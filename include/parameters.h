@@ -34,7 +34,7 @@ class Parameters {
 
 		// Other grid parameters
 		int nprod = 15;
-		int nocc = 6;
+		int nocc = 1;
 		int ny;
 		int naby;
 		int nab;
@@ -42,6 +42,8 @@ class Parameters {
 		// --- PREFERENCES ---
 		double elast = 10;
 		double frisch = 1.0;
+		bool adjustProdGridFrisch = true;
+		double adjFrischGridFrac = 0.85;
 		double riskaver = 1.0;
 		double rho = 0.01444;
 		double prefshock = 1.0;
@@ -91,6 +93,7 @@ class Parameters {
 		};
 
 		// --- OTHER MODEL PARAMETERS ---
+		bool oneAssetNoCapital = false;
 		bool borrowing = true;
 		// Steady state output gap
 		double ssgap = 0.0;

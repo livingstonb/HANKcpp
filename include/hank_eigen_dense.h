@@ -4,6 +4,7 @@
 #include <hank_config.h>
 #include <Eigen/Core>
 #include <hank_types.h>
+#include <algorithm>
 
 using Eigen::seq;
 
@@ -13,13 +14,23 @@ typedef Eigen::Map<Eigen::VectorXd> map_type_vec;
 
 typedef Eigen::VectorXd double_vector;
 
-typedef Eigen::ArrayXd double_array;
+typedef Eigen::ArrayXXd double_array;
+
+typedef Eigen::ArrayXd double_array_vector;
 
 typedef Eigen::MatrixXd double_matrix;
 
 typedef Eigen::Matrix<bool, Eigen::Dynamic, 1> bool_vector;
 
 typedef double_vector grid_type;
+
+using Eigen::ArrayXd;
+
+using Eigen::VectorXd;
+
+using Eigen::MatrixXd;
+
+using Eigen::VectorXi;
 
 inline double_vector eflatten(const double_matrix& arr) {
 	const Eigen::Map<const double_vector> arr_map(arr.data(), arr.size());
@@ -62,6 +73,40 @@ double_matrix vector2eigenm(const T& vec, int n, int m)
 			out(i, j) = vec[i*m + j];	
 
 	return out;
+}
+
+template<typename T>
+std::vector<double> to_vector(const T& emat) {
+	std::vector<double> vec(emat.size());
+	std::copy(emat.begin(), emat.end(), vec.begin());
+	return vec;
+}
+
+template<typename T>
+map_type_vec to_eigen(T& arr) {
+	map_type_vec map(arr.data(), arr.size());
+	return map;
+}
+
+template<typename T>
+map_type to_eigen(T& arr, int n, int m) {
+	map_type map(arr.data(), n, m);
+	return map;
+}
+
+template<typename V>
+V as_eigen(std::vector<double>& arr) {
+	V out(arr.size());
+
+	for (unsigned int i=0; i<arr.size(); ++i)
+		out(i) = arr[i];
+
+	return out;
+}
+
+template<typename V>
+V as_eigen(StdVector3d<double>& arr) {
+	return as_eigen<V>(arr.vector);
 }
 
 #endif

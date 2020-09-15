@@ -9,3 +9,4 @@ exec
 *.sublime-*
 .depend
 gmon.out
+*_old

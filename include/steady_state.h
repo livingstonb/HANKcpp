@@ -11,42 +11,57 @@ class Parameters;
 
 // Provides attributes and methods for steady state computations
 class SteadyState {
-	private:
+	public:
+		enum class SSType { initial, final };
+
+		SteadyState(const Parameters& p_, const Model& model_);
+
+		void set(const std::vector<double>& x, SSType mode);
+
+		void compute(SSType mode);
+
+		void compute_profits();
+
+		void compute_factor_prices();
+
+		void compute_dividends();
+
+		void compute_govt();
+
 		const Model& model;
+
 		const Parameters& p;
 
-	public:
-		SteadyState(const Model& model_);
-
-		void update();
-
-		// Normalize to 1
 		double output = 1.0;
+
 		double varieties = 1.0;
-		double totoutput;
 
-		// Profits, prices, and dividends
-		double price_W, grossprofit_W, netprofit_W, grossprofit_R, netprofit_R;
-		double profit, dividend_A, dividend_B, equity_A, equity_B;
+		double rho, capital, capital_Y, capital_N, price_W, target_KY_ratio;
 
-		// Production
-		double tfp_N, tfp_Y, mc_N, mc_Y;
+		double investment, labor_Y, labor_N, labor;
 
-		// Labor market
-		double labor_Y, labor_N, wage_N, wage_Y;
+		std::vector<double> labor_occ, labshareY, labshareN, labfracY, labfracN;
+
+		double capshareY, capshareN, capfracY, capfracN;
+
+		double netprofit_W, grossprofit_R, netprofit_R, profit;
+
+		double rcapital, tfp_N, tfp_Y;
+
+		std::vector<double> wage_occ;
+
+		double wage_Y, wage_N, mc_Y, mc_N;
+
+		double ra, dividend_A, dividend_B, equity_A, equity_B;
+
 		std::vector<double> netwagegrid;
 
-		// Capital
-		double ra, rcapital, capital, capital_N, capital_Y;
-		double K_totoutput_ratio;
+		double taxrev;
 
-		// Labor disutility
+		double illprice, illpricedot, illshares;
+
 		double chi;
-
-		// Productivity grid
-		std::vector<double> yprodgrid;
 };
-
 
 
 

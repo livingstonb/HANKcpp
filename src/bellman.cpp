@@ -34,31 +34,15 @@ namespace {
 		const Parameters& p = model.p;
 
 		StdVector3d<double> V(p.na, p.nb, p.ny);
-		double lc, u, llabdisutil = 0.0;
-		const double sep_constant = 1.0 / 3.0;
-		double_array wageexpr, bdriftnn;
-
-		bdriftnn = model.get_rb_effective().array() * model.bgrid.array();
-
-		switch ( p.laborsupply ) {
-			case LaborType::sep:
-				wageexpr = vector2eigenv(ss.netwagegrid).array() * sep_constant;
-				llabdisutil = model.labdisutil(sep_constant, ss.chi);
-				break;
-			case LaborType::none:
-				wageexpr = vector2eigenv(ss.netwagegrid).array();
-				break;
-			case LaborType::ghh:
-				wageexpr = vector2eigenv(ss.netwagegrid).array().pow(1 + p.frisch);
-				break;
-		}
+		double lc, u;
+		ArrayXd bdriftnn = model.get_rb_effective().array() * model.bgrid.array();
 
 		for (int ia=0; ia<p.na; ++ia) {
 			for (int ib=0; ib<p.nb; ++ib) {
 				for (int iy=0; iy<p.ny; ++iy) {
-					lc = wageexpr(iy) + p.lumptransfer + bdriftnn(ib);
+					lc = 0.5 * ss.netwagegrid[iy] + p.lumptransfer + bdriftnn(ib);
 					u = model.util(lc);
-					V(ia,ib,iy) = (u - llabdisutil) / (p.rho + p.deathrate);
+					V(ia,ib,iy) = u / (p.rho + p.deathrate);
 				}
 			}
 		}
@@ -85,15 +69,15 @@ void HJB::iterate(const SteadyState& ss) {
 	int ii = 0;
 	double lVdiff = 1.0;
 
-	double_vector lastV = to_eigenv(V);
+	VectorXd lastV = as_eigen<VectorXd>(V);
 	Upwinding::Policies policies(model.dims);
 	while ( (ii < maxiter) & (lVdiff > vtol) ) {
 		policies = update_policies(ss);
 		update_value_fn(ss, policies);
 
-		double_vector newV = to_eigenv(V);
+		VectorXd newV = as_eigen<VectorXd>(V);
 		lVdiff = (lastV - newV).lpNorm<Eigen::Infinity>();
-		lastV = to_eigenv(V);
+		lastV = as_eigen<VectorXd>(V);
 
 		check_progress(lVdiff, dispfreq, ii, vtol);
 
@@ -159,12 +143,7 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 			for (int iy=0; iy<p.ny; ++iy) {
 				derivs = compute_derivatives(ia, ib, iy);
 
-				if ( p.scaleDisutilityIdio )
-					idioscale = model.yprodgrid(iy);
-				else if ( scale_wrt_ss )
-					idioscale = model.yprodgrid(iy) / ss.yprodgrid[iy];
-				else
-					idioscale = 1.0;
+				idioscale = 1.0;
 
 				gbdrift = bdrift(ib) + prof_common + profW(iy);
 				gnetwage = ss.netwagegrid[iy];

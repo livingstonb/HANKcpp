@@ -21,6 +21,9 @@ class ModelBase {
 		double_vector yprodgrid_, yoccgrid_, ydist_;
 		double_matrix prodmarkov_, ymarkov_, ymarkovdiag_, ymarkovoff_;
 
+		double_vector wage_occ_, wagegrid_, netwagegrid_;
+		double_vector occYsharegrid_, occNsharegrid_;
+
 		int nocc_, nprod_;
 
 		AdjustmentCosts adjcosts_;
@@ -69,6 +72,12 @@ class Model : private ModelBase {
 		const int ntot = p.nb * p.na * nocc_ * nprod_;
 		const std::vector<int> dims = {p.na, p.nb, p.ny};
 		const double prodmarkovscale = 1.0;
+
+		const double_vector& wage_occ = wage_occ_;
+		const double_vector& wagegrid = wagegrid_;
+		const double_vector& netwagegrid = netwagegrid_;
+		const double_vector& occYsharegrid = occYsharegrid_;
+		const double_vector& occNsharegrid = occNsharegrid_;
 
 		double_vector get_rb_effective() const;
 

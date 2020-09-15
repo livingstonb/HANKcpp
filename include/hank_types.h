@@ -37,11 +37,13 @@ class StdVector3d {
 			vector.resize(n);
 		}
 
+		operator std::vector<T>() const {return vector;}
+
 		int shape[3];
 
 		std::vector<T> vector;
 
-		std::vector<T> as_vector() const {return vector;}
+		std::vector<T>& as_vector() const {return vector;}
 
 		T operator()(int i, int j, int k) const {
 			return vector[i + shape[0] * j + shape[0] * shape[1] * k];

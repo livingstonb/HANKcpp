@@ -2,11 +2,11 @@
 #include <iostream>
 #include <parameters.h>
 #include <hank_types.h>
-#include <distribution_statistics.h>
 #include <model.h>
 #include <steady_state.h>
-#include <bellman.h>
-#include <stationary_dist.h>
+// #include <bellman.h>
+// #include <stationary_dist.h>
+// #include <distribution_statistics.h>
 #include <adjustment_costs.h>
 #include <utilities.h>
 
@@ -28,14 +28,14 @@ int main () {
 
 	Model model = Model(params, income_dir);
 
-	SteadyState iss(model);
+	SteadyState iss(params, model);
 
-	HJB hjb(model, iss);
-	hjb.iterate(iss);
+	// HJB hjb(model, iss);
+// 	hjb.iterate(iss);
 
-	StationaryDist sdist;
-	sdist.compute(model, iss, hjb);
+// 	StationaryDist sdist;
+// 	sdist.compute(model, iss, hjb);
 
-	DistributionStatistics stats(params, model, hjb, sdist);
-	stats.print();
+// 	DistributionStatistics stats(params, model, hjb, sdist);
+// 	stats.print();
 }

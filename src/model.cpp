@@ -78,59 +78,44 @@ void ModelBase::make_asset_grids(const Parameters& p) {
 	bdelta_ = compute_grid_deltas(bgrid_, dbgrid_);
 
 	// Illiquid asset
-	agrid_ = double_vector(p.na);
-	powerSpacedGrid(p.amin, p.amax, p.acurv, agrid_);
-	adjustPowerSpacedGrid(agrid_);
+	if ( p.oneAssetNoCapital ) {
+		agrid_ = double_vector::Constant(p.na, 0.0);
+		dagrid_ = double_vector::Constant(p.na-1, 1.0);
+		adelta_ = double_vector::Constant(p.na, 1.0);
+	}
+	else {
+		agrid_ = double_vector(p.na);
+		powerSpacedGrid(p.amin, p.amax, p.acurv, agrid_);
+		adjustPowerSpacedGrid(agrid_);
 
-	dagrid_ = agrid_(seq(1,p.na-1)) - agrid_(seq(0,p.na-2));
-	adelta_ = compute_grid_deltas(agrid_, dagrid_);
+		dagrid_ = agrid_(seq(1,p.na-1)) - agrid_(seq(0,p.na-2));
+		adelta_ = compute_grid_deltas(agrid_, dagrid_);
+	}
 }
 
 void ModelBase::make_occupation_grids(const Parameters& p) {
-	occgrid_ = double_vector(p.nocc);
-	occdist_ = double_vector(p.nocc);
-	nocc_ = p.nocc;
+	// wage_occ_ = double_vector::Constant(p.ny, 1.0);
+	// wagegrid_ = double_vector(p.ny);
+	// int iy = 0;
+	// for (int io=0; io<p.nocc_; ++io) {
+	// 	for (int ip=0; ip<p.nprod_; ++ip) {
+	// 		wagegrid_(iy) = wage_occ_(io);
+	// 		++iy;
+	// 	}
+	// }
+	// netwagegrid_ = (1.0 - p.labtax) * yprodgrid_.array() * wagegrid_.array();
 
-	if (p.nocc == 1) {
-		std::fill(occgrid_.begin(), occgrid_.end(), 0.0);
-		std::fill(occdist_.begin(), occdist_.end(), 1.0);
+	// Occupation types
+	if ( p.nocc == 1 ) {
+		occYsharegrid_ = double_vector::Constant(p.nocc, 1.0);
+		occNsharegrid_ = double_vector::Constant(p.nocc, 1.0);
+		occdist_ = double_vector::Constant(p.nocc, 1.0);
 	}
 	else {
-		// S_N / (S_N + S_Y)
-		double lshareNY = (1.0 - p.alpha_N) * p.drs_N
-			/ ((p.elast - 1.0) * (1.0 - p.alpha_Y) * p.drs_Y + (1.0 - p.alpha_N) * p.drs_N);
-
-		if (lshareNY == 0.0) {
-			// No labor income accrues to N-type
-			std::fill(occgrid_.begin(), occgrid_.end(), 0.0);
-			std::fill(occdist_.begin(), occdist_.end(), 1.0 / p.nocc);
-		}
-		else if (lshareNY == 1.0) {
-			// All labor income accrues to N-type
-			std::fill(occgrid_.begin(), occgrid_.end(), 1.0);
-			std::fill(occdist_.begin(), occdist_.end(), 1.0 / p.nocc);
-		}
-		else {
-			// Equally spaced in [0, 1], midpoints of intervals
-			double lwidth = 1.0 / p.nocc;
-			occgrid_[0] = 0.5 * lwidth;
-			occgrid_[p.nocc-1] = 1.0 - 0.5 * lwidth;
-			if (p.nocc >= 2) {
-				for (int i=1; i<p.nocc-1; ++i) {
-					occgrid_[i] = occgrid_[i-1] + lwidth;
-				}
-			}
-
-			// Distribution has CDF x ^ par. Choose par to target mean a
-			double lWNtoWY = 1.5;
-			double lmeanocc = lshareNY / (lshareNY + (1.0 - lshareNY) * lWNtoWY);
-			double lpar = lmeanocc / (1.0 - lmeanocc);
-			for (int i=0; i<p.nocc; ++i) {
-				occdist_[i] = pow(occgrid_[i] + 0.5 * lwidth, lpar)
-					- pow(occgrid_[i] - 0.5 * lwidth, lpar);
-			}
-		}
+		throw "Not coded";
 	}
+	nocc_ = p.nocc;
+
 }
 
 void ModelBase::create_income_process(
@@ -143,6 +128,10 @@ void ModelBase::create_income_process(
 	proddist_ = vector2eigenv(read_matrix(dist_loc));
 
 	std::string markov_loc = "input/" + income_dir + "/ymarkov_combined.txt";
+
+	if ( p.adjustProdGridFrisch )
+		logprodgrid_ = logprodgrid_ / (1.0 + p.adjFrischGridFrac * p.frisch);
+
 	int k = proddist_.size();
 	prodmarkov_ = vector2eigenm(read_matrix(markov_loc), k, k);
 	fix_rounding(prodmarkov_);
@@ -156,42 +145,26 @@ void ModelBase::create_income_process(
 }
 
 void ModelBase::create_combined_variables(const Parameters& p) {
-	int iy, io, ip, iy2, io2, ip2;
 	int ny = nprod_ * nocc_;
-
-	double_vector occfromy(ny);
-	double_vector prodfromy(ny);
-	double_matrix yfromoccprod(nocc_, nprod_);
-
-	iy = 0;
-	for (int io=0; io<nocc_; ++io) {
-		for (int ip=0; ip<nprod_; ++ip) {
-			occfromy(iy) = io;
-			prodfromy(iy) = ip;
-			yfromoccprod(io,ip) = iy;
-			++iy;
-		}
-	}
 
 	ymarkov_ = double_matrix::Zero(ny, ny);
 	ymarkovdiag_ = double_matrix::Zero(ny, ny);
 	yprodgrid_ = double_vector(ny);
-	yoccgrid_ = double_vector(ny);
+	yoccgrid_ = double_vector::Zero(ny);
 	ydist_ = double_vector(ny);
 
-	for (int iy=0; iy<ny; ++iy) {
-		io = occfromy(iy);
-		ip = prodfromy(iy);
-		yprodgrid_(iy) = prodgrid_(ip);
-		yoccgrid_(iy) = occgrid_(io);
-		ydist_(iy) = proddist_(ip) * occdist_(io);
+	int iy = 0;
+	for (int io=0; io<nocc_; ++io) {
+		for (int ip=0; ip<nprod_; ++ip) {
+			yprodgrid_(iy) = prodgrid_(ip);
+			// yoccgrid_(iy) = occgrid_(io);
+			ydist_(iy) = proddist_(ip) * occdist_(io);
 
-		for (iy2=0; iy2<ny; ++iy2) {
-			io2 = occfromy(iy2);
-			ip2 = prodfromy(iy2);
+			for (int ip2=0; ip2<nprod_; ++ip2) {
+				ymarkov_(iy, io + nocc_ * ip2) = prodmarkov_(ip, ip2);
+			}
 
-			if (io == io2)
-				ymarkov_(iy,iy2) = prodmarkov_(ip,ip2);
+			++iy;
 		}
 	}
 
