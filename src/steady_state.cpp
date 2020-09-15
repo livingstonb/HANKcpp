@@ -4,6 +4,7 @@
 #include <hank_eigen_dense.h>
 #include <math.h>
 #include <algorithm>
+#include <iostream>
 
 namespace {
 	double marginal_cost(double tfp, double r, double alpha, double wage) {
@@ -51,19 +52,18 @@ void SteadyState::set(const std::vector<double>& x, SSType mode) {
 	if ( mode == SSType::initial ) {
 		// Guess rho and labor occ, and chi
 		rho = exp(x[0]);
-		labor_occ.resize(p.ny);
+		labor_occ.resize(p.nocc);
 		std::copy(x.begin()+1, x.begin()+p.nocc+1, labor_occ.begin());
 		capital = p.targetMeanIll;
-		// chi = x[p.nocc+1];
-		chi = 0.5;
+		chi = x[p.nocc+1];
 	}
 	else if ( mode == SSType::final ) {
 	}
 }
 
 void SteadyState::compute(SSType mode) {
-	double_array_vector elabshareY, elabshareN;
-	double_array_vector elabfracY, elabfracN;
+	ArrayXd elabshareY, elabshareN;
+	ArrayXd elabfracY, elabfracN;
 
 	elabshareY = (1.0 - p.alpha_Y) * price_W * p.drs_Y * model.occYsharegrid;
 	elabshareN = (1.0 - p.alpha_N) * (1.0 - price_W) * p.drs_N * model.occNsharegrid;
@@ -83,7 +83,6 @@ void SteadyState::compute(SSType mode) {
 	// Output and varieties
 
 	capital_Y = capfracY * capital;
-	// double_array_vector labor_Yocc = elabfracY * to_eigen(labor_occ).array();
 	ArrayXd labor_Yocc = elabfracY * as_eigen<ArrayXd>(labor_occ);
 	labor_Y = labor_Yocc.pow(model.occYsharegrid.array()).prod();
 

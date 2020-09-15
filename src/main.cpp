@@ -4,11 +4,12 @@
 #include <hank_types.h>
 #include <model.h>
 #include <steady_state.h>
-// #include <bellman.h>
+#include <bellman.h>
 // #include <stationary_dist.h>
 // #include <distribution_statistics.h>
 #include <adjustment_costs.h>
 #include <utilities.h>
+#include <math.h>
 
 int main () {
 	std::string income_dir = "2point_3_5";
@@ -28,10 +29,21 @@ int main () {
 
 	Model model = Model(params, income_dir);
 
-	SteadyState iss(params, model);
+	// guess rho, chi and labor_occ
+	double chi = 0.5;
+	std::vector<double> x(params.nocc+2);
+	x[0] = log(params.rho);
+	for (int io=0; io<params.nocc; ++io)
+		x[io+1] = params.hourtarget * params.meanlabeff * model.occdist[io];
 
-	// HJB hjb(model, iss);
-// 	hjb.iterate(iss);
+	x[params.nocc+1] = chi;
+
+	SteadyState iss(params, model);
+	iss.set(x, SteadyState::SSType::initial);
+	iss.compute(SteadyState::SSType::initial);
+
+	HJB hjb(model, iss);
+	hjb.iterate(iss);
 
 // 	StationaryDist sdist;
 // 	sdist.compute(model, iss, hjb);
