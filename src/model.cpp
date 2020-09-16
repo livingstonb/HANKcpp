@@ -189,8 +189,8 @@ Model::Model(const Parameters p_, const std::string& income_dir)
 	: ModelBase(p_, income_dir), p(p_), dims({p_.na, p_.nb, p_.ny}) {};
 
 double_vector Model::get_rb_effective() const {
-	double_vector rb_effective = bgrid;
-	rb_effective = rb_effective.unaryExpr([this](double x) {
+	double_vector rb_effective, bvec = bgrid;
+	rb_effective = bvec.unaryExpr([this](double x) {
 			return (x >= 0.0) ? p.rb : p.rborr;
 		});
 	rb_effective = rb_effective.array() + p.perfectAnnuityMarkets * p.deathrate;

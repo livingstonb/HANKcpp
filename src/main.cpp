@@ -58,6 +58,7 @@ int main () {
 	params.rho = 0.01;
 	params.drs_N = 0;
 	params.drs_Y = 1;
+	params.borrowing = true;
 	// params.na = 25;
 	// params.nb_pos = 25;
 	// params.depreciation = 0.001;
@@ -66,7 +67,6 @@ int main () {
 	global_params_ptr = &params;
 
 	Model model = Model(params, income_dir);
-	// global_model_ptr = &model;
 
 	// guess rho, chi,labor_occ, capital, and rb
 	double x[params.nocc+4];

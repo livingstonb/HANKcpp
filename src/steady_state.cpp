@@ -62,9 +62,7 @@ void SteadyState::set(const double x[], SSType mode) {
 }
 
 void SteadyState::compute(SSType mode) {
-	ArrayXd elabshareY(p.nocc);
-	ArrayXd elabshareN(p.nocc);
-	ArrayXd elabfracY, elabfracN;
+	ArrayXd elabshareY, elabshareN, elabfracY, elabfracN;
 
 	elabshareY = (1.0 - p.alpha_Y) * price_W * p.drs_Y * model.occYsharegrid;
 	elabshareN = (1.0 - p.alpha_N) * (1.0 - price_W) * p.drs_N * model.occNsharegrid;

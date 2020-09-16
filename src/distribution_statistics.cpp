@@ -137,5 +137,6 @@ void DistributionStatistics::print() {
 	print_result("E[nw]", Enetworth);
 	print_result("E[a]", Ea);
 	print_result("E[b]", Eb);
+	print_result("Median(a)", a_pctiles[5]);
 	std::cout << "--------------------------\n";
 }

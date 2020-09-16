@@ -109,7 +109,7 @@ namespace {
 			}
 
 			gmass = gmat.col(iy).dot(abdelta);
-			gmat.col(iy) = p_y * gmat.col(iy) / gmass;
+			gmat.col(iy) *= p_y / gmass;
 		}
 
 		return gmat;

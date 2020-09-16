@@ -103,10 +103,6 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 
 	double gbdrift, gnetwage, idioscale, illiq, labdisutil;
 	bool worth_adjusting;
-	const double prof_common = p.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
-
-	bool labor_is_ghh = (p.laborsupply == LaborType::ghh);
-	const bool scale_wrt_ss = (!p.scaleDisutilityIdio) & p.prodispshock & labor_is_ghh;
 
 	double prof_keep;
 	if ( p.taxHHProfitIncome )
@@ -114,10 +110,12 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 	else
 		prof_keep = 1.0;
 
-	double_vector profW = prof_keep * p.profdistfracW
+	ArrayXd proftot = prof_keep * p.profdistfracW
 			* (1.0 - p.corptax) * ss.profit * model.profsharegrid.array();
+	proftot += p.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
 
 	double_vector bdrift = model.get_rb_effective().array() * model.bgrid.array();
+	// double_vector adrift = (p.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
 
 	std::function<Upwinding::ConUpwind(double, double, double, double)> opt_c;
 	if ( p.laborsupply == LaborType::none ) {
@@ -143,9 +141,9 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 			for (int iy=0; iy<p.ny; ++iy) {
 				derivs = compute_derivatives(ia, ib, iy);
 
-				idioscale = 1.0;
+				idioscale = 1; // model.yprodgrid(iy);
 
-				gbdrift = bdrift(ib) + prof_common + profW(iy);
+				gbdrift = bdrift(ib) + proftot(iy);
 				gnetwage = ss.netwagegrid[iy];
 
 				// CONSUMPTION UPWINDING
@@ -194,10 +192,10 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 				// Deposit decision: a backward, b backward
 				if ( ia > 0 ) {
 					if ( ib == 0 ) {
-						labdisutil = idioscale * model.labdisutil(upwindB.h, chi);
-
-						if ( p.laborsupply == LaborType::ghh )
+						if ( p.laborsupply == LaborType::ghh ) {
+							labdisutil = idioscale * model.labdisutil(upwindB.h, chi);
 							derivs.VbB = model.util1(upwindB.c - labdisutil / p.labwedge);
+						}
 						else
 							derivs.VbB = model.util1(upwindB.c);
 					}
@@ -278,20 +276,20 @@ Upwinding::ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift
 	Upwinding::ConUpwind upwind;
 
 	if ( !is_stationary_pt_or_limit(Vb) ) {
-		upwind.h = model.labdisutil1inv(p.labwedge * netwage * Vb / idioscale, chi);
+		upwind.h = model.labdisutil1inv(p.labwedge * netwage * Vb, chi);
 	}
 	else {
 		upwind.s = 0.0;
-		const double hmin = fmax(-bdrift / netwage + 1.0e-5, 0.0);
-		const double hmax = ( p.imposeMaxHours ) ? 1 : 100;
-		const double v1_at_min = model.util1BC(hmin, chi, bdrift, netwage, idioscale);
-		const double v1_at_max = model.util1BC(hmax, chi, bdrift, netwage, idioscale);
+		double hmin = fmax(-bdrift / netwage + 1.0e-5, 0.0);
+		double hmax = ( p.imposeMaxHours ) ? 1 : 100;
+		double v1_at_min = model.util1BC(hmin, chi, bdrift, netwage, idioscale);
+		double v1_at_max = model.util1BC(hmax, chi, bdrift, netwage, idioscale);
 
 		if ( (v1_at_max > 0) & (v1_at_min < 0) ) {
 			std::function<double(double)> objective = [=] (double h) {
 				return model.util1BC(h, chi, bdrift, netwage, idioscale);
 			};
-			const double facc = 1.0e-8;
+			double facc = 1.0e-8;
 			upwind.h = HankNumerics::rtsec(objective, hmin, hmax, facc);
 		}
 		else if ( v1_at_max <= 0.0 )
