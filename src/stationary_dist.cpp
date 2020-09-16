@@ -41,9 +41,9 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 		B[iy] = A.transpose();
 
 		// Adjust A' matrix for non-linearly spaced grids
-		B[iy] = inv_abdelta.asDiagonal() * B[iy];
-		B[iy] = -delta * B[iy] * abdelta.asDiagonal();
-		B[iy] = B[iy] + speye(p.na * p.nb) * (1.0 + delta * p.deathrate - delta * model.ymarkovdiag(iy,iy));
+		B[iy] = inv_abdelta.asDiagonal() * B[iy] * abdelta.asDiagonal();
+		B[iy] *= -delta;
+		B[iy] += speye(p.na * p.nb) * (1.0 + delta * p.deathrate - delta * model.ymarkovdiag(iy,iy));
 		B[iy].makeCompressed();
 
 		spsolvers[iy].compute(B[iy]);
@@ -57,7 +57,7 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 	while ( (diff > gtol) & (ii < maxiter) ) {
 		for (int iy=0; iy<p.ny; ++iy) {
 			double_vector lgmat = gmat * double_vector(lmat.row(iy));
-			lgmat(iabx) = lgmat(iabx) + delta * p.deathrate * gmat.col(iy).dot(abdelta) / abdelta(iabx);
+			lgmat(iabx) += delta * p.deathrate * gmat.col(iy).dot(abdelta) / abdelta(iabx);
 
 			gmat_update.col(iy) = spsolvers[iy].solve(lgmat);
 			if ( spsolvers[iy].info() != Eigen::Success )
@@ -99,7 +99,6 @@ namespace {
 			}
 			else if ( (p.deathrate == 0.0) & p.borrowing ) {
 				gmat.as3d(0, p.nb_neg+1, iy) = p_y;
-				gmat.as3d(1, p.nb_neg+1, iy) = p_y;
 			}
 			else if ( p.borrowing ) {
 				gmat.as3d(0, p.nb_neg, iy) = p_y;

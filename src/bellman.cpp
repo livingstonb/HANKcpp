@@ -11,6 +11,7 @@
 #include <transition_matrix.h>
 
 #include <algorithm>
+#include <math.h>
 
 #define TO_INDEX_1D(a, b, na) ((a) + (na) * (b))
 
@@ -54,7 +55,8 @@ namespace {
 		Upwinding::DepositUpwind dupwind;
 
 		dupwind.d = model.adjcosts.cost1inv(Va / Vb - 1.0, a);
-		dupwind.d = fmin(dupwind.d, model.p.dmax);
+		// dupwind.d = fmin(dupwind.d, model.p.dmax);
+		// dupwind.d = fmax(dupwind.d, -model.p.dmax);
 
 		dupwind.Hd = Va * dupwind.d - Vb * (dupwind.d + model.adjcosts.cost(dupwind.d, a));
 		return dupwind;

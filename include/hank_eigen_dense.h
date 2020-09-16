@@ -95,7 +95,7 @@ map_type to_eigen(T& arr, int n, int m) {
 }
 
 template<typename V>
-V as_eigen(std::vector<double>& arr) {
+V as_eigen(const std::vector<double>& arr) {
 	V out(arr.size());
 
 	for (unsigned int i=0; i<arr.size(); ++i)
@@ -105,7 +105,7 @@ V as_eigen(std::vector<double>& arr) {
 }
 
 template<typename V>
-V as_eigen(StdVector3d<double>& arr) {
+V as_eigen(const StdVector3d<double>& arr) {
 	return as_eigen<V>(arr.vector);
 }
 
@@ -115,8 +115,25 @@ VectorXd cumsum(const T& arr) {
 	double val = 0.0;
 
 	for (unsigned int i=0; i<arr.size(); ++i) {
-		val += arr[i];
+		val += arr(i);
 		out[i] = val;
+	}
+
+	return out;
+}
+
+template<typename T>
+MatrixXd repmat(const T& arr, int n, int m) {
+	MatrixXd out(arr.rows() * n, arr.cols() * m);
+
+	int ii = 0;
+	for (int in=0; in<n; ++in) {
+		int jj = 0;
+		for (int jm=0; jm<m; ++jm) {
+			out.block(ii, jj, arr.rows(), arr.cols()) = arr;
+			jj += arr.cols();
+		}
+		ii += arr.rows();
 	}
 
 	return out;

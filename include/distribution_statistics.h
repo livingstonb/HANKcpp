@@ -28,11 +28,6 @@ class DistributionStatistics {
 		DistributionStatistics(const Parameters& p, const Model& model,
 			const HJB& hjb, const StationaryDist& sdist);
 
-		void compute_moments(const Upwinding::Policies& policies, const DistStruct& grids);
-
-		void compute_pctiles(const Upwinding::Policies& policies, const DistStruct& grids,
-			const Model& model);
-
 		void print();
 
 		double Ehours, Ea, Eb, Enetworth;

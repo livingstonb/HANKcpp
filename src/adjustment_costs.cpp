@@ -3,9 +3,12 @@
 
 AdjustmentCosts::AdjustmentCosts(AdjustCostFnRatioMode mode_, bool exponential_costs_,
 	double kappa_w_fc_, double kappa_d_fc_, const std::array<double, 5>& kappa_w_,
-	const std::array<double, 5>& kappa_d_)
+	const std::array<double, 5>& kappa_d_, double adjcost1max_, double dmax_)
 	: mode(mode_), exponential_costs(exponential_costs_),
 		kappa_w_fc(kappa_w_fc_), kappa_d_fc(kappa_d_fc_), kappa_w(kappa_w_), kappa_d(kappa_d_) {
+
+	dmax = dmax_;
+	adjcost1max = adjcost1max_;
 
 	if ( exponential_costs ) {
 		cost = [this](double d, double a) {return cost_fn_exponential(d, a);};
@@ -79,9 +82,9 @@ double AdjustmentCosts::cost_deriv_exponential(double d, double a) const {
 double AdjustmentCosts::cost_deriv_other(double d, double a) const {
 	double x = scale_factor(a) * d;
 
-	if ( x == 0 )
+	if ( d == 0 )
 		return 0;
-	else if ( x > 0 )
+	else if ( d > 0 )
 		return kappa_d[0] + pow(x / kappa_d[1], kappa_d[2]);
 	else
 		return -kappa_w[0] - pow(-x / kappa_w[1], kappa_w[2]);
@@ -89,6 +92,12 @@ double AdjustmentCosts::cost_deriv_other(double d, double a) const {
 
 double AdjustmentCosts::cost_deriv_inv_exponential(double chi, double a) const {
 	double scale = scale_factor(a);
+	
+	if ( chi > adjcost1max )
+		return dmax / scale;
+	else if ( chi < -adjcost1max )
+		return -dmax / scale;
+
 	if ( chi == 0 )
 		return 0;
 	else if ( chi > 0 )
@@ -99,6 +108,12 @@ double AdjustmentCosts::cost_deriv_inv_exponential(double chi, double a) const {
 
 double AdjustmentCosts::cost_deriv_inv_other(double chi, double a) const {
 	double scale = scale_factor(a);
+
+	if ( chi > adjcost1max )
+		return dmax / scale;
+	else if ( chi < -adjcost1max )
+		return -dmax / scale;
+
 	if ( (chi >= -kappa_w[0]) & (chi <= kappa_d[0]) )
 		return 0;
 	else if ( chi > kappa_d[0] )

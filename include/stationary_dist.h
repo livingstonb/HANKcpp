@@ -17,13 +17,15 @@ class StationaryDist {
 
 		void compute(const Model& model, const SteadyState& ss, const HJB& hjb);
 
+		void transform();
+
 		StdVector3d<double> density;
 
 		int dispfreq = 50;
 
 		double delta = 1.0e6;
 
-		double gtol = 1.0e-12;
+		double gtol = 1.0e-8;
 
 		int maxiter = 2000;
 };

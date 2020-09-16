@@ -22,7 +22,7 @@ class Parameters {
 		int na = 40;
 		double amin = 0.0;
 		double acurv = 0.15;
-		double amax = 1000;
+		double amax = 100;
 
 		// bgrid
 		int nb_pos = 40;
@@ -62,9 +62,9 @@ class Parameters {
 
 		// --- OTHER FIRM-SIDE PARAMETERS ---
 		bool taxHHProfitIncome = true;
-		double profdistfracA = 1.0; // Fraction of profits to illiquid equity (set to alpha)
+		double profdistfracA = 0.333; // Fraction of profits to illiquid equity (set to alpha)
 		double profdistfracB = 0.0;
-		double profdistfracW = 0.0;
+		double profdistfracW = 0.667;
 		double profdistfracL = 0.0;
 		double priceadjcost = 100.0;
 
@@ -78,8 +78,8 @@ class Parameters {
 		double kappa_w_fc = 0.0;
 		std::array<double, 5> kappa_w = {
 			0.0, // kappa0_w
-			0.04336, // kappa1_w
-			0.15, // kappa2_w
+			0.00001, // kappa1_w
+			0.0001, // kappa2_w
 			0.01, // kappa3_w
 			0.0 // kappa4_w
 		};

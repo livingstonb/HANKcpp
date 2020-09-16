@@ -46,8 +46,14 @@ ModelBase::ModelBase(const Parameters p, const std::string& income_dir) {
 
 	check_nbl(p);
 
+	double adjcost1max = 1.0e30;
+
+	AdjustmentCosts adjcosts_initial(p.adjCostRatioMode, p.exponential_adjcosts,
+		p.kappa_w_fc, p.kappa_d_fc, p.kappa_w, p.kappa_d, adjcost1max, p.dmax);
+
+	adjcost1max = adjcosts_initial.cost1(p.dmax, 1.0);
 	adjcosts_ = std::move(AdjustmentCosts(p.adjCostRatioMode, p.exponential_adjcosts,
-		p.kappa_w_fc, p.kappa_d_fc, p.kappa_w, p.kappa_d));
+		p.kappa_w_fc, p.kappa_d_fc, p.kappa_w, p.kappa_d, adjcost1max, p.dmax));
 }
 
 void ModelBase::make_asset_grids(const Parameters& p) {
