@@ -9,7 +9,7 @@ MKL=-I$(MKLR)/include -DMKL_ILP64 -m64 -I/media/hdd/lib/intel/mkl/include -L/med
 SSFLAGS=-I/media/hdd/lib/SuiteSparse/include -L/media/hdd/lib/SuiteSparse/lib
 CFLAGS=-O3 -pg -c -W -Wall -g3 -I$(shell pwd) -I$(shell pwd)/include -I$(shell pwd)/src
 SOURCES=parameters model steady_state adjustment_costs utilities hank_numerics upwinding bellman \
-	transition_matrix stationary_dist distribution_statistics
+	transition_matrix stationary_dist distribution_statistics minpack
 SOURCES:=$(addsuffix .cpp, $(SOURCES))
 MAIN=main.cpp
 SOURCEDIR=src

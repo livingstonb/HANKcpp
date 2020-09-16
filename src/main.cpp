@@ -11,16 +11,52 @@
 #include <utilities.h>
 #include <math.h>
 
+#include <minpack.h>
+
+Parameters *global_params_ptr = NULL;
+
 Model *global_model_ptr = NULL;
 
 SteadyState *global_iss_ptr = NULL;
 
-void find_initial_steady_state(int n, double *x, double *fvec, int *iflag) {
+// void find_initial_steady_state(int n, double *x, double *fvec, int *iflag) {
+// 	SteadyState& iss = *global_iss_ptr;
+
+// 	global_iss_ptr->set(x, SteadyState::SSType::initial);
+// 	global_iss_ptr->compute(SteadyState::SSType::initial);
+
+// 	HJB hjb(*global_model_ptr, *global_iss_ptr);
+// 	hjb.iterate(*global_iss_ptr);
+
+// 	StationaryDist sdist;
+// 	sdist.compute(*global_model_ptr, *global_iss_ptr, hjb);
+
+// 	DistributionStatistics stats(*global_params_ptr, *global_model_ptr, hjb, sdist);
+// 	stats.print();
+
+// 	fvec[0] = stats.Ea / (iss.capital + iss.equity_A) - 1.0;
+// 	for (int i=1; i<global_params_ptr->nocc+4; ++i)
+// 		fvec[i] = 0.2;
+// }
+
+void find_initial_steady_state(int n, double x[], double fvec[], int &iflag) {
+	SteadyState& iss = *global_iss_ptr;
+
 	global_iss_ptr->set(x, SteadyState::SSType::initial);
 	global_iss_ptr->compute(SteadyState::SSType::initial);
 
 	HJB hjb(*global_model_ptr, *global_iss_ptr);
 	hjb.iterate(*global_iss_ptr);
+
+	StationaryDist sdist;
+	sdist.compute(*global_model_ptr, *global_iss_ptr, hjb);
+
+	DistributionStatistics stats(*global_params_ptr, *global_model_ptr, hjb, sdist);
+	stats.print();
+
+	fvec[0] = stats.Ea / (iss.capital + iss.equity_A) - 1.0;
+	for (int i=1; i<global_params_ptr->nocc+4; ++i)
+		fvec[i] = 0.2;
 }
 
 int main () {
@@ -38,6 +74,7 @@ int main () {
 	// params.depreciation = 0.001;
 	params.rb = 0.001 / 4.0;
 	params.setup(options);
+	global_params_ptr = &params;
 
 	Model model = Model(params, income_dir);
 	global_model_ptr = &model;
@@ -69,7 +106,15 @@ int main () {
 	// DistributionStatistics stats(params, model, hjb, sdist);
 	// stats.print();
 
-	double *fvec = NULL;
-	int *iflag = NULL;
-	find_initial_steady_state(1, x, fvec, iflag);
+	int n = params.nocc + 4;
+	double fvec[n];
+	double tol = 1.0e-9;
+
+	int lwa = n * (3 * n + 13);
+	double wa[lwa];
+
+	int iflag = 0;
+	// find_initial_steady_state(1, x, fvec, iflag);
+
+	hybrd1(find_initial_steady_state, n, x, fvec, tol, wa, lwa);
 }

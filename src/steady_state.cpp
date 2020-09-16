@@ -48,7 +48,7 @@ SteadyState::SteadyState(const Parameters& p_, const Model& model_) : model(mode
 	target_KY_ratio = compute_ss_capital_output_ratio(p, price_W);
 }
 
-void SteadyState::set(const double *x, SSType mode) {
+void SteadyState::set(const double x[], SSType mode) {
 	if ( mode == SSType::initial ) {
 		// Guess rho and labor occ, and chi
 		rho = exp(x[0]);
