@@ -115,7 +115,6 @@ void ModelBase::make_occupation_grids(const Parameters& p) {
 		throw "Not coded";
 	}
 	nocc_ = p.nocc;
-
 }
 
 void ModelBase::create_income_process(

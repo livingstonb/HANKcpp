@@ -3,6 +3,27 @@
 #include <vector>
 #include <math.h>
 
+namespace {
+
+	double quadratic_formula(double a, double b, double c) {
+		return (-b + sqrt(pow(b, 2.0) - 4.0 * a * c)) / (2.0 * a);
+	}
+
+	double compute_ss_capital_output_ratio(const Parameters& p, double price_W) {
+		double la, lb, lc;
+
+		la = -p.depreciation;
+		lb = p.targetMeanIll * p.depreciation + price_W * p.alpha_Y * p.drs_Y
+			+ (1.0 - price_W) * p.alpha_N * p.drs_N
+			+ (price_W * (1.0 - p.drs_Y) + (1.0 - price_W) * (1.0 - p.drs_N))
+				* (1.0 - p.corptax) * p.profdistfracA;
+		lc = -p.targetMeanIll
+			* (price_W * p. alpha_Y * p. drs_Y + (1.0 - price_W) * p.alpha_N * p.drs_N);
+
+		return quadratic_formula(la, lb, lc);
+	}
+}
+
 void Parameters::setup(const Options& opts) {
 
 	if ( opts.fast ) {
@@ -41,4 +62,8 @@ void Parameters::setup(const Options& opts) {
 			// Leave deposit adj cost parameters at current values
 			break;
 	}
+
+	double price_W = 1.0 - 1.0 / elast;
+	target_KY_ratio = compute_ss_capital_output_ratio(*this, price_W);
+	chi = meanlabeff / (pow(0.7, -riskaver) * pow(hourtarget, 1.0 / frisch));
 };

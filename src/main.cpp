@@ -29,14 +29,16 @@ int main () {
 
 	Model model = Model(params, income_dir);
 
-	// guess rho, chi and labor_occ
+	// guess rho, chi,labor_occ, capital, and rb
 	double chi = 0.5;
-	std::vector<double> x(params.nocc+2);
+	std::vector<double> x(params.nocc+4);
 	x[0] = log(params.rho);
 	for (int io=0; io<params.nocc; ++io)
 		x[io+1] = params.hourtarget * params.meanlabeff * model.occdist[io];
 
-	x[params.nocc+1] = chi;
+	x[params.nocc+1] = params.target_KY_ratio;
+	x[params.nocc+2] = log(params.rb);
+	x[params.nocc+3] = chi;
 
 	SteadyState iss(params, model);
 	iss.set(x, SteadyState::SSType::initial);

@@ -52,7 +52,7 @@ class SteadyState {
 
 		double wage_Y, wage_N, mc_Y, mc_N;
 
-		double ra, dividend_A, dividend_B, equity_A, equity_B;
+		double rb, ra, dividend_A, dividend_B, equity_A, equity_B;
 
 		std::vector<double> netwagegrid;
 

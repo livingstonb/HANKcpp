@@ -54,15 +54,17 @@ void SteadyState::set(const std::vector<double>& x, SSType mode) {
 		rho = exp(x[0]);
 		labor_occ.resize(p.nocc);
 		std::copy(x.begin()+1, x.begin()+p.nocc+1, labor_occ.begin());
-		capital = p.targetMeanIll;
-		chi = x[p.nocc+1];
+		capital = x[p.nocc+1];
+		rb = exp(x[p.nocc+2]);
+		chi = x[p.nocc+3];
 	}
 	else if ( mode == SSType::final ) {
 	}
 }
 
 void SteadyState::compute(SSType mode) {
-	ArrayXd elabshareY, elabshareN;
+	ArrayXd elabshareY(p.nocc);
+	ArrayXd elabshareN(p.nocc);
 	ArrayXd elabfracY, elabfracN;
 
 	elabshareY = (1.0 - p.alpha_Y) * price_W * p.drs_Y * model.occYsharegrid;
@@ -162,7 +164,7 @@ void SteadyState::compute_dividends() {
 	dividend_A = p.profdistfracA * profit * (1.0 - p.corptax);
 	dividend_B = p.profdistfracB * profit * (1.0 - p.corptax);
 	equity_A = dividend_A / ra;
-	equity_B = dividend_B / p.rb;
+	equity_B = dividend_B / rb;
 }
 
 void SteadyState::compute_govt() {

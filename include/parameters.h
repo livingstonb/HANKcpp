@@ -109,6 +109,8 @@ class Parameters {
 		double lumptransfer = 0.05;
 		bool prodispshock = false;
 		AdjustCostFnRatioMode adjCostRatioMode = AdjustCostFnRatioMode::max;
+		double target_KY_ratio;
+		double chi;
 
 		// --- OTHER SOLUTION PARAMETERS ---
 		double cmin = 1.0e-5;
@@ -118,6 +120,10 @@ class Parameters {
 		// --- CALIBRATION TARGETS ---
 		double targetMeanIll = 11.68;
 		double targetMeanLiq = 0.8;
+		bool targetMedianIllWealth = false;
+		bool targetMedianLiqWealth = true;
+		bool calibrateLaborDisutility = true;
+		bool calibrateRb = true;
 
 		// number of time periods
 		int Ttransition = 200;
