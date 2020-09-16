@@ -13,6 +13,8 @@ class Parameters {
 
 		void setup(const Options& opts);
 
+		void update();
+
 		bool Borrowing = true;
 
 		// --- GRIDS ---

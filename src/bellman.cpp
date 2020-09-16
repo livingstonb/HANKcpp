@@ -92,7 +92,7 @@ void HJB::iterate(const SteadyState& ss) {
 
 Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 	ValueFnDerivatives derivs;
-	double chi = ss.chi;
+	double chi = p.chi;
 
 	Upwinding::ConUpwind upwindB, upwindF, upwind0, upwindBad;
 	upwindBad.s = 0.0;
@@ -389,12 +389,16 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 
 		sparse_solver solver;
 		solver.compute(B);
-		if ( solver.info() != Eigen::Success )
-			throw "Sparse solver failure";
+		if ( solver.info() != Eigen::Success ) {
+			std::cerr << "Sparse solver failure" << '\n';
+			throw 0;
+		}
 
 		double_vector v_vec = solver.solve(bvec);
-		if ( solver.info() != Eigen::Success )
-			throw "Sparse solver failure";
+		if ( solver.info() != Eigen::Success ) {
+			std::cerr << "Sparse solver failure" << '\n';
+			throw 0;
+		}
 
 		for (int ia=0; ia<p.na; ++ia)
 			for (int ib=0; ib<p.nb; ++ib)

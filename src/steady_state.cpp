@@ -51,15 +51,11 @@ SteadyState::SteadyState(const Parameters& p_, const Model& model_) : model(mode
 void SteadyState::set(const double x[], SSType mode) {
 	if ( mode == SSType::initial ) {
 		// Guess rho and labor occ, and chi
-		rho = exp(x[0]);
-
 		labor_occ.clear();
 		for (int io=0; io<p.nocc; ++io)
 			labor_occ.push_back(x[io+1]);
 
 		capital = x[p.nocc+1];
-		rb = exp(x[p.nocc+2]);
-		chi = x[p.nocc+3];
 	}
 	else if ( mode == SSType::final ) {
 	}
@@ -167,7 +163,7 @@ void SteadyState::compute_dividends() {
 	dividend_A = p.profdistfracA * profit * (1.0 - p.corptax);
 	dividend_B = p.profdistfracB * profit * (1.0 - p.corptax);
 	equity_A = dividend_A / ra;
-	equity_B = dividend_B / rb;
+	equity_B = dividend_B / p.rb;
 }
 
 void SteadyState::compute_govt() {

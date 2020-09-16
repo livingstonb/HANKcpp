@@ -66,4 +66,9 @@ void Parameters::setup(const Options& opts) {
 	double price_W = 1.0 - 1.0 / elast;
 	target_KY_ratio = compute_ss_capital_output_ratio(*this, price_W);
 	chi = meanlabeff / (pow(0.7, -riskaver) * pow(hourtarget, 1.0 / frisch));
-};
+}
+
+void Parameters::update() {
+	rborr = rb + borrwedge;
+	target_KY_ratio = compute_ss_capital_output_ratio(*this, 1.0 - 1.0 / elast);
+}

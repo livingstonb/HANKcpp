@@ -14,15 +14,17 @@
 #include <minpack.h>
 
 Parameters *global_params_ptr = NULL;
-
-Model *global_model_ptr = NULL;
-
-SteadyState *global_iss_ptr = NULL;
+std::string income_dir = "2point_3_5";
 
 void find_initial_steady_state(int n, double x[], double fvec[], int &iflag) {
 	Parameters& p = *global_params_ptr;
-	Model& model = *global_model_ptr;
-	// SteadyState& iss = *global_iss_ptr;
+
+	p.rho = exp(x[0]);
+	p.rb = exp(x[p.nocc+2]);
+	p.chi = x[p.nocc+3];
+	p.update();
+
+	Model model = Model(p, income_dir);
 
 	SteadyState iss(p, model);
 	iss.set(x, SteadyState::SSType::initial);
@@ -65,10 +67,9 @@ int main () {
 	global_params_ptr = &params;
 
 	Model model = Model(params, income_dir);
-	global_model_ptr = &model;
+	// global_model_ptr = &model;
 
 	// guess rho, chi,labor_occ, capital, and rb
-	double chi = 0.5;
 	double x[params.nocc+4];
 	x[0] = log(params.rho);
 	for (int io=0; io<params.nocc; ++io)
@@ -76,23 +77,7 @@ int main () {
 
 	x[params.nocc+1] = params.target_KY_ratio;
 	x[params.nocc+2] = log(params.rb);
-	x[params.nocc+3] = chi;
-
-	// SteadyState iss(params, model);
-	// global_iss_ptr = &iss;
-
-	// iss.set(x, SteadyState::SSType::initial);
-	// iss.compute(SteadyState::SSType::initial);
-
-	
-	// HJB hjb(model, iss);
-	// hjb.iterate(iss);
-
-	// StationaryDist sdist;
-	// sdist.compute(model, iss, hjb);
-
-	// DistributionStatistics stats(params, model, hjb, sdist);
-	// stats.print();
+	x[params.nocc+3] = params.chi;
 
 	int n = params.nocc + 4;
 	double fvec[n];
@@ -100,9 +85,5 @@ int main () {
 
 	int lwa = n * (3 * n + 13);
 	double wa[lwa];
-
-	int iflag = 0;
-	// find_initial_steady_state(1, x, fvec, iflag);
-
 	hybrd1(find_initial_steady_state, n, x, fvec, tol, wa, lwa);
 }
