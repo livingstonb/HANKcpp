@@ -38,7 +38,7 @@ namespace {
 	}
 }
 
-ModelBase::ModelBase(const Parameters p, const std::string& income_dir) {
+ModelBase::ModelBase(const Parameters& p, const std::string& income_dir) {
 	make_asset_grids(p);
 	make_occupation_grids(p);
 	create_income_process(income_dir, p);
@@ -191,7 +191,7 @@ void ModelBase::check_nbl(const Parameters& p) const {
 	}
 }
 
-Model::Model(const Parameters p_, const std::string& income_dir)
+Model::Model(const Parameters& p_, const std::string& income_dir)
 	: ModelBase(p_, income_dir), p(p_), dims({p_.na, p_.nb, p_.ny}) {};
 
 double_vector Model::get_rb_effective() const {

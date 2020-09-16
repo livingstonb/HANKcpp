@@ -17,13 +17,14 @@ namespace {
 	}
 
 	VectorXi sort_by_values(VectorXd& vals, VectorXd& dist) {
+		assert(vals.size() == dist.size());
 		std::vector<std::pair<int, double>> zipped(vals.size());
 		VectorXi indices(vals.size());
 		for (unsigned int i=0; i<vals.size(); ++i)
-			zipped.push_back(std::make_pair(i, vals[i]));
+			zipped[i] = std::make_pair(i, vals[i]);
 
 		std::sort(zipped.begin(), zipped.end(),
-			[](auto a, auto b) {return a.second > b.second;});
+			[](auto a, auto b) {return a.second < b.second;});
 
 		VectorXd vcopy = vals;
 		VectorXd dcopy = dist;
@@ -93,8 +94,8 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 		for (int ib=0; ib<p.nb; ++ib) {
 			iab = TO_INDEX_1D(ia, ib, p.na);
 			for (int iy=0; iy<p.ny; ++iy) {
-				p_ay(ia, iy) += gdistmat(iab, iy) * model.bdelta(ib);
-				p_by(ib, iy) += gdistmat(iab, iy) * model.adelta(ia);
+				p_ay(ia, iy) += gdistmat(iab, iy) * abdelta(iab);
+				p_by(ib, iy) += gdistmat(iab, iy) * abdelta(iab);
 			}
 		}
 	}
@@ -106,9 +107,9 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 	VectorXd pcum_b = cumsum(p_b);
 
 	// Marginal distribution over net worth
-	VectorXd nw_grid = nw_aby.col(1);
-	VectorXd g_nwy = gdistvec;
-	VectorXi nw_order = sort_by_values(nw_grid, g_nwy);
+	VectorXd nw_grid = nw_aby.col(0);
+	VectorXd g_nw = gdistmat.rowwise().sum();
+	VectorXi nw_order = sort_by_values(nw_grid, g_nw);
 
 	VectorXd nwdelta(nab);
 	nwdelta(seq(0, nab-2)) = 0.5 * (nw_grid(seq(1, nab-1)) - nw_grid(seq(0, nab-2)));

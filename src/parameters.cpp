@@ -34,8 +34,10 @@ void Parameters::setup(const Options& opts) {
 
 	if ( borrowing )
 		nb = nb_pos + nb_neg;
-	else
+	else {
 		nb = nb_pos;
+		nb_neg = 0;
+	}
 
 	ny = nprod * nocc;
 	naby = na * nb * ny;

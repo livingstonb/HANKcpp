@@ -11,7 +11,7 @@
 // Constructs the grids and provides a container with public attribute access
 class ModelBase {
 	public:
-		ModelBase(const Parameters p, const std::string& income_dir);
+		ModelBase(const Parameters& p, const std::string& income_dir);
 
 		double_vector bgrid_, dbgrid_, bdelta_;
 		double_vector agrid_, dagrid_, adelta_;
@@ -42,7 +42,7 @@ class ModelBase {
 // Binds the attributes constructed in ModelBase to const references
 class Model : private ModelBase {
 	public:
-		Model(const Parameters p_, const std::string& income_dir);
+		Model(const Parameters& p_, const std::string& income_dir);
 
 		const Parameters p;
 		const AdjustmentCosts& adjcosts = adjcosts_;
@@ -89,7 +89,7 @@ class Model : private ModelBase {
 
 		double labdisutil(double h, double chi) const;
 
-		double labdisutil1(double u, double chi) const;
+		double labdisutil1(double h, double chi) const;
 
 		double labdisutil1inv(double du, double chi) const;
 

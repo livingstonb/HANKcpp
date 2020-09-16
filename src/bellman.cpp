@@ -113,7 +113,7 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 		prof_keep = 1.0;
 
 	ArrayXd proftot = prof_keep * p.profdistfracW
-			* (1.0 - p.corptax) * ss.profit * model.profsharegrid.array();
+		* (1.0 - p.corptax) * ss.profit * model.profsharegrid.array();
 	proftot += p.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
 
 	double_vector bdrift = model.get_rb_effective().array() * model.bgrid.array();
