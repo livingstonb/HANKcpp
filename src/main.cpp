@@ -11,6 +11,18 @@
 #include <utilities.h>
 #include <math.h>
 
+Model *global_model_ptr = NULL;
+
+SteadyState *global_iss_ptr = NULL;
+
+void find_initial_steady_state(int n, double *x, double *fvec, int *iflag) {
+	global_iss_ptr->set(x, SteadyState::SSType::initial);
+	global_iss_ptr->compute(SteadyState::SSType::initial);
+
+	HJB hjb(*global_model_ptr, *global_iss_ptr);
+	hjb.iterate(*global_iss_ptr);
+}
+
 int main () {
 	std::string income_dir = "2point_3_5";
 
@@ -28,10 +40,11 @@ int main () {
 	params.setup(options);
 
 	Model model = Model(params, income_dir);
+	global_model_ptr = &model;
 
 	// guess rho, chi,labor_occ, capital, and rb
 	double chi = 0.5;
-	std::vector<double> x(params.nocc+4);
+	double x[params.nocc+4];
 	x[0] = log(params.rho);
 	for (int io=0; io<params.nocc; ++io)
 		x[io+1] = params.hourtarget * params.meanlabeff * model.occdist[io];
@@ -41,15 +54,22 @@ int main () {
 	x[params.nocc+3] = chi;
 
 	SteadyState iss(params, model);
-	iss.set(x, SteadyState::SSType::initial);
-	iss.compute(SteadyState::SSType::initial);
+	global_iss_ptr = &iss;
 
-	HJB hjb(model, iss);
-	hjb.iterate(iss);
+	// iss.set(x, SteadyState::SSType::initial);
+	// iss.compute(SteadyState::SSType::initial);
 
-	StationaryDist sdist;
-	sdist.compute(model, iss, hjb);
+	
+	// HJB hjb(model, iss);
+	// hjb.iterate(iss);
 
-	DistributionStatistics stats(params, model, hjb, sdist);
-	stats.print();
+	// StationaryDist sdist;
+	// sdist.compute(model, iss, hjb);
+
+	// DistributionStatistics stats(params, model, hjb, sdist);
+	// stats.print();
+
+	double *fvec = NULL;
+	int *iflag = NULL;
+	find_initial_steady_state(1, x, fvec, iflag);
 }

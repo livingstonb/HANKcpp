@@ -16,7 +16,7 @@ class SteadyState {
 
 		SteadyState(const Parameters& p_, const Model& model_);
 
-		void set(const std::vector<double>& x, SSType mode);
+		void set(const double *x, SSType mode);
 
 		void compute(SSType mode);
 
@@ -62,7 +62,5 @@ class SteadyState {
 
 		double chi;
 };
-
-
 
 #endif

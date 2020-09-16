@@ -48,12 +48,15 @@ SteadyState::SteadyState(const Parameters& p_, const Model& model_) : model(mode
 	target_KY_ratio = compute_ss_capital_output_ratio(p, price_W);
 }
 
-void SteadyState::set(const std::vector<double>& x, SSType mode) {
+void SteadyState::set(const double *x, SSType mode) {
 	if ( mode == SSType::initial ) {
 		// Guess rho and labor occ, and chi
 		rho = exp(x[0]);
-		labor_occ.resize(p.nocc);
-		std::copy(x.begin()+1, x.begin()+p.nocc+1, labor_occ.begin());
+
+		labor_occ.clear();
+		for (int io=0; io<p.nocc; ++io)
+			labor_occ.push_back(x[io+1]);
+
 		capital = x[p.nocc+1];
 		rb = exp(x[p.nocc+2]);
 		chi = x[p.nocc+3];
