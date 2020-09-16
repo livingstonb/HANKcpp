@@ -22,7 +22,7 @@ class Parameters {
 		int na = 40;
 		double amin = 0.0;
 		double acurv = 0.15;
-		double amax = 100.0;
+		double amax = 1000;
 
 		// bgrid
 		int nb_pos = 40;
@@ -47,7 +47,7 @@ class Parameters {
 		bool adjustProdGridFrisch = true;
 		double adjFrischGridFrac = 0.85;
 		double riskaver = 1.0;
-		double rho = 0.01444;
+		double rho = 0.014444;
 		double prefshock = 1.0;
 		LaborType laborsupply = LaborType::sep;
 
@@ -116,13 +116,15 @@ class Parameters {
 
 		// --- OTHER SOLUTION PARAMETERS ---
 		double cmin = 1.0e-5;
-		double dmax = 1.0e10;
+		double dmax = 100;
 		double facc = 1.0e-10;
 
 		// --- CALIBRATION TARGETS ---
 		double targetMeanIll = 11.68;
+		double targetMedianIll = 8.6;
 		double targetMeanLiq = 0.8;
-		bool targetMedianIllWealth = false;
+		double targetMedianLiq = 0.7;
+		bool targetMedianIllWealth = true;
 		bool targetMedianLiqWealth = true;
 		bool calibrateLaborDisutility = true;
 		bool calibrateRb = true;

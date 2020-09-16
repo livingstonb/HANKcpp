@@ -109,4 +109,17 @@ V as_eigen(StdVector3d<double>& arr) {
 	return as_eigen<V>(arr.vector);
 }
 
+template<typename T>
+VectorXd cumsum(const T& arr) {
+	VectorXd out(arr.size());
+	double val = 0.0;
+
+	for (unsigned int i=0; i<arr.size(); ++i) {
+		val += arr[i];
+		out[i] = val;
+	}
+
+	return out;
+}
+
 #endif

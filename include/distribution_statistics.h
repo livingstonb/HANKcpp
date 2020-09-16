@@ -30,11 +30,16 @@ class DistributionStatistics {
 
 		void compute_moments(const Upwinding::Policies& policies, const DistStruct& grids);
 
+		void compute_pctiles(const Upwinding::Policies& policies, const DistStruct& grids,
+			const Model& model);
+
 		void print();
 
 		double Ehours, Ea, Eb, Enetworth;
 
-		std::vector<double> Elabor_occ;
+		std::vector<double> Elabor_occ, a_pctiles, b_pctiles;
+
+		const std::vector<double> pctiles = {0.01, 0.02, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.98, 0.99};
 };
 
 #endif

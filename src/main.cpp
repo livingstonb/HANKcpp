@@ -43,8 +43,7 @@ void find_initial_steady_state(int n, double x[], double fvec[], int &iflag) {
 	for (int io=0; io<p.nocc; ++io)
 		fvec[io+1] = stats.Elabor_occ[io] * model.occdist[io] / iss.labor_occ[io] - 1.0;
 
-	// fvec[p.nocc+1] = stats.a_pctile[5] / p.targetMedianIll - 1.0;
-	fvec[p.nocc+1] = 0.0;
+	fvec[p.nocc+1] = stats.a_pctiles[5] / p.targetMedianIll - 1.0;
 	fvec[p.nocc+2] = stats.Eb / p.targetMeanLiq - 1.0;
 	fvec[p.nocc+3] = (stats.Ehours / p.hourtarget - 1.0) / 100.0;
 }
@@ -56,9 +55,9 @@ int main () {
 	options.fast = false;
 
 	Parameters params;
-	params.rho = 0.02;
-	params.drs_N = 0.8;
-	params.drs_Y = 0.9;
+	params.rho = 0.01;
+	params.drs_N = 0;
+	params.drs_Y = 1;
 	// params.na = 25;
 	// params.nb_pos = 25;
 	// params.depreciation = 0.001;

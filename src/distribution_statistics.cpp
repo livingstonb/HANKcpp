@@ -6,6 +6,7 @@
 #include <upwinding.h>
 #include <iostream>
 #include <algorithm>
+#include <hank_numerics.h>
 
 #define TO_INDEX_1D(a, b, na) ((a) + (na) * (b))
 
@@ -23,6 +24,9 @@ class DistributionStatistics::DistStruct {
 				wage(nz, ny), labor(nz, ny), pmass1d(nz) {}
 
 		double_matrix networth, pmass, agrid_ab, bgrid_ab, wage, labor;
+		double_matrix p_ay, p_by; 
+
+		VectorXd p_a, p_b, pcum_a, pcum_b;
 
 		double_vector pmass1d;
 };
@@ -52,7 +56,6 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 				dist_struct.agrid_ab(iab, iy) = model.agrid(ia);
 				dist_struct.bgrid_ab(iab, iy) = model.bgrid(ib);
 				dist_struct.labor(iab, iy) = hjb.optimal_decisions.h(ia, ib, iy) * model.yprodgrid(iy);
-				// dist_struct.wage(iab, iy) = model.yprodgrid(iy) * 
 			}
 		}
 	}
@@ -60,7 +63,27 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 	std::vector<double> density_copy = sdist.density.as_vector();
 	dist_struct.pmass = map_type(density_copy.data(), p.na * p.nb, p.ny).array().colwise() * abdelta.array();
 	dist_struct.pmass1d = map_type_vec(dist_struct.pmass.data(), p.na * p.nb * p.ny);
+
+	double_matrix pmat = map_type(density_copy.data(), p.na * p.nb, p.ny);
+	int dims[] = {p.na, p.nb, p.ny};
+	pmat.set_dims_3d(dims, 3);
+	dist_struct.p_ay = double_matrix::Zero(p.na, p.ny);
+	dist_struct.p_by = double_matrix::Zero(p.nb, p.ny);
+	for (int ia=0; ia<p.na; ++ia) {
+		for (int ib=0; ib<p.nb; ++ib) {
+			for (int iy=0; iy<p.ny; ++iy) {
+				dist_struct.p_ay(ia, iy) += pmat.as3d(ia, ib, iy) * model.bdelta(ib);
+				dist_struct.p_by(ib, iy) += pmat.as3d(ia, ib, iy) * model.adelta(ia);
+			}
+		}
+	}
+	dist_struct.p_a = dist_struct.p_ay.rowwise().sum();
+	dist_struct.p_b = dist_struct.p_by.rowwise().sum();
+	dist_struct.pcum_a = cumsum(dist_struct.p_a);
+	dist_struct.pcum_b = cumsum(dist_struct.p_b);
+
 	compute_moments(hjb.optimal_decisions, dist_struct);
+	compute_pctiles(hjb.optimal_decisions, dist_struct, model);
 }
 
 void DistributionStatistics::compute_moments(
@@ -88,6 +111,22 @@ void DistributionStatistics::compute_moments(
 			pmass_ab = dist_struct.pmass.col(iy);
 			Elabor_occ[io] += labor_ab.dot(pmass_ab);
 			++iy;
+		}
+	}
+}
+
+void DistributionStatistics::compute_pctiles(
+	const Upwinding::Policies& policies, const DistStruct& dist_struct,
+	const Model& model) {
+
+	// Illiquid wealth
+	for (auto pval : pctiles) {
+		if ( dist_struct.pcum_a[0] >= pval )
+			a_pctiles.push_back(model.agrid[0]);
+		else {
+			double apct = HankNumerics::lininterp1(
+				p.na, dist_struct.pcum_a.data(), model.agrid.data(), pval);
+			a_pctiles.push_back(apct);
 		}
 	}
 }

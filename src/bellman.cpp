@@ -378,7 +378,6 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 			}
 		}
 
-		// sparse_matrix A = construct_A_matrix(ss, policies, iy, kfe);
 		sparse_matrix A = construct_transition_matrix(p, model, ss.ra, policies, iy, kfe);
 
 		// Construct B matrix = I + delta * (rho * I - A)
