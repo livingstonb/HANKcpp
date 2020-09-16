@@ -33,7 +33,7 @@ double rtsec(std::function<double(double)> fn, double x1, double x2, double facc
 		dx = (xl - lrtsec) * f / (f - fl);
 		xl = lrtsec;
 		fl = f;
-		lrtsec = lrtsec + dx;
+		lrtsec += dx;
 		f = fn(lrtsec);
 
 		if (fabs(f) < facc)
