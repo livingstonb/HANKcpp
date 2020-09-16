@@ -70,7 +70,7 @@ double_matrix vector2eigenm(const T& vec, int n, int m)
 
 	for (int i=0; i<n; ++i)
 		for (int j=0; j<m; ++j)
-			out(i, j) = vec[i*m + j];	
+			out(i, j) = vec[i*m + j];
 
 	return out;
 }

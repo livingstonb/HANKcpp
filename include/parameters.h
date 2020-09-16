@@ -97,7 +97,6 @@ class Parameters {
 		// --- OTHER MODEL PARAMETERS ---
 		bool oneAssetNoCapital = false;
 		bool borrowing = true;
-		// Steady state output gap
 		double ssgap = 0.0;
 		double meanlabeff = 1.0;
 		double hourtarget = 1.0 / 3.0;

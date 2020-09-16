@@ -146,7 +146,7 @@ void ModelBase::create_income_process(
 
 	// Normalize mean productivity
 	double lmean = prodgrid_.dot(proddist_);
-	prodgrid_ = p.meanlabeff * prodgrid_ / lmean;
+	prodgrid_ *= p.meanlabeff / lmean;
 }
 
 void ModelBase::create_combined_variables(const Parameters& p) {
@@ -166,7 +166,7 @@ void ModelBase::create_combined_variables(const Parameters& p) {
 			ydist_(iy) = proddist_(ip) * occdist_(io);
 
 			for (int ip2=0; ip2<nprod_; ++ip2) {
-				ymarkov_(iy, io + nocc_ * ip2) = prodmarkov_(ip, ip2);
+				ymarkov_(iy, ip2 + nprod_ * io) = prodmarkov_(ip, ip2);
 			}
 
 			++iy;
