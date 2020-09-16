@@ -9,7 +9,7 @@
 #include <hank_numerics.h>
 #include <utility>
 
-#define TO_INDEX_1D(a, b, na) ((a) + (na) * (b))
+#include <hank_macros.h>
 
 namespace {
 	void print_result(const std::string& expr, double val) {
@@ -37,15 +37,6 @@ namespace {
 
 		return indices;
 	}
-
-	// VectorXd reindex(const VectorXd& vals, const std::vector<int>& index) {
-	// 	VectorXd out = vals;
-
-	// 	for (unsigned int i=0; i<vals.size(); ++i)
-	// 		out[i] = vals[index[i]];
-
-	// 	return out;
-	// }
 }
 
 DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model& model,
@@ -53,22 +44,20 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 
 	const Upwinding::Policies& policies = hjb.optimal_decisions;
 
-	int nz = p.na * p.nb;
-	int nab = nz;
-	ArrayXd abdelta(nz);
+	ArrayXd abdelta(p.nab);
 
-	MatrixXd nw_aby(p.na * p.nb, p.ny);
-	MatrixXd agrid_aby(p.na * p.nb, p.ny);
-	MatrixXd bgrid_aby(p.na * p.nb, p.ny);
-	MatrixXd labor_aby(p.na * p.nb, p.ny);
-	MatrixXd h_aby(p.na * p.nb, p.ny);
+	MatrixXd nw_aby(p.nab, model.ny);
+	MatrixXd agrid_aby(p.nab, model.ny);
+	MatrixXd bgrid_aby(p.nab, model.ny);
+	MatrixXd labor_aby(p.nab, model.ny);
+	MatrixXd h_aby(p.nab, model.ny);
 
 	int iab;
 	for (int ia=0; ia<p.na; ++ia) {
 		for (int ib=0; ib<p.nb; ++ib) {
 			iab = TO_INDEX_1D(ia, ib, p.na);
 			abdelta(iab) = model.adelta(ia) * model.bdelta(ib);
-			for (int iy=0; iy<p.ny; ++iy) {
+			for (int iy=0; iy<model.ny; ++iy) {
 				nw_aby(iab, iy) = model.agrid(ia) + model.bgrid(ib);
 				agrid_aby(iab, iy) = model.agrid(ia);
 				bgrid_aby(iab, iy) = model.bgrid(ib);
@@ -80,20 +69,20 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 
 	// Distribution
 	ArrayXd gdistvec = as_eigen<VectorXd>(sdist.density);
-	MatrixXd gdistmat = Eigen::Map<MatrixXd>(gdistvec.data(), p.na * p.nb, p.ny);
+	MatrixXd gdistmat = Eigen::Map<MatrixXd>(gdistvec.data(), p.nab, model.ny);
 
 	MatrixXd pdistmat = gdistmat.array().colwise() * abdelta;
 	VectorXd pdistvec = eflatten(pdistmat);
 
 	// Joint asset-income distributions
-	MatrixXd p_ay = MatrixXd::Zero(p.na, p.ny);
-	MatrixXd p_by = MatrixXd::Zero(p.nb, p.ny);
+	MatrixXd p_ay = MatrixXd::Zero(p.na, model.ny);
+	MatrixXd p_by = MatrixXd::Zero(p.nb, model.ny);
 
 	iab = 0;
 	for (int ia=0; ia<p.na; ++ia) {
 		for (int ib=0; ib<p.nb; ++ib) {
 			iab = TO_INDEX_1D(ia, ib, p.na);
-			for (int iy=0; iy<p.ny; ++iy) {
+			for (int iy=0; iy<model.ny; ++iy) {
 				p_ay(ia, iy) += gdistmat(iab, iy) * abdelta(iab);
 				p_by(ib, iy) += gdistmat(iab, iy) * abdelta(iab);
 			}
@@ -111,13 +100,13 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 	VectorXd g_nw = gdistmat.rowwise().sum();
 	VectorXi nw_order = sort_by_values(nw_grid, g_nw);
 
-	VectorXd nwdelta(nab);
-	nwdelta(seq(0, nab-2)) = 0.5 * (nw_grid(seq(1, nab-1)) - nw_grid(seq(0, nab-2)));
-	nwdelta(seq(1, nab-1)) += 0.5 * (nw_grid(seq(1, nab-1)) - nw_grid(seq(0, nab-2)));
+	VectorXd nwdelta(p.nab);
+	nwdelta(seq(0, p.nab-2)) = 0.5 * (nw_grid(seq(1, p.nab-1)) - nw_grid(seq(0, p.nab-2)));
+	nwdelta(seq(1, p.nab-1)) += 0.5 * (nw_grid(seq(1, p.nab-1)) - nw_grid(seq(0, p.nab-2)));
 
 	VectorXd p_nw(p.nab);
 	int inw;
-	for (int iab=0; iab<nab; ++iab) {
+	for (int iab=0; iab<p.nab; ++iab) {
 		inw = nw_order(iab);
 		p_nw(iab) = abdelta(inw) * gdistmat.row(inw).sum();
 	}
@@ -135,7 +124,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 	int iy = 0;
 	VectorXd labor_ab, pmass_ab;
 	for (int io=0; io<p.nocc; ++io) {
-		for (int ip=0; ip<p.nprod; ++ip) {
+		for (int ip=0; ip<model.nprod; ++ip) {
 			Elabor_occ[io] += pdistmat.col(iy).dot(labor_aby.col(iy));
 			++iy;
 		}
@@ -165,7 +154,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 			nwpct = nw_grid[0];
 		else
 			nwpct = HankNumerics::lininterp1(
-				nab, pcum_nw.data(), nw_grid.data(), pval);
+				p.nab, pcum_nw.data(), nw_grid.data(), pval);
 		nw_pctiles.push_back(nwpct);
 	}
 }

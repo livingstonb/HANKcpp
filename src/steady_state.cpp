@@ -165,7 +165,7 @@ void SteadyState::compute_dividends() {
 }
 
 void SteadyState::compute_govt() {
-	std::vector<double> wage_occ_rep = repeat(wage_occ, p.nprod);
+	std::vector<double> wage_occ_rep = repeat(wage_occ, model.nprod);
 	ArrayXd wage_occ_ygrid = as_eigen<ArrayXd>(wage_occ_rep);
 	double_vector enetwagegrid = (1.0 - p.labtax) * model.yprodgrid.array() * wage_occ_ygrid;
 	netwagegrid = to_vector(enetwagegrid);

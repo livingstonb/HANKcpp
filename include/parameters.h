@@ -35,10 +35,7 @@ class Parameters {
 		double blim = -1.0;
 
 		// Other grid parameters
-		int nprod = 15;
 		int nocc = 1;
-		int ny;
-		int naby;
 		int nab;
 
 		// --- PREFERENCES ---

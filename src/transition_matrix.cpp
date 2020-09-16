@@ -5,7 +5,7 @@
 #include <upwinding.h>
 #include <hank_eigen_dense.h>
 
-#define TO_INDEX_1D(a, b, na) ((a) + (na) * (b))
+#include <hank_macros.h>
 
 sparse_matrix construct_transition_matrix(const Parameters& p, const Model& model, double ra,
 	const Upwinding::Policies& policies, int iy, bool kfe) {

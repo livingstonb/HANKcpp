@@ -13,7 +13,7 @@
 #include <algorithm>
 #include <math.h>
 
-#define TO_INDEX_1D(a, b, na) ((a) + (na) * (b))
+#include <hank_macros.h>
 
 namespace {
 	constexpr bool is_stationary_pt_or_limit(double Vb) {
@@ -34,13 +34,13 @@ namespace {
 	StdVector3d<double> make_value_guess(const Model& model, const SteadyState& ss) {
 		const Parameters& p = model.p;
 
-		StdVector3d<double> V(p.na, p.nb, p.ny);
+		StdVector3d<double> V(p.na, p.nb, model.ny);
 		double lc, u;
 		ArrayXd bdriftnn = model.get_rb_effective().array() * model.bgrid.array();
 
 		for (int ia=0; ia<p.na; ++ia) {
 			for (int ib=0; ib<p.nb; ++ib) {
-				for (int iy=0; iy<p.ny; ++iy) {
+				for (int iy=0; iy<model.ny; ++iy) {
 					lc = 0.5 * ss.netwagegrid[iy] + p.lumptransfer + bdriftnn(ib);
 					u = model.util(lc);
 					V(ia,ib,iy) = u / (p.rho + p.deathrate);
@@ -63,7 +63,7 @@ namespace {
 	}
 }
 
-HJB::HJB(const Model& model_, const SteadyState& ss) : model(model_), p(model_.p), V(p.na, p.nb, p.ny), optimal_decisions(model.dims) {
+HJB::HJB(const Model& model_, const SteadyState& ss) : model(model_), p(model_.p), V(p.na, p.nb, model.ny), optimal_decisions(model.dims) {
 	V = make_value_guess(model, ss);
 }
 
@@ -140,7 +140,7 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 
 	for (int ia=0; ia<p.na; ++ia) {
 		for (int ib=0; ib<p.nb; ++ib) {
-			for (int iy=0; iy<p.ny; ++iy) {
+			for (int iy=0; iy<model.ny; ++iy) {
 				derivs = compute_derivatives(ia, ib, iy);
 
 				idioscale = 1; // model.yprodgrid(iy);
@@ -351,7 +351,7 @@ Upwinding::ConUpwind HJB::optimal_consumption_ghh_labor(double Vb, double bdrift
 
 void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& policies) {
 	double_vector bvec(p.nb * p.na);
-	double_vector ycol, vcol(p.ny);
+	double_vector ycol, vcol(model.ny);
 	int iab;
 	Bellman::Drifts drifts;
 	bool kfe = false;
@@ -362,7 +362,7 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 	double_vector bdriftvec = model.get_rb_effective().array() * model.bgrid.array();
 
 	int na = p.na;
-	for ( int iy=0; iy<p.ny; ++iy ) {
+	for ( int iy=0; iy<model.ny; ++iy ) {
 		triplet_list Aentries;
 		ycol = model.prodmarkovscale * model.ymarkovoff.row(iy);
 
@@ -371,7 +371,7 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 				iab = TO_INDEX_1D(ia, ib, p.na);
 
 				// Vector of constants, bvec
-				for (int iy2=0; iy2<p.ny; ++iy2)
+				for (int iy2=0; iy2<model.ny; ++iy2)
 					vcol[iy2] = V(ia,ib,iy2);
 
 				bvec(iab) = delta * policies.u(ia,ib,iy) + V(ia,ib,iy) + delta * ycol.dot(vcol);

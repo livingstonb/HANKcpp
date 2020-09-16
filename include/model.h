@@ -21,7 +21,6 @@ class ModelBase {
 		double_vector yprodgrid_, yoccgrid_, ydist_;
 		double_matrix prodmarkov_, ymarkov_, ymarkovdiag_, ymarkovoff_;
 
-		double_vector wage_occ_, wagegrid_, netwagegrid_;
 		double_vector occYsharegrid_, occNsharegrid_;
 
 		int nocc_, nprod_;
@@ -69,13 +68,12 @@ class Model : private ModelBase {
 		const int na = p.na;
 		const int nocc = nocc_;
 		const int nprod = nprod_;
+		const int ny = nprod * nocc;
+		const int naby = nb * na * ny;
 		const int ntot = p.nb * p.na * nocc_ * nprod_;
-		const std::vector<int> dims = {p.na, p.nb, p.ny};
+		const std::vector<int> dims = {p.na, p.nb, ny};
 		const double prodmarkovscale = 1.0;
 
-		const double_vector& wage_occ = wage_occ_;
-		const double_vector& wagegrid = wagegrid_;
-		const double_vector& netwagegrid = netwagegrid_;
 		const double_vector& occYsharegrid = occYsharegrid_;
 		const double_vector& occNsharegrid = occNsharegrid_;
 

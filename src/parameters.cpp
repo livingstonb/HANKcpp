@@ -39,8 +39,6 @@ void Parameters::setup(const Options& opts) {
 		nb_neg = 0;
 	}
 
-	ny = nprod * nocc;
-	naby = na * nb * ny;
 	nab = na * nb;
 
 	rborr = rb + borrwedge;

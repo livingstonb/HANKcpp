@@ -6,8 +6,10 @@
 
 namespace {
 	void fix_rounding(double_matrix& mat) {
-		for (int i=0; i<mat.rows(); ++i)
-			mat(i,i) = mat(i,i) - mat.row(i).sum();
+		for (int i=0; i<mat.rows(); ++i) {
+			double rowsum = mat.row(i).sum();
+			mat(i,i) -= rowsum;
+		}
 	}
 
 	double_vector compute_grid_deltas(const double_vector& grid, const double_vector& dgrid) {
@@ -26,9 +28,8 @@ namespace {
 		int n = grid.size();
 		linspace(0.0, 1.0, n, grid);
 
-		for (int i=0; i<n; ++i) {
+		for (int i=0; i<n; ++i)
 			grid[i] = low + (high - low) * pow(grid[i], 1.0 / curv);
-		}
 	}
 
 	void adjustPowerSpacedGrid(grid_type& grid) {
@@ -100,17 +101,6 @@ void ModelBase::make_asset_grids(const Parameters& p) {
 }
 
 void ModelBase::make_occupation_grids(const Parameters& p) {
-	// wage_occ_ = double_vector::Constant(p.ny, 1.0);
-	// wagegrid_ = double_vector(p.ny);
-	// int iy = 0;
-	// for (int io=0; io<p.nocc_; ++io) {
-	// 	for (int ip=0; ip<p.nprod_; ++ip) {
-	// 		wagegrid_(iy) = wage_occ_(io);
-	// 		++iy;
-	// 	}
-	// }
-	// netwagegrid_ = (1.0 - p.labtax) * yprodgrid_.array() * wagegrid_.array();
-
 	// Occupation types
 	if ( p.nocc == 1 ) {
 		occYsharegrid_ = double_vector::Constant(p.nocc, 1.0);
@@ -177,7 +167,6 @@ void ModelBase::create_combined_variables(const Parameters& p) {
 		ymarkovdiag_(iy,iy) = ymarkov_(iy,iy);
 	
 	ymarkovoff_ = ymarkov_ - ymarkovdiag_;
-
 	profsharegrid_ = yprodgrid_.array() / p.meanlabeff;
 }
 
@@ -192,7 +181,7 @@ void ModelBase::check_nbl(const Parameters& p) const {
 }
 
 Model::Model(const Parameters& p_, const std::string& income_dir)
-	: ModelBase(p_, income_dir), p(p_), dims({p_.na, p_.nb, p_.ny}) {};
+	: ModelBase(p_, income_dir), p(p_) {};
 
 double_vector Model::get_rb_effective() const {
 	double_vector rb_effective, bvec = bgrid;

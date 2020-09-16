@@ -61,6 +61,7 @@ int main () {
 	params.dmax = 1e5;
 	params.borrowing = true;
 	// params.deathrate = 0.0;
+	params.amax = 1000;
 	// params.na = 25;
 	// params.nb_pos = 25;
 	// params.depreciation = 0.001;

@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <cmath>
 
-#define TO_INDEX_1D(a, b, na) ((a) + (na) * (b))
+#include <hank_macros.h>
 
 namespace {
 	double_matrix make_dist_guess(const Model& model, const double_vector& abdelta);
@@ -26,15 +26,15 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 			abdelta(TO_INDEX_1D(ia, ib, p.na)) = model.adelta(ia) * model.bdelta(ib);
 
 	double_vector inv_abdelta = abdelta.cwiseInverse();
-	double_matrix lmat = speye(p.ny) + delta * model.ymarkovoff.transpose();
+	double_matrix lmat = speye(model.ny) + delta * model.ymarkovoff.transpose();
 	int iabx = TO_INDEX_1D(0, p.nb_neg, p.na);
 
 	double_matrix gmat = make_dist_guess(model, abdelta);
-	double_matrix gmat_update(p.na * p.nb, p.ny);
+	double_matrix gmat_update(p.na * p.nb, model.ny);
 
-	std::vector<sparse_matrix> B(p.ny);
-	std::vector<sparse_solver> spsolvers(p.ny);
-	for (int iy=0; iy<p.ny; ++iy) {
+	std::vector<sparse_matrix> B(model.ny);
+	std::vector<sparse_solver> spsolvers(model.ny);
+	for (int iy=0; iy<model.ny; ++iy) {
 		sparse_matrix A = get_kfe_transition_matrix(p, model, ss.ra,
 			hjb.optimal_decisions, iy);
 
@@ -55,7 +55,7 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 	double diff = 1.0e10;
 	int ii = 0;
 	while ( (diff > gtol) & (ii < maxiter) ) {
-		for (int iy=0; iy<p.ny; ++iy) {
+		for (int iy=0; iy<model.ny; ++iy) {
 			double_vector lgmat = gmat * double_vector(lmat.row(iy));
 			lgmat(iabx) += delta * p.deathrate * gmat.col(iy).dot(abdelta) / abdelta(iabx);
 
@@ -77,10 +77,10 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 	double pmass = (gmat.array().colwise() * abdelta.array()).matrix().sum();
 	assert( abs(1.0 - pmass) < 1.0e-6 );
 
-	density = StdVector3d<double>(p.na, p.nb, p.ny);
+	density = StdVector3d<double>(p.na, p.nb, model.ny);
 	for (int ia=0; ia<p.na; ++ia)
 		for (int ib=0; ib<p.nb; ++ib)
-			for (int iy=0; iy<p.ny; ++iy)
+			for (int iy=0; iy<model.ny; ++iy)
 				density(ia, ib, iy) = gmat(TO_INDEX_1D(ia, ib, p.na), iy);
 }
 
@@ -88,11 +88,11 @@ namespace {
 	double_matrix make_dist_guess(const Model& model, const double_vector& abdelta) {
 		const Parameters& p = model.p;
 		double gmass, p_y;
-		double_matrix gmat = double_matrix::Zero(p.na * p.nb, p.ny);
-		std::vector<int> vdims = {p.na, p.nb, p.ny};
+		double_matrix gmat = double_matrix::Zero(p.na * p.nb, model.ny);
+		std::vector<int> vdims = {p.na, p.nb, model.ny};
 		gmat.set_dims_3d(vdims.data(), 3);
 
-		for (int iy=0; iy<p.ny; ++iy) {
+		for (int iy=0; iy<model.ny; ++iy) {
 			p_y = model.ydist(iy);
 			if ( (p.deathrate == 0.0) & !p.borrowing ) {
 				gmat.as3d(0, 1, iy) = p_y;
