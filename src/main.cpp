@@ -19,44 +19,32 @@ Model *global_model_ptr = NULL;
 
 SteadyState *global_iss_ptr = NULL;
 
-// void find_initial_steady_state(int n, double *x, double *fvec, int *iflag) {
-// 	SteadyState& iss = *global_iss_ptr;
-
-// 	global_iss_ptr->set(x, SteadyState::SSType::initial);
-// 	global_iss_ptr->compute(SteadyState::SSType::initial);
-
-// 	HJB hjb(*global_model_ptr, *global_iss_ptr);
-// 	hjb.iterate(*global_iss_ptr);
-
-// 	StationaryDist sdist;
-// 	sdist.compute(*global_model_ptr, *global_iss_ptr, hjb);
-
-// 	DistributionStatistics stats(*global_params_ptr, *global_model_ptr, hjb, sdist);
-// 	stats.print();
-
-// 	fvec[0] = stats.Ea / (iss.capital + iss.equity_A) - 1.0;
-// 	for (int i=1; i<global_params_ptr->nocc+4; ++i)
-// 		fvec[i] = 0.2;
-// }
-
 void find_initial_steady_state(int n, double x[], double fvec[], int &iflag) {
-	SteadyState& iss = *global_iss_ptr;
+	Parameters& p = *global_params_ptr;
+	Model& model = *global_model_ptr;
+	// SteadyState& iss = *global_iss_ptr;
 
-	global_iss_ptr->set(x, SteadyState::SSType::initial);
-	global_iss_ptr->compute(SteadyState::SSType::initial);
+	SteadyState iss(p, model);
+	iss.set(x, SteadyState::SSType::initial);
+	iss.compute(SteadyState::SSType::initial);
 
-	HJB hjb(*global_model_ptr, *global_iss_ptr);
-	hjb.iterate(*global_iss_ptr);
+	HJB hjb(model, iss);
+	hjb.iterate(iss);
 
 	StationaryDist sdist;
-	sdist.compute(*global_model_ptr, *global_iss_ptr, hjb);
+	sdist.compute(model, iss, hjb);
 
-	DistributionStatistics stats(*global_params_ptr, *global_model_ptr, hjb, sdist);
+	DistributionStatistics stats(p, model, hjb, sdist);
 	stats.print();
 
 	fvec[0] = stats.Ea / (iss.capital + iss.equity_A) - 1.0;
-	for (int i=1; i<global_params_ptr->nocc+4; ++i)
-		fvec[i] = 0.2;
+	for (int io=0; io<p.nocc; ++io)
+		fvec[io+1] = stats.Elabor_occ[io] * model.occdist[io] / iss.labor_occ[io] - 1.0;
+
+	// fvec[p.nocc+1] = stats.a_pctile[5] / p.targetMedianIll - 1.0;
+	fvec[p.nocc+1] = 0.0;
+	fvec[p.nocc+2] = stats.Eb / p.targetMeanLiq - 1.0;
+	fvec[p.nocc+3] = (stats.Ehours / p.hourtarget - 1.0) / 100.0;
 }
 
 int main () {
@@ -90,8 +78,8 @@ int main () {
 	x[params.nocc+2] = log(params.rb);
 	x[params.nocc+3] = chi;
 
-	SteadyState iss(params, model);
-	global_iss_ptr = &iss;
+	// SteadyState iss(params, model);
+	// global_iss_ptr = &iss;
 
 	// iss.set(x, SteadyState::SSType::initial);
 	// iss.compute(SteadyState::SSType::initial);

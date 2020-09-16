@@ -74,7 +74,7 @@ class HJB {
 
 		StdVector3d<double> V;
 		int maxiter = 500;
-		int dispfreq = 1;
+		int dispfreq = 50;
 		double vtol = 1.0e-8;
 		double delta = 1.0e6;
 		double dVamin = 1.0e-8;

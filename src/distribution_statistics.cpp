@@ -5,6 +5,7 @@
 #include <stationary_dist.h>
 #include <upwinding.h>
 #include <iostream>
+#include <algorithm>
 
 #define TO_INDEX_1D(a, b, na) ((a) + (na) * (b))
 
@@ -19,9 +20,9 @@ class DistributionStatistics::DistStruct {
 		DistStruct(int nz, int ny)
 			: networth(nz, ny), pmass(nz, ny),
 				agrid_ab(nz, ny), bgrid_ab(nz, ny),
-				wage(nz, ny), pmass1d(nz) {}
+				wage(nz, ny), labor(nz, ny), pmass1d(nz) {}
 
-		double_matrix networth, pmass, agrid_ab, bgrid_ab, wage;
+		double_matrix networth, pmass, agrid_ab, bgrid_ab, wage, labor;
 
 		double_vector pmass1d;
 };
@@ -36,8 +37,8 @@ namespace {
 	}
 }
 
-DistributionStatistics::DistributionStatistics(const Parameters& p, const Model& model,
-	const HJB& hjb, const StationaryDist& sdist) {
+DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model& model,
+	const HJB& hjb, const StationaryDist& sdist) : p(p_) {
 
 	int iab, nz = p.na * p.nb;
 	DistStruct dist_struct(nz, p.ny);
@@ -50,6 +51,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p, const Model&
 				dist_struct.networth(iab, iy) = model.agrid(ia) + model.bgrid(ib);
 				dist_struct.agrid_ab(iab, iy) = model.agrid(ia);
 				dist_struct.bgrid_ab(iab, iy) = model.bgrid(ib);
+				dist_struct.labor(iab, iy) = hjb.optimal_decisions.h(ia, ib, iy) * model.yprodgrid(iy);
 				// dist_struct.wage(iab, iy) = model.yprodgrid(iy) * 
 			}
 		}
@@ -63,6 +65,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p, const Model&
 
 void DistributionStatistics::compute_moments(
 	const Upwinding::Policies& policies, const DistStruct& dist_struct) {
+	int iy;
 
 	const double_matrix& pmass = dist_struct.pmass;
 	auto expectation = [pmass](const auto& values) {
@@ -73,6 +76,20 @@ void DistributionStatistics::compute_moments(
 	Enetworth = expectation(dist_struct.networth);
 	Ea = expectation(dist_struct.agrid_ab);
 	Eb = expectation(dist_struct.bgrid_ab);
+
+	Elabor_occ.resize(p.nocc);
+	std::fill(Elabor_occ.begin(), Elabor_occ.end(), 0.0);
+
+	iy = 0;
+	VectorXd labor_ab, pmass_ab;
+	for (int io=0; io<p.nocc; ++io) {
+		for (int ip=0; ip<p.nprod; ++ip) {
+			labor_ab = dist_struct.labor.col(iy);
+			pmass_ab = dist_struct.pmass.col(iy);
+			Elabor_occ[io] += labor_ab.dot(pmass_ab);
+			++iy;
+		}
+	}
 }
 
 void DistributionStatistics::print() {

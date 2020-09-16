@@ -19,7 +19,7 @@ class StationaryDist {
 
 		StdVector3d<double> density;
 
-		int dispfreq = 1;
+		int dispfreq = 50;
 
 		double delta = 1.0e6;
 

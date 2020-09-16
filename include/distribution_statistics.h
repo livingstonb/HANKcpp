@@ -1,6 +1,8 @@
 #ifndef _DISTRIBUTION_STATISTICS_H
 #define _DISTRIBUTION_STATISTICS_H
 
+#include <vector>
+
 // Forward declarations
 class Parameters;
 
@@ -19,6 +21,9 @@ class DistributionStatistics {
 
 	class DistStruct;
 
+	private:
+		const Parameters& p;
+
 	public:
 		DistributionStatistics(const Parameters& p, const Model& model,
 			const HJB& hjb, const StationaryDist& sdist);
@@ -28,6 +33,8 @@ class DistributionStatistics {
 		void print();
 
 		double Ehours, Ea, Eb, Enetworth;
+
+		std::vector<double> Elabor_occ;
 };
 
 #endif
