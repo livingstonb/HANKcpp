@@ -61,8 +61,6 @@ class HJB {
 
 		Upwinding::ConUpwind optimal_consumption_sep_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
 
-		Upwinding::ConUpwind optimal_consumption_ghh_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
-
 	public:
 		HJB(const Model& model_, const SteadyState& ss);
 

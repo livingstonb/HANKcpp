@@ -10,8 +10,6 @@
 	#define TO_INDEX_1D(a, b, y, na, nb) ((b) + (nb) * (a) + (nb) * (na) * (y))
 #endif
 
-enum class LaborType { none, sep, ghh };
-
 enum class AdjustCostFnRatioMode { none, linear, max };
 
 enum class DepositCostMode { custom, symmetric, no_deposit_cost };

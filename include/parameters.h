@@ -46,7 +46,7 @@ class Parameters {
 		double riskaver = 1.5;
 		double rho = 0.014444;
 		double prefshock = 1.0;
-		LaborType laborsupply = LaborType::sep;
+		bool endogLabor = true;
 
 		// --- PRODUCTION PARAMETERS ---
 		double drs_Y = 0.9;

@@ -120,23 +120,16 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 	// double_vector adrift = (p.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
 
 	std::function<Upwinding::ConUpwind(double, double, double, double)> opt_c;
-	if ( p.laborsupply == LaborType::none ) {
-		opt_c = [this] (double Vb, double bdrift, double netwage, double) {
-				return optimal_consumption_no_laborsupply(Vb, bdrift, netwage);
-			};
-		}
-	else if ( p.laborsupply == LaborType::sep ) {
+	if ( p.endogLabor ) {
 		opt_c = [this, chi] (double Vb, double bdrift, double netwage, double idioscale) {
 				return optimal_consumption_sep_labor(Vb, bdrift, netwage, chi, idioscale);
-			};
-		}
-	else if ( p.laborsupply == LaborType::ghh ) {
-		opt_c = [this, chi] (double Vb, double bdrift, double netwage, double idioscale) {
-				return optimal_consumption_ghh_labor(Vb, bdrift, netwage, chi, idioscale);
-			};
-		}
-	else
-		throw "Logic error";
+		};
+	}
+	else {
+		opt_c = [this] (double Vb, double bdrift, double netwage, double) {
+				return optimal_consumption_no_laborsupply(Vb, bdrift, netwage);
+		};
+	}
 
 	for (int ia=0; ia<p.na; ++ia) {
 		for (int ib=0; ib<p.nb; ++ib) {
@@ -193,14 +186,9 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 
 				// Deposit decision: a backward, b backward
 				if ( ia > 0 ) {
-					if ( ib == 0 ) {
-						if ( p.laborsupply == LaborType::ghh ) {
-							labdisutil = idioscale * model.labdisutil(upwindB.h, chi);
-							derivs.VbB = model.util1(upwindB.c - labdisutil / p.labwedge);
-						}
-						else
-							derivs.VbB = model.util1(upwindB.c);
-					}
+					if ( ib == 0 )
+						derivs.VbB = model.util1(upwindB.c);
+
 					depositBB = optimal_deposits(model, derivs.VaB, derivs.VbB, illiq);
 					worth_adjusting = ( depositBB.d > -model.adjcosts.cost(depositBB.d, illiq) );
 					depositBB.valid = ( worth_adjusting & (depositBB.d <= 0) & (depositBB.Hd > 0));
@@ -213,12 +201,10 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 
 				// Update u
 				labdisutil = idioscale * model.labdisutil(policies.h(ia,ib,iy), chi);
-				if ( p.laborsupply == LaborType::none )
-					policies.u(ia,ib,iy) = model.util(policies.c(ia,ib,iy));
-				if ( p.laborsupply == LaborType::sep )
+				if ( p.endogLabor )
 					policies.u(ia,ib,iy) = model.util(policies.c(ia,ib,iy)) - labdisutil / p.labwedge;
 				else
-					policies.u(ia,ib,iy) = model.util(policies.c(ia,ib,iy) - labdisutil / p.labwedge);
+					policies.u(ia,ib,iy) = model.util(policies.c(ia,ib,iy));
 			}
 		}
 	}
@@ -317,32 +303,6 @@ Upwinding::ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift
 
 	if ( upwind.c > 0.0 )
 		upwind.Hc = model.util(upwind.c) - labdisutil / p.labwedge + Vb * upwind.s;
-	else
-		upwind.Hc = -1.0e12;
-
-	return upwind;
-}
-
-Upwinding::ConUpwind HJB::optimal_consumption_ghh_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const {
-	Upwinding::ConUpwind upwind;
-
-	upwind.h = model.labdisutil1inv(p.labwedge * netwage / idioscale, chi);
-	if ( p.imposeMaxHours )
-		upwind.h = fmax(upwind.h, 1.0);
-
-	double labdisutil = idioscale * model.labdisutil(upwind.h, chi);
-
-	if ( !is_stationary_pt_or_limit(Vb) ) {
-		upwind.c = model.util1inv(Vb) + labdisutil / p.labwedge;
-		upwind.s = bdrift + upwind.h * netwage - upwind.c;
-	}
-	else {
-		upwind.s = 0;
-		upwind.c = bdrift + upwind.h * netwage;
-	}
-
-	if ( upwind.c - labdisutil / p.labwedge > 0.0 )
-		upwind.Hc = model.util(upwind.c - labdisutil / p.labwedge) + Vb * upwind.s;
 	else
 		upwind.Hc = -1.0e12;
 

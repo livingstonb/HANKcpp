@@ -57,7 +57,7 @@ int main () {
 
 	Parameters params;
 	params.rho = 0.02;
-	params.drs_N = 0;
+	params.drs_N = 1;
 	params.drs_Y = 0.9;
 	params.dmax = 1e2;
 	params.borrowing = true;
