@@ -4,6 +4,8 @@
 #include <cmath>
 #include <boost/algorithm/string.hpp>
 
+#include <hank_macros.h>
+
 namespace {
 	void fix_rounding(double_matrix& mat) {
 		for (int i=0; i<mat.rows(); ++i) {
@@ -98,6 +100,11 @@ void ModelBase::make_asset_grids(const Parameters& p) {
 		dagrid_ = agrid_(seq(1,p.na-1)) - agrid_(seq(0,p.na-2));
 		adelta_ = compute_grid_deltas(agrid_, dagrid_);
 	}
+
+	abdelta_.resize(p.nab);
+	for (int ia=0; ia<p.na; ++ia)
+		for (int ib=0; ib<p.nb; ++ib)
+			abdelta_(TO_INDEX_1D(ia, ib, p.na, p.nb)) = adelta_(ia) * bdelta_(ib);
 }
 
 void ModelBase::make_occupation_grids(const Parameters& p) {

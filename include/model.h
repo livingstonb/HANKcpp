@@ -15,6 +15,7 @@ class ModelBase {
 
 		double_vector bgrid_, dbgrid_, bdelta_;
 		double_vector agrid_, dagrid_, adelta_;
+		double_vector abdelta_;
 		double_vector occgrid_, occdist_;
 		double_vector logprodgrid_, prodgrid_;
 		double_vector proddist_, profsharegrid_;
@@ -51,6 +52,7 @@ class Model : private ModelBase {
 		const double_vector& agrid = agrid_;
 		const double_vector& dagrid = dagrid_;
 		const double_vector& adelta = adelta_;
+		const double_vector& abdelta = abdelta_;
 		const double_vector& occgrid = occgrid_;
 		const double_vector& occdist = occdist_;
 		const double_vector& logprodgrid = logprodgrid_;

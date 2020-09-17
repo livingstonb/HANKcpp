@@ -75,8 +75,8 @@ class Parameters {
 		double kappa_w_fc = 0.0;
 		std::array<double, 5> kappa_w = {
 			0.0, // kappa0_w
-			0.00001, // kappa1_w
-			0.0001, // kappa2_w
+			0.0, // kappa1_w
+			0.15, // kappa2_w
 			0.01, // kappa3_w
 			0.0 // kappa4_w
 		};

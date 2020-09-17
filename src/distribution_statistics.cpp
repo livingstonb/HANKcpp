@@ -44,8 +44,6 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 
 	const Upwinding::Policies& policies = hjb.optimal_decisions;
 
-	ArrayXd abdelta(p.nab);
-
 	MatrixXd nw_aby(p.nab, model.ny);
 	MatrixXd agrid_aby(p.nab, model.ny);
 	MatrixXd bgrid_aby(p.nab, model.ny);
@@ -56,7 +54,6 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 	for (int ia=0; ia<p.na; ++ia) {
 		for (int ib=0; ib<p.nb; ++ib) {
 			iab = TO_INDEX_1D(ia, ib, p.na, p.nb);
-			abdelta(iab) = model.adelta(ia) * model.bdelta(ib);
 			for (int iy=0; iy<model.ny; ++iy) {
 				nw_aby(iab, iy) = model.agrid(ia) + model.bgrid(ib);
 				agrid_aby(iab, iy) = model.agrid(ia);
@@ -71,7 +68,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 	ArrayXd gdistvec = as_eigen<VectorXd>(sdist.density);
 	MatrixXd gdistmat = Eigen::Map<MatrixXd>(gdistvec.data(), p.nab, model.ny);
 
-	MatrixXd pdistmat = gdistmat.array().colwise() * abdelta;
+	MatrixXd pdistmat = gdistmat.array().colwise() * model.abdelta.array();
 	VectorXd pdistvec = eflatten(pdistmat);
 
 	// Joint asset-income distributions
@@ -83,8 +80,8 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 		for (int ib=0; ib<p.nb; ++ib) {
 			iab = TO_INDEX_1D(ia, ib, p.na, p.nb);
 			for (int iy=0; iy<model.ny; ++iy) {
-				p_ay(ia, iy) += gdistmat(iab, iy) * abdelta(iab);
-				p_by(ib, iy) += gdistmat(iab, iy) * abdelta(iab);
+				p_ay(ia, iy) += gdistmat(iab, iy) * model.abdelta(iab);
+				p_by(ib, iy) += gdistmat(iab, iy) * model.abdelta(iab);
 			}
 		}
 	}
@@ -108,7 +105,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 	int inw;
 	for (int iab=0; iab<p.nab; ++iab) {
 		inw = nw_order(iab);
-		p_nw(iab) = abdelta(inw) * gdistmat.row(inw).sum();
+		p_nw(iab) = model.abdelta(inw) * gdistmat.row(inw).sum();
 	}
 	VectorXd pcum_nw = cumsum(p_nw);
 
