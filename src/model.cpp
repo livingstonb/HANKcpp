@@ -123,13 +123,13 @@ void ModelBase::make_occupation_grids(const Parameters& p) {
 void ModelBase::create_income_process(
 	const std::string& income_dir, const Parameters& p) {
 
-	std::string grid_loc = "input/" + income_dir + "/ygrid_combined.txt";
+	std::string grid_loc = "../input/" + income_dir + "/ygrid_combined.txt";
 	logprodgrid_ = vector2eigenv(read_matrix(grid_loc));
 
-	std::string dist_loc = "input/" + income_dir + "/ydist_combined.txt";
+	std::string dist_loc = "../input/" + income_dir + "/ydist_combined.txt";
 	proddist_ = vector2eigenv(read_matrix(dist_loc));
 
-	std::string markov_loc = "input/" + income_dir + "/ymarkov_combined.txt";
+	std::string markov_loc = "../input/" + income_dir + "/ymarkov_combined.txt";
 
 	if ( p.adjustProdGridFrisch )
 		logprodgrid_ = logprodgrid_ / (1.0 + p.adjFrischGridFrac * p.frisch);

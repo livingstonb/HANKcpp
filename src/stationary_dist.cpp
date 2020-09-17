@@ -26,21 +26,22 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 	int iabx = TO_INDEX_1D(0, p.nb_neg, p.na, p.nb);
 
 	double_matrix gmat = make_dist_guess(model);
-	double_matrix gmat_update(p.na * p.nb, model.ny);
+	double_matrix gmat_update(p.nab, model.ny);
 
+	std::vector<sparse_matrix> B(model.ny);
 	std::vector<sparse_solver> spsolvers(model.ny);
 	for (int iy=0; iy<model.ny; ++iy) {
 		sparse_matrix A = get_kfe_transition_matrix(p, model, ss.ra,
 			hjb.optimal_decisions, iy);
-		sparse_matrix B = A.transpose();
+		B[iy] = A.transpose();
 
 		// Adjust A' matrix for non-linearly spaced grids
-		B = inv_abdelta.asDiagonal() * B * model.abdelta.asDiagonal();
-		B *= -delta;
-		B += (1.0 + delta * p.deathrate - delta * model.ymarkovdiag(iy,iy)) * speye(p.na * p.nb);
-		B.makeCompressed();
+		B[iy] = inv_abdelta.asDiagonal() * B[iy] * model.abdelta.asDiagonal();
+		B[iy] *= -delta;
+		B[iy] += speye(p.na * p.nb) * (1.0 + delta * p.deathrate - delta * model.ymarkovdiag(iy,iy));
+		B[iy].makeCompressed();
 
-		spsolvers[iy].compute(B);
+		spsolvers[iy].compute(B[iy]);
 		if ( spsolvers[iy].info() != Eigen::Success )
 				throw "Sparse solver failure";
 
@@ -81,7 +82,7 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 namespace {
 	MatrixXd make_dist_guess(const Model& model) {
 		const Parameters& p = model.p;
-		MatrixXd gmat = MatrixXd::Zero(p.na * p.nb, model.ny);
+		MatrixXd gmat = MatrixXd::Zero(p.nab, model.ny);
 
 		double gmass, p_y;
 		int bpos;

@@ -70,8 +70,8 @@ class Model : private ModelBase {
 		const int na = p.na;
 		const int nocc = nocc_;
 		const int nprod = nprod_;
-		const int ny = nprod * nocc;
-		const int naby = nb * na * ny;
+		const int ny = nprod_ * nocc_;
+		const int naby = p.nb * p.na * nocc_ * nprod_;
 		const int ntot = p.nb * p.na * nocc_ * nprod_;
 		const std::vector<int> dims = {p.na, p.nb, ny};
 		const double prodmarkovscale = 1.0;
