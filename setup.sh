@@ -1,1 +1,0 @@
-source /media/hdd/lib/intel/bin/compilervars.sh intel64

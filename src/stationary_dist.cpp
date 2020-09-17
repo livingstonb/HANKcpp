@@ -84,11 +84,9 @@ namespace {
 		const Parameters& p = model.p;
 		MatrixXd gmat = MatrixXd::Zero(p.nab, model.ny);
 
-		double gmass, p_y;
+		double gmass;
 		int bpos;
 		for (int iy=0; iy<model.ny; ++iy) {
-			p_y = model.ydist(iy);
-
 			if ( p.borrowing )
 				bpos = p.nb_neg;
 			else
@@ -97,9 +95,9 @@ namespace {
 			if ( p.deathrate == 0.0 )
 				++bpos;
 
-			gmat(TO_INDEX_1D(0, bpos, p.na, p.nb), iy) = p_y;
+			gmat(TO_INDEX_1D(0, bpos, p.na, p.nb), iy) = model.ydist(iy);
 			gmass = gmat.col(iy).dot(model.abdelta);
-			gmat.col(iy) *= p_y / gmass;
+			gmat.col(iy) *= model.ydist(iy) / gmass;
 		}
 		return gmat;
 	}

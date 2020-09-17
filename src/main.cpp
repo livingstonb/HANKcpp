@@ -62,7 +62,7 @@ int main () {
 	params.dmax = 1e2;
 	params.borrowing = true;
 	// params.deathrate = 0.0;
-	params.amax = 1000;
+	params.amax = 10;
 	// params.na = 25;
 	// params.nb_pos = 25;
 	// params.depreciation = 0.001;
@@ -72,8 +72,6 @@ int main () {
 	global_params_ptr = &params;
 
 	Model model = Model(params, income_dir);
-
-	printvec(params.kappa_w);
 
 	// guess rho, chi,labor_occ, capital, and rb
 	double x[params.nocc+4];
