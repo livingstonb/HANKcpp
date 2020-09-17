@@ -23,11 +23,11 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 	double_vector abdelta(p.na * p.nb);
 	for (int ia=0; ia<p.na; ++ia)
 		for (int ib=0; ib<p.nb; ++ib)
-			abdelta(TO_INDEX_1D(ia, ib, p.na)) = model.adelta(ia) * model.bdelta(ib);
+			abdelta(TO_INDEX_1D(ia, ib, p.na, p.nb)) = model.adelta(ia) * model.bdelta(ib);
 
 	double_vector inv_abdelta = abdelta.cwiseInverse();
 	double_matrix lmat = speye(model.ny) + delta * model.ymarkovoff.transpose();
-	int iabx = TO_INDEX_1D(0, p.nb_neg, p.na);
+	int iabx = TO_INDEX_1D(0, p.nb_neg, p.na, p.nb);
 
 	double_matrix gmat = make_dist_guess(model, abdelta);
 	double_matrix gmat_update(p.na * p.nb, model.ny);
@@ -81,7 +81,7 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 	for (int ia=0; ia<p.na; ++ia)
 		for (int ib=0; ib<p.nb; ++ib)
 			for (int iy=0; iy<model.ny; ++iy)
-				density(ia, ib, iy) = gmat(TO_INDEX_1D(ia, ib, p.na), iy);
+				density(ia, ib, iy) = gmat(TO_INDEX_1D(ia, ib, p.na, p.nb), iy);
 }
 
 namespace {
@@ -94,18 +94,14 @@ namespace {
 
 		for (int iy=0; iy<model.ny; ++iy) {
 			p_y = model.ydist(iy);
-			if ( (p.deathrate == 0.0) & !p.borrowing ) {
-				gmat.as3d(0, 1, iy) = p_y;
-			}
-			else if ( (p.deathrate == 0.0) & p.borrowing ) {
-				gmat.as3d(0, p.nb_neg+1, iy) = p_y;
-			}
-			else if ( p.borrowing ) {
-				gmat.as3d(0, p.nb_neg, iy) = p_y;
-			}
-			else {
-				gmat.as3d(0, 0, iy) = p_y;
-			}
+			if ( (p.deathrate == 0.0) & !p.borrowing )
+				gmat(TO_INDEX_1D(0, 1, p.na, p.nb), iy) = p_y;
+			else if ( (p.deathrate == 0.0) & p.borrowing )
+				gmat(TO_INDEX_1D(0, p.nb_neg+1, p.na, p.nb), iy) = p_y;
+			else if ( p.borrowing )
+				gmat(TO_INDEX_1D(0, p.nb_neg, p.na, p.nb), iy) = p_y;
+			else
+				gmat(TO_INDEX_1D(0, 0, p.na, p.nb), iy) = p_y;
 
 			gmass = gmat.col(iy).dot(abdelta);
 			gmat.col(iy) *= p_y / gmass;

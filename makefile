@@ -23,14 +23,12 @@ SPARSEOBJS:=$(addprefix $(OBJDIR)/, $(SPARSEOBJS))
 VPATH=%.cpp src
 EXECUTABLE=exec
 
-all: $(OBJECTS) $(MAIN) $(EXECUTABLE)
+all: depend $(OBJECTS) $(MAIN) $(EXECUTABLE)
 
 debug: all
 	gdb -ex run ./exec
 
-depend: .depend
-
-.depend: $(SOURCES)
+depend: $(SOURCES)
 	rm -f ./.depend
 	$(CC) $(CFLAGS) $(MKL) $(SSFLAGS) -MM $^ > ./.depend;
 
@@ -52,4 +50,4 @@ $(MAIN): $(OBJDIR)/%.o: $(SOURCEDIR)/%.cpp
 clean:
 	rm build/*
 
-.PHONY: clean
+.PHONY: clean depend

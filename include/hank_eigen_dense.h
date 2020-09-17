@@ -38,12 +38,6 @@ inline double_vector eflatten(const double_matrix& arr) {
 	return flattened;
 }
 
-inline double_vector to_eigenv(const std::vector<double>& vec) {
-	std::vector<double> vcopy = vec;
-	double_vector out = map_type_vec(vcopy.data(), vcopy.size());
-	return out;
-}
-
 inline double_vector to_eigenv(const StdVector3d<double>& vec) {
 	std::vector<double> vcopy = vec.vector;
 	double_vector out = map_type_vec(vcopy.data(), vcopy.size());
@@ -82,18 +76,6 @@ std::vector<double> to_vector(const T& emat) {
 	return vec;
 }
 
-template<typename T>
-map_type_vec to_eigen(T& arr) {
-	map_type_vec map(arr.data(), arr.size());
-	return map;
-}
-
-template<typename T>
-map_type to_eigen(T& arr, int n, int m) {
-	map_type map(arr.data(), n, m);
-	return map;
-}
-
 template<typename V>
 V as_eigen(const std::vector<double>& arr) {
 	V out(arr.size());
@@ -117,23 +99,6 @@ VectorXd cumsum(const T& arr) {
 	for (unsigned int i=0; i<arr.size(); ++i) {
 		val += arr(i);
 		out[i] = val;
-	}
-
-	return out;
-}
-
-template<typename T>
-MatrixXd repmat(const T& arr, int n, int m) {
-	MatrixXd out(arr.rows() * n, arr.cols() * m);
-
-	int ii = 0;
-	for (int in=0; in<n; ++in) {
-		int jj = 0;
-		for (int jm=0; jm<m; ++jm) {
-			out.block(ii, jj, arr.rows(), arr.cols()) = arr;
-			jj += arr.cols();
-		}
-		ii += arr.rows();
 	}
 
 	return out;

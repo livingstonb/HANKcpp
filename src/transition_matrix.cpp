@@ -22,7 +22,7 @@ sparse_matrix construct_transition_matrix(const Parameters& p, const Model& mode
 
 	for (int ia=0; ia<p.na; ++ia) {
 		for (int ib=0; ib<p.nb; ++ib) {
-			iab = TO_INDEX_1D(ia, ib, p.na);
+			iab = TO_INDEX_1D(ia, ib, p.na, p.nb);
 			d = policies.d(ia,ib,iy);
 			s = policies.s(ia,ib,iy);
 			acost = model.adjcosts.cost(d, model.agrid(ia));
@@ -34,13 +34,13 @@ sparse_matrix construct_transition_matrix(const Parameters& p, const Model& mode
 			// Matrix entries, ia-1
 			if ( (ia > 0) & (drifts.aB != 0.0) ) {
 				val = -drifts.aB / model.dagrid(ia-1);
-				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia-1, ib, na), val));
+				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia-1, ib, na, p.nb), val));
 			}
 
 			// Matrix entries, ib-1
 			if ( (ib > 0) & (drifts.bB != 0.0) ) {
 				val = -drifts.bB / model.dbgrid(ib-1);
-				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia, ib-1, na), val));
+				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia, ib-1, na, p.nb), val));
 			}
 
 			// Matrix entries, diagonal
@@ -64,13 +64,13 @@ sparse_matrix construct_transition_matrix(const Parameters& p, const Model& mode
 			// Matrix entries, ia+1
 			if ( (ia < p.na - 1 ) & (drifts.aF != 0.0) ) {
 				val = drifts.aF / model.dagrid(ia);
-				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia+1, ib, na), val));
+				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia+1, ib, na, p.nb), val));
 			}
 			
 			// Matrix entries, ib+1
 			if ( (ib < p.nb - 1) & (drifts.bF != 0.0) ) {
 				val = drifts.bF /  model.dbgrid(ib);
-				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia, ib+1, na), val));
+				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia, ib+1, na, p.nb), val));
 			}
 		}
 	}

@@ -14,12 +14,12 @@
 // Put liquid asset in first dimension instead of illiquid asset, for stacked variables
 #define STACK_LIQ_FIRST 1
 
-
 // --- DO NOT CHANGE ---
 #if HANK_TURN_OFF_EIGEN_DEBUG == 1
 	#define NDEBUG
 #endif
 
 #define EIGEN_MATRIXBASE_PLUGIN "matrix_base_addons.h"
+
 
 #endif

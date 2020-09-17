@@ -368,7 +368,7 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 
 		for (int ia=0; ia<p.na; ++ia) {
 			for (int ib=0; ib<p.nb; ++ib) {
-				iab = TO_INDEX_1D(ia, ib, p.na);
+				iab = TO_INDEX_1D(ia, ib, p.na, p.nb);
 
 				// Vector of constants, bvec
 				for (int iy2=0; iy2<model.ny; ++iy2)
@@ -401,6 +401,6 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 
 		for (int ia=0; ia<p.na; ++ia)
 			for (int ib=0; ib<p.nb; ++ib)
-				V(ia,ib,iy) = v_vec[TO_INDEX_1D(ia, ib, na)];
+				V(ia,ib,iy) = v_vec[TO_INDEX_1D(ia, ib, na, p.nb)];
 	}
 }

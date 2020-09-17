@@ -4,6 +4,12 @@
 #include <hank_config.h>
 #include <vector>
 
+#if STACK_LIQ_FIRST == 0
+	#define TO_INDEX_1D(a, b, y, na, nb) ((a) + (na) * (b) + (na) * (nb) * (y))
+#elif STACK_LIQ_FIRST == 1
+	#define TO_INDEX_1D(a, b, y, na, nb) ((b) + (nb) * (a) + (nb) * (na) * (y))
+#endif
+
 enum class LaborType { none, sep, ghh };
 
 enum class AdjustCostFnRatioMode { none, linear, max };
@@ -46,11 +52,11 @@ class StdVector3d {
 		std::vector<T> as_vector() const {return vector;}
 
 		T operator()(int i, int j, int k) const {
-			return vector[i + shape[0] * j + shape[0] * shape[1] * k];
+			return vector[TO_INDEX_1D(i, j, k, shape[0], shape[1])];
 		}
 
 		T& operator()(int i, int j, int k) {
-			return vector[i + shape[0] * j + shape[0] * shape[1] * k];
+			return vector[TO_INDEX_1D(i, j, k, shape[0], shape[1])];
 		}
 
 		int size() const {return vector.size();}
@@ -59,5 +65,7 @@ class StdVector3d {
 
 		const T* data() const {return vector.data();}
 };
+
+#undef TO_INDEX_1D
 
 #endif

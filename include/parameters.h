@@ -43,7 +43,7 @@ class Parameters {
 		double frisch = 1.0;
 		bool adjustProdGridFrisch = true;
 		double adjFrischGridFrac = 0.85;
-		double riskaver = 1.0;
+		double riskaver = 1.5;
 		double rho = 0.014444;
 		double prefshock = 1.0;
 		LaborType laborsupply = LaborType::sep;

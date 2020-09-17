@@ -55,7 +55,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 	int iab;
 	for (int ia=0; ia<p.na; ++ia) {
 		for (int ib=0; ib<p.nb; ++ib) {
-			iab = TO_INDEX_1D(ia, ib, p.na);
+			iab = TO_INDEX_1D(ia, ib, p.na, p.nb);
 			abdelta(iab) = model.adelta(ia) * model.bdelta(ib);
 			for (int iy=0; iy<model.ny; ++iy) {
 				nw_aby(iab, iy) = model.agrid(ia) + model.bgrid(ib);
@@ -81,7 +81,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 	iab = 0;
 	for (int ia=0; ia<p.na; ++ia) {
 		for (int ib=0; ib<p.nb; ++ib) {
-			iab = TO_INDEX_1D(ia, ib, p.na);
+			iab = TO_INDEX_1D(ia, ib, p.na, p.nb);
 			for (int iy=0; iy<model.ny; ++iy) {
 				p_ay(ia, iy) += gdistmat(iab, iy) * abdelta(iab);
 				p_by(ib, iy) += gdistmat(iab, iy) * abdelta(iab);
