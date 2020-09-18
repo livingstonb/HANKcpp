@@ -33,10 +33,9 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 	for (int iy=0; iy<model.ny; ++iy) {
 		sparse_matrix A = get_kfe_transition_matrix(p, model, ss.ra,
 			hjb.optimal_decisions, iy);
-		B[iy] = A.transpose();
 
 		// Adjust A' matrix for non-linearly spaced grids
-		B[iy] = inv_abdelta.asDiagonal() * B[iy] * model.abdelta.asDiagonal();
+		B[iy] = inv_abdelta.asDiagonal() * A.transpose() * model.abdelta.asDiagonal();
 		B[iy] *= -delta;
 		B[iy] += speye(p.na * p.nb) * (1.0 + delta * p.deathrate - delta * model.ymarkovdiag(iy,iy));
 		B[iy].makeCompressed();

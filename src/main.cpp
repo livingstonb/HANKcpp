@@ -34,7 +34,7 @@ void find_initial_steady_state(int n, double x[], double fvec[], int &iflag) {
 	hjb.iterate(iss);
 
 	StationaryDist sdist;
-	sdist.gtol = 1.0e-12;
+	sdist.gtol = 1.0e-9;
 	sdist.compute(model, iss, hjb);
 
 	DistributionStatistics stats(p, model, hjb, sdist);
@@ -61,7 +61,7 @@ int main () {
 	params.drs_Y = 0.9;
 	params.dmax = 1e2;
 	params.borrowing = true;
-	// params.deathrate = 0.0;
+	params.deathrate = 0.0;
 	params.amax = 10;
 	// params.na = 25;
 	// params.nb_pos = 25;
@@ -70,6 +70,8 @@ int main () {
 
 	params.setup(options);
 	global_params_ptr = &params;
+
+	// printvec(params.kappa_w);
 
 	Model model = Model(params, income_dir);
 

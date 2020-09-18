@@ -1,5 +1,9 @@
 #include <adjustment_costs.h>
 #include <math.h>
+#include <iostream>
+#include <functional>
+
+using namespace std::placeholders;
 
 AdjustmentCosts::AdjustmentCosts(AdjustCostFnRatioMode mode_, bool exponential_costs_,
 	double kappa_w_fc_, double kappa_d_fc_, const std::array<double, 5>& kappa_w_,
@@ -14,16 +18,17 @@ AdjustmentCosts::AdjustmentCosts(AdjustCostFnRatioMode mode_, bool exponential_c
 		cost = [this](double d, double a) {return cost_fn_exponential(d, a);};
 		cost1 = [this](double d, double a) {return cost_deriv_exponential(d, a);};
 		cost1inv = [this](double chi, double a) {return cost_deriv_inv_exponential(chi, a);};
+
 	}
 	else {
-		cost = [this](double d, double a) {return cost_fn_other(d, a);};
-		cost1 = [this](double d, double a) {return cost_deriv_other(d, a);};
-		cost1inv = [this](double chi, double a) {return cost_deriv_inv_other(chi, a);};
+		cost = std::bind(&AdjustmentCosts::cost_fn_other, *this, _1, _2);
+		cost1 = std::bind(&AdjustmentCosts::cost_deriv_other, *this, _1, _2);
+		cost1inv = std::bind(&AdjustmentCosts::cost_deriv_inv_other, *this, _1, _2);
 	}
 }
 
 double AdjustmentCosts::scale_factor(double a) const {
-	double scale = 0.0;
+	double scale = 0;
 	switch ( mode ) {
 		case AdjustCostFnRatioMode::none:
 			scale = 1;

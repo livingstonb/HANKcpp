@@ -37,11 +37,12 @@ namespace {
 		StdVector3d<double> V(p.na, p.nb, model.ny);
 		double lc, u;
 		ArrayXd bdriftnn = model.get_rb_effective().array() * model.bgrid.array();
+		ArrayXd adriftnn = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
 
 		for (int ia=0; ia<p.na; ++ia) {
 			for (int ib=0; ib<p.nb; ++ib) {
 				for (int iy=0; iy<model.ny; ++iy) {
-					lc = 0.5 * ss.netwagegrid[iy] + p.lumptransfer + bdriftnn(ib);
+					lc = 0.5 * ss.netwagegrid[iy] + p.lumptransfer + bdriftnn(ib) + adriftnn(ia);
 					u = model.util(lc);
 					V(ia,ib,iy) = u / (p.rho + p.deathrate);
 				}
@@ -198,6 +199,14 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 
 				// Update d
 				policies.update_d(ia, ib, iy, depositFB, depositBF, depositBB);
+
+				// std::cout << "VaB = " << derivs.VaB << '\n';
+				// std::cout << "VaF = " << derivs.VaF << '\n';
+				// std::cout << "VbB = " << derivs.VbB << '\n';
+				// std::cout << "VbF = " << derivs.VbF << '\n';
+				// std::cout << "dFB = " << depositFB.d << '\n';
+				// std::cout << "dBF = " << depositBF.d << '\n';
+				// std::cout << "dBB = " << depositBB.d << '\n' << '\n';
 
 				// Update u
 				labdisutil = idioscale * model.labdisutil(policies.h(ia,ib,iy), chi);
