@@ -4,12 +4,8 @@
 using namespace std::placeholders;
 
 namespace {
-	double deviation_mean_illiq_wealth(const SSCalibrationArgs& args) {
-		return args.stats->Ea / args.p->illiqWealthTarget.value - 1.0;
-	}
-
 	double deviation_median_illiq_wealth(const SSCalibrationArgs& args) {
-		return args.stats->a_pctiles[5] / args.p->liqWealthTarget.value - 1.0;
+		return args.stats->a_pctiles[5] / args.p->illiqWealthTarget.value - 1.0;
 	}
 
 	double deviation_mean_liq_wealth(const SSCalibrationArgs& args) {
@@ -27,12 +23,14 @@ namespace {
 	double labor_market_clearing(const SSCalibrationArgs& args, int io) {
 		return args.stats->Elabor_occ[io] / args.iss->labor_occ[io] - 1.0;
 	}
+
+	double hours_target(const SSCalibrationArgs& args) {
+		return args.stats->Ehours / args.p->hourtarget - 1.0;
+	}
 }
 
 SSCalibrator::SSCalibrator(const Parameters &p) {
-	if ( p.illiqWealthTarget.is_mean() )
-		obj_functions.push_back(deviation_mean_illiq_wealth);
-	else if ( p.illiqWealthTarget.is_median() )
+	if ( p.illiqWealthTarget.is_median() )
 		obj_functions.push_back(deviation_median_illiq_wealth);
 
 	if ( p.liqWealthTarget.is_mean() )
@@ -48,6 +46,9 @@ SSCalibrator::SSCalibrator(const Parameters &p) {
 		deviation_fn_type labclearing_io = std::bind(labor_market_clearing, _1, io);
 		obj_functions.push_back(labclearing_io);
 	}
+
+	// Hours target
+	obj_functions.push_back(hours_target);
 }
 
 void SSCalibrator::fill_fvec(const SSCalibrationArgs& args, double fvec[]) const {

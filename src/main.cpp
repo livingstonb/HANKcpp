@@ -43,16 +43,16 @@ void find_initial_steady_state(int n, double x[], double fvec[], int &iflag) {
 	DistributionStatistics stats(p, model, hjb, sdist);
 	stats.print();
 
-	// fvec[0] = stats.Ea / (iss.capital + iss.equity_A) - 1.0;
-	// for (int io=0; io<p.nocc; ++io)
-	// 	fvec[io+1] = stats.Elabor_occ[io] * model.occdist[io] / iss.labor_occ[io] - 1.0;
-
-	// fvec[p.nocc+1] = stats.a_pctiles[5] / p.targetMedianIll - 1.0;
-	// fvec[p.nocc+2] = stats.Eb / p.targetMeanLiq - 1.0;
-	// fvec[p.nocc+3] = (stats.Ehours / p.hourtarget - 1.0) / 100.0;
-
 	SSCalibrationArgs args(global_params_ptr, &model, &stats, &iss);
 	global_calibrator_ptr->fill_fvec(args, fvec);
+
+	VectorXd fvals(n);
+	for (int i=0; i<n; ++i)
+		fvals[i] = fvec[i];
+
+	std::cout << "fvec = \n";
+	printvec(fvals);
+	std::cout << "fvec norm = " << fvals.norm() << '\n';
 }
 
 int main () {
@@ -65,7 +65,7 @@ int main () {
 	params.rho = 0.02;
 	params.drs_N = 0.8;
 	params.drs_Y = 0.9;
-	params.dmax = 1e4;
+	params.dmax = 1e2;
 	params.borrowing = true;
 	// params.deathrate = 0.0;
 	params.amax = 1000;
@@ -95,6 +95,8 @@ int main () {
 	int n = params.nocc + 4;
 	double fvec[n];
 	double tol = 1.0e-9;
+
+	assert( n == calibrator.nvals() );
 
 	int lwa = n * (3 * n + 13);
 	double wa[lwa];

@@ -1145,7 +1145,8 @@ int hybrd ( void fcn ( int n, double x[], double fvec[], int &iflag ),
       r[l-1] = wa1[j-1];
       if ( wa1[j-1] == 0.0 )
       {
-        cout << "  Matrix is singular.\n";
+        cerr << "  Matrix is singular.\n";
+        throw 0;
       }
     }
 //
