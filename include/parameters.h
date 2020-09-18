@@ -116,12 +116,9 @@ class Parameters {
 		double facc = 1.0e-10;
 
 		// --- CALIBRATION TARGETS ---
-		double targetMeanIll = 11.68;
-		double targetMedianIll = 8.6;
-		double targetMeanLiq = 0.8;
-		double targetMedianLiq = 0.7;
-		bool targetMedianIllWealth = true;
-		bool targetMedianLiqWealth = true;
+		WealthTarget illiqWealthTarget = WealthTarget(WealthTarget::Type::mean, 11.68);
+		WealthTarget liqWealthTarget = WealthTarget(WealthTarget::Type::mean, 0.8);
+		double targetMeanIllGuess = 2.5; // Overriden if illiqWealthTarget is mean
 		bool calibrateLaborDisutility = true;
 		bool calibrateRb = true;
 

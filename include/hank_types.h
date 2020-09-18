@@ -22,6 +22,21 @@ class Options {
 		bool fast = false;
 };
 
+class WealthTarget {
+	public:
+		enum class Type { mean, median, none };
+
+		WealthTarget(WealthTarget::Type type_, double value_) : type(type_), value(value_) {}
+
+		Type type;
+
+		double value;
+
+		bool is_mean() const {return (type == Type::mean);}
+
+		bool is_median() const {return (type == Type::median);}
+};
+
 template<typename T>
 class StdVector3d {
 	public:

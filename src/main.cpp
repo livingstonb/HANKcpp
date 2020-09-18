@@ -10,11 +10,14 @@
 #include <adjustment_costs.h>
 #include <utilities.h>
 #include <math.h>
+#include <ss_calibrator.h>
 
 #include <minpack.h>
 
 Parameters *global_params_ptr = NULL;
 std::string income_dir = "2point_3_5";
+
+SSCalibrator *global_calibrator_ptr = NULL;
 
 void find_initial_steady_state(int n, double x[], double fvec[], int &iflag) {
 	Parameters& p = *global_params_ptr;
@@ -40,38 +43,42 @@ void find_initial_steady_state(int n, double x[], double fvec[], int &iflag) {
 	DistributionStatistics stats(p, model, hjb, sdist);
 	stats.print();
 
-	fvec[0] = stats.Ea / (iss.capital + iss.equity_A) - 1.0;
-	for (int io=0; io<p.nocc; ++io)
-		fvec[io+1] = stats.Elabor_occ[io] * model.occdist[io] / iss.labor_occ[io] - 1.0;
+	// fvec[0] = stats.Ea / (iss.capital + iss.equity_A) - 1.0;
+	// for (int io=0; io<p.nocc; ++io)
+	// 	fvec[io+1] = stats.Elabor_occ[io] * model.occdist[io] / iss.labor_occ[io] - 1.0;
 
-	fvec[p.nocc+1] = stats.a_pctiles[5] / p.targetMedianIll - 1.0;
-	fvec[p.nocc+2] = stats.Eb / p.targetMeanLiq - 1.0;
-	fvec[p.nocc+3] = (stats.Ehours / p.hourtarget - 1.0) / 100.0;
+	// fvec[p.nocc+1] = stats.a_pctiles[5] / p.targetMedianIll - 1.0;
+	// fvec[p.nocc+2] = stats.Eb / p.targetMeanLiq - 1.0;
+	// fvec[p.nocc+3] = (stats.Ehours / p.hourtarget - 1.0) / 100.0;
+
+	SSCalibrationArgs args(global_params_ptr, &model, &stats, &iss);
+	global_calibrator_ptr->fill_fvec(args, fvec);
 }
 
 int main () {
 	std::string income_dir = "2point_3_5";
 
-	Options options;
+	Options options; 
 	options.fast = false;
 
 	Parameters params;
 	params.rho = 0.02;
-	params.drs_N = 1;
+	params.drs_N = 0.8;
 	params.drs_Y = 0.9;
-	params.dmax = 1e2;
+	params.dmax = 1e4;
 	params.borrowing = true;
-	params.deathrate = 0.0;
-	params.amax = 10;
-	// params.na = 25;
-	// params.nb_pos = 25;
+	// params.deathrate = 0.0;
+	params.amax = 1000;
+	params.na = 30;
+	params.nb_pos = 30;
 	// params.depreciation = 0.001;
-	params.rb = 0.02 / 4.0;
+	params.rb = 0.01 / 4.0;
 
 	params.setup(options);
 	global_params_ptr = &params;
 
-	// printvec(params.kappa_w);
+	SSCalibrator calibrator(params);
+	global_calibrator_ptr = &calibrator;
 
 	Model model = Model(params, income_dir);
 
@@ -79,7 +86,7 @@ int main () {
 	double x[params.nocc+4];
 	x[0] = log(params.rho);
 	for (int io=0; io<params.nocc; ++io)
-		x[io+1] = params.hourtarget * params.meanlabeff * model.occdist[io];
+		x[io+1] = log(params.hourtarget * params.meanlabeff * model.occdist[io]);
 
 	x[params.nocc+1] = params.target_KY_ratio;
 	x[params.nocc+2] = log(params.rb);

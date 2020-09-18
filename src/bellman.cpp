@@ -10,10 +10,13 @@
 #include <hank_eigen_sparse.h>
 #include <transition_matrix.h>
 
+#include <functional>
 #include <algorithm>
 #include <math.h>
 
 #include <hank_macros.h>
+
+using namespace std::placeholders;
 
 namespace {
 	constexpr bool is_stationary_pt_or_limit(double Vb) {
@@ -122,9 +125,11 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 
 	std::function<Upwinding::ConUpwind(double, double, double, double)> opt_c;
 	if ( p.endogLabor ) {
-		opt_c = [this, chi] (double Vb, double bdrift, double netwage, double idioscale) {
-				return optimal_consumption_sep_labor(Vb, bdrift, netwage, chi, idioscale);
-		};
+		// opt_c = [this, chi] (double Vb, double bdrift, double netwage, double idioscale) {
+		// 		return optimal_consumption_sep_labor(Vb, bdrift, netwage, chi, idioscale);
+		// };
+
+		opt_c = std::bind(&HJB::optimal_consumption_sep_labor, *this, _1, _2, _3, chi, _4);
 	}
 	else {
 		opt_c = [this] (double Vb, double bdrift, double netwage, double) {
@@ -289,12 +294,16 @@ Upwinding::ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift
 			double facc = 1.0e-8;
 			upwind.h = HankNumerics::rtsec(objective, hmin, hmax, facc);
 		}
-		else if ( v1_at_max <= 0.0 )
+		else if ( v1_at_max <= 0 )
 			upwind.h = hmax;
-		else if ( v1_at_min >= 0.0 )
+		else if ( v1_at_min >= 0 )
 			upwind.h = hmin;
-		else
-			throw "Logic error";
+		else {
+			std::cerr << "v1_at_min = " << v1_at_min << '\n';
+			std::cerr << "v1_at_max = " << v1_at_max << '\n';
+			std::cerr << "Logic error\n";
+			throw 0;
+		}
 	}
 
 	if ( p.imposeMaxHours )

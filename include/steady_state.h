@@ -36,7 +36,7 @@ class SteadyState {
 
 		double varieties = 1.0;
 
-		double rho, capital, capital_Y, capital_N, price_W, target_KY_ratio;
+		double rho, capital, capital_Y, capital_N, price_W;
 
 		double investment, labor_Y, labor_N, labor;
 

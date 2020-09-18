@@ -225,5 +225,7 @@ double Model::labdisutil1inv(double du, double chi) const {
 }
 
 double Model::util1BC(double h, double chi, double bdrift, double netwage, double wagescale) const {
-	return labdisutil1(h, chi) - util1(bdrift + h * netwage) * netwage * p.labwedge / wagescale;
+	double c = bdrift + h * netwage;
+	assert( c > 0 );
+	return labdisutil1(h, chi) - util1(c) * netwage * p.labwedge / wagescale;
 }

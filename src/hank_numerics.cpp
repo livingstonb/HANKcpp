@@ -1,5 +1,6 @@
 #include <hank_numerics.h>
 #include <math.h>
+#include <iostream>
 
 namespace HankNumerics {
 
@@ -40,7 +41,8 @@ double rtsec(std::function<double(double)> fn, double x1, double x2, double facc
 			return lrtsec;
 	}
 
-	throw "Exceeded maximum iterations";
+	std::cout << "Exceeded maximum iterations";
+	throw 0;
 }
 
 double lininterp1(int n, const double *x, const double *y, double xi) {

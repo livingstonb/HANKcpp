@@ -5,29 +5,9 @@
 #include <math.h>
 #include <algorithm>
 #include <iostream>
+#include <assert.h>
 
 namespace {
-	double marginal_cost(double tfp, double r, double alpha, double wage) {
-		return (1.0 / tfp) * pow(r / alpha, alpha) * pow(wage / (1.0 - alpha), 1.0 - alpha);
-	}
-
-	double quadratic_formula(double a, double b, double c) {
-		return (-b + sqrt(pow(b, 2.0) - 4.0 * a * c)) / (2.0 * a);
-	}
-
-	double compute_ss_capital_output_ratio(const Parameters& p, double price_W) {
-		double la, lb, lc;
-
-		la = -p.depreciation;
-		lb = p.targetMeanIll * p.depreciation + price_W * p.alpha_Y * p.drs_Y
-			+ (1.0 - price_W) * p.alpha_N * p.drs_N
-			+ (price_W * (1.0 - p.drs_Y) + (1.0 - price_W) * (1.0 - p.drs_N))
-				* (1.0 - p.corptax) * p.profdistfracA;
-		lc = -p.targetMeanIll
-			* (price_W * p. alpha_Y * p. drs_Y + (1.0 - price_W) * p.alpha_N * p.drs_N);
-
-		return quadratic_formula(la, lb, lc);
-	}
 
 	std::vector<double> repeat(const std::vector<double>& arr_in, int r) {
 		std::vector<double> arr_out(arr_in.size() * r);
@@ -45,15 +25,15 @@ namespace {
 
 SteadyState::SteadyState(const Parameters& p_, const Model& model_) : model(model_), p(p_) {
 	price_W = 1.0 - 1.0 / p.elast;
-	target_KY_ratio = compute_ss_capital_output_ratio(p, price_W);
 }
 
 void SteadyState::set(const double x[], SSType mode) {
 	if ( mode == SSType::initial ) {
 		// Guess rho and labor occ, and chi
 		labor_occ.clear();
-		for (int io=0; io<p.nocc; ++io)
-			labor_occ.push_back(x[io+1]);
+		for (int io=0; io<p.nocc; ++io) {
+			labor_occ.push_back(exp(x[io+1]));
+		}
 
 		capital = x[p.nocc+1];
 	}

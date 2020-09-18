@@ -13,11 +13,11 @@ namespace {
 		double la, lb, lc;
 
 		la = -p.depreciation;
-		lb = p.targetMeanIll * p.depreciation + price_W * p.alpha_Y * p.drs_Y
+		lb = p.targetMeanIllGuess * p.depreciation + price_W * p.alpha_Y * p.drs_Y
 			+ (1.0 - price_W) * p.alpha_N * p.drs_N
 			+ (price_W * (1.0 - p.drs_Y) + (1.0 - price_W) * (1.0 - p.drs_N))
 				* (1.0 - p.corptax) * p.profdistfracA;
-		lc = -p.targetMeanIll
+		lc = -p.targetMeanIllGuess
 			* (price_W * p. alpha_Y * p. drs_Y + (1.0 - price_W) * p.alpha_N * p.drs_N);
 
 		return quadratic_formula(la, lb, lc);
@@ -62,6 +62,9 @@ void Parameters::setup(const Options& opts) {
 			// Leave deposit adj cost parameters at current values
 			break;
 	}
+
+	if ( illiqWealthTarget.is_mean() )
+		targetMeanIllGuess = illiqWealthTarget.value;
 
 	double price_W = 1.0 - 1.0 / elast;
 	target_KY_ratio = compute_ss_capital_output_ratio(*this, price_W);
