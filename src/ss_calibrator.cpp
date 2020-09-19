@@ -63,7 +63,7 @@ void SSCalibrator::fill_xguess(const Parameters &p, const Model& model, double x
 
 	// Labor market clearing
 	for (int io=0; io<p.nocc; ++io) {
-		xvec[ix] = log(p.hourtarget * p.meanlabeff * model.occdist[io]);
+		xvec[ix] = p.hourtarget * p.meanlabeff * model.occdist[io];
 		ix_occdist.push_back(ix);
 		++ix;
 	}
@@ -87,14 +87,14 @@ void SSCalibrator::fill_xguess(const Parameters &p, const Model& model, double x
 	// Labor disutility
 	if ( p.calibrateLaborDisutility ) {
 		check_size(ix);
-		xvec[ix] = log(p.chi);
+		xvec[ix] = p.chi;
 		ix_chi = ix;
 		++ix;
 	}
 
 	if ( ix == nmoments() - 1) {
 		// Use capital as the last moment
-		xvec[ix] = log(p.target_KY_ratio);
+		xvec[ix] = p.target_KY_ratio;
 		ix_capital = ix;
 		++ix;
 	}
@@ -127,7 +127,7 @@ void SSCalibrator::update_params(Parameters *p, double xvec[]) const {
 	}
 
 	if ( ix_chi > 0 ) {
-		p->chi = exp(xvec[ix_chi]);
+		p->chi = xvec[ix_chi];
 		std::cout << "  chi = " << p->chi << '\n';
 	}
 
@@ -136,12 +136,12 @@ void SSCalibrator::update_params(Parameters *p, double xvec[]) const {
 
 void SSCalibrator::update_ss(const Parameters& p, SteadyState *iss, double xvec[]) const {
 	for (int io=0; io<ix_occdist.size(); ++io) {
-		iss->labor_occ.push_back(exp(xvec[ix_occdist[io]]));
-		std::cout << "  labor_" << io << " = " << exp(xvec[ix_occdist[io]]) << '\n';
+		iss->labor_occ.push_back(xvec[ix_occdist[io]]);
+		std::cout << "  labor_" << io << " = " << xvec[ix_occdist[io]] << '\n';
 	}
 
 	if ( ix_capital > 0 ) {
-		iss->capital = exp(xvec[ix_capital]);
+		iss->capital = xvec[ix_capital];
 		std::cout << "  capital = " << iss->capital << '\n';
 	}
 	else

@@ -71,7 +71,7 @@ int main () {
 	params.drs_Y = 0.9;
 	params.dmax = 1e3;
 	params.borrowing = true;
-	// params.deathrate = 0.0;
+	params.deathrate = 0.0;
 	params.amax = 500;
 	params.na = 50;
 	params.nb_pos = 30;
@@ -79,7 +79,7 @@ int main () {
 	params.elast = 2;
 	params.nocc = 1;
 	// params.riskaver = 1.0;
-	params.rb = 0.02 / 4.0;
+	params.rb = 0.05 / 4.0;
 
 	params.setup(options);
 	global_params_ptr = &params;

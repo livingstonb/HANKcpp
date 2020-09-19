@@ -124,7 +124,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 		pocc = 0;
 		for (int ip=0; ip<model.nprod; ++ip) {
 			Elabor_occ[io] += pdistmat.col(iy).dot(labor_aby.col(iy));
-			pocc = pdistmat.col(iy).sum();
+			pocc += pdistmat.col(iy).sum();
 			++iy;
 		}
 		Elabor_occ[io] /= pocc;
