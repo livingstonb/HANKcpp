@@ -65,7 +65,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 	}
 
 	// Distribution
-	ArrayXd gdistvec = as_eigen<VectorXd>(sdist.density);
+	ArrayXd gdistvec = as_eigen<ArrayXd>(sdist.density);
 	MatrixXd gdistmat = Eigen::Map<MatrixXd>(gdistvec.data(), p.nab, model.ny);
 
 	MatrixXd pdistmat = gdistmat.array().colwise() * model.abdelta.array();
@@ -75,7 +75,6 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 	MatrixXd p_ay = MatrixXd::Zero(p.na, model.ny);
 	MatrixXd p_by = MatrixXd::Zero(p.nb, model.ny);
 
-	iab = 0;
 	for (int ia=0; ia<p.na; ++ia) {
 		for (int ib=0; ib<p.nb; ++ib) {
 			iab = TO_INDEX_1D(ia, ib, p.na, p.nb);
@@ -119,12 +118,16 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 	std::fill(Elabor_occ.begin(), Elabor_occ.end(), 0.0);
 
 	int iy = 0;
+	double pocc;
 	VectorXd labor_ab, pmass_ab;
 	for (int io=0; io<p.nocc; ++io) {
+		pocc = 0;
 		for (int ip=0; ip<model.nprod; ++ip) {
 			Elabor_occ[io] += pdistmat.col(iy).dot(labor_aby.col(iy));
+			pocc = pdistmat.col(iy).sum();
 			++iy;
 		}
+		Elabor_occ[io] /= pocc;
 	}
 
 	// Percentiles

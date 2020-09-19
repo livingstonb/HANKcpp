@@ -66,6 +66,10 @@ void Parameters::setup(const Options& opts) {
 	if ( illiqWealthTarget.is_mean() )
 		targetMeanIllGuess = illiqWealthTarget.value;
 
+	targetMeanIllGuess /= USGDPperHH;
+	illiqWealthTarget.value /= USGDPperHH;
+	liqWealthTarget.value /= USGDPperHH;
+
 	double price_W = 1.0 - 1.0 / elast;
 	target_KY_ratio = compute_ss_capital_output_ratio(*this, price_W);
 	chi = meanlabeff / (pow(0.7, -riskaver) * pow(hourtarget, 1.0 / frisch));

@@ -45,7 +45,7 @@ namespace {
 		for (int ia=0; ia<p.na; ++ia) {
 			for (int ib=0; ib<p.nb; ++ib) {
 				for (int iy=0; iy<model.ny; ++iy) {
-					lc = 0.5 * ss.netwagegrid[iy] + p.lumptransfer + bdriftnn(ib) + adriftnn(ia);
+					lc = ss.netwagegrid[iy] + p.lumptransfer + bdriftnn(ib) + adriftnn(ia);
 					u = model.util(lc);
 					V(ia,ib,iy) = u / (p.rho + p.deathrate);
 				}
@@ -121,21 +121,12 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 	proftot += p.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
 
 	double_vector bdrift = model.get_rb_effective().array() * model.bgrid.array();
-	// double_vector adrift = (p.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
 
 	std::function<Upwinding::ConUpwind(double, double, double, double)> opt_c;
-	if ( p.endogLabor ) {
-		// opt_c = [this, chi] (double Vb, double bdrift, double netwage, double idioscale) {
-		// 		return optimal_consumption_sep_labor(Vb, bdrift, netwage, chi, idioscale);
-		// };
-
+	if ( p.endogLabor )
 		opt_c = std::bind(&HJB::optimal_consumption_sep_labor, *this, _1, _2, _3, chi, _4);
-	}
-	else {
-		opt_c = [this] (double Vb, double bdrift, double netwage, double) {
-				return optimal_consumption_no_laborsupply(Vb, bdrift, netwage);
-		};
-	}
+	else
+		opt_c = std::bind(&HJB::optimal_consumption_no_laborsupply, *this, _1, _2, _3);
 
 	for (int ia=0; ia<p.na; ++ia) {
 		for (int ib=0; ib<p.nb; ++ib) {
@@ -205,14 +196,6 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 				// Update d
 				policies.update_d(ia, ib, iy, depositFB, depositBF, depositBB);
 
-				// std::cout << "VaB = " << derivs.VaB << '\n';
-				// std::cout << "VaF = " << derivs.VaF << '\n';
-				// std::cout << "VbB = " << derivs.VbB << '\n';
-				// std::cout << "VbF = " << derivs.VbF << '\n';
-				// std::cout << "dFB = " << depositFB.d << '\n';
-				// std::cout << "dBF = " << depositBF.d << '\n';
-				// std::cout << "dBB = " << depositBB.d << '\n' << '\n';
-
 				// Update u
 				labdisutil = idioscale * model.labdisutil(policies.h(ia,ib,iy), chi);
 				if ( p.endogLabor )
@@ -281,16 +264,14 @@ Upwinding::ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift
 		upwind.h = model.labdisutil1inv(p.labwedge * netwage * Vb, chi);
 	}
 	else {
-		upwind.s = 0.0;
 		double hmin = fmax(-bdrift / netwage + 1.0e-5, 0.0);
 		double hmax = ( p.imposeMaxHours ) ? 1 : 100;
 		double v1_at_min = model.util1BC(hmin, chi, bdrift, netwage, idioscale);
 		double v1_at_max = model.util1BC(hmax, chi, bdrift, netwage, idioscale);
 
 		if ( (v1_at_max > 0) & (v1_at_min < 0) ) {
-			std::function<double(double)> objective = [=] (double h) {
-				return model.util1BC(h, chi, bdrift, netwage, idioscale);
-			};
+			std::function<double(double)> objective = std::bind(
+				&Model::util1BC, model, _1, chi, bdrift, netwage, idioscale);
 			double facc = 1.0e-8;
 			upwind.h = HankNumerics::rtsec(objective, hmin, hmax, facc);
 		}
@@ -317,6 +298,7 @@ Upwinding::ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift
 	}
 	else {
 		upwind.c = bdrift + upwind.h * netwage;
+		upwind.s = 0.0;
 	}
 
 	if ( upwind.c > 0.0 )
@@ -335,8 +317,6 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 	bool kfe = false;
 
 	sparse_matrix ldiagmat, sparseI = speye(p.na * p.nb);
-
-	double_vector adriftvec = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
 	double_vector bdriftvec = model.get_rb_effective().array() * model.bgrid.array();
 
 	int na = p.na;

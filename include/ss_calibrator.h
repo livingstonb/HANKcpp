@@ -35,14 +35,25 @@ class SSCalibrator {
 
 		void fill_fvec(const SSCalibrationArgs& args, double fvec[]) const;
 
-		int nvals() const {return obj_functions.size();}
+		void fill_xguess(const Parameters &p, const Model& model, double xvec[]);
 
+		void update_params(Parameters *p, double xvec[]) const;
+
+		void update_ss(const Parameters& p, SteadyState *iss, double xvec[]) const;
+
+		int nmoments() const {return obj_functions.size();}
+
+		void check_size(int ix) const;
+
+		std::vector<int> ix_occdist;
+
+		int ix_rho = -1;
+
+		int ix_rb = -1;
+
+		int ix_chi = -1;
+
+		int ix_capital = -1;
 };
-
-// void set_from_x(Parameters *p, Model *model, SteadyState *iss) {
-
-// }
-
-
 
 #endif

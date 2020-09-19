@@ -3,7 +3,7 @@
 #include <functions.h>
 #include <cmath>
 #include <boost/algorithm/string.hpp>
-
+#include <assert.h>
 #include <hank_macros.h>
 
 namespace {
@@ -11,6 +11,7 @@ namespace {
 		for (int i=0; i<mat.rows(); ++i) {
 			double rowsum = mat.row(i).sum();
 			mat(i,i) -= rowsum;
+			assert( abs(mat.row(i).sum()) < 1e-7 );
 		}
 	}
 
@@ -109,13 +110,22 @@ void ModelBase::make_asset_grids(const Parameters& p) {
 
 void ModelBase::make_occupation_grids(const Parameters& p) {
 	// Occupation types
+	occYsharegrid_.resize(p.nocc);
+	occNsharegrid_.resize(p.nocc);
+	occdist_.resize(p.nocc);
 	if ( p.nocc == 1 ) {
-		occYsharegrid_ = double_vector::Constant(p.nocc, 1.0);
-		occNsharegrid_ = double_vector::Constant(p.nocc, 1.0);
-		occdist_ = double_vector::Constant(p.nocc, 1.0);
+		occYsharegrid_ << 1;
+		occNsharegrid_ << 1;
+		occdist_ << 1;
+	}
+	else if ( p.nocc == 4 ) {
+		occYsharegrid_ << 0.325, 0.275, 0.225, 0.175;
+		occNsharegrid_ << 0.1, 0.15, 0.25, 0.5;
+		occdist_ << 0.25, 0.25, 0.25, 0.25;
 	}
 	else {
-		throw "Not coded";
+		std::cerr << "Invalid number of occupation points\n";
+		throw 0;
 	}
 	nocc_ = p.nocc;
 }

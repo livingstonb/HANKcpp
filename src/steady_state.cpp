@@ -27,20 +27,6 @@ SteadyState::SteadyState(const Parameters& p_, const Model& model_) : model(mode
 	price_W = 1.0 - 1.0 / p.elast;
 }
 
-void SteadyState::set(const double x[], SSType mode) {
-	if ( mode == SSType::initial ) {
-		// Guess rho and labor occ, and chi
-		labor_occ.clear();
-		for (int io=0; io<p.nocc; ++io) {
-			labor_occ.push_back(exp(x[io+1]));
-		}
-
-		capital = x[p.nocc+1];
-	}
-	else if ( mode == SSType::final ) {
-	}
-}
-
 void SteadyState::compute(SSType mode) {
 	ArrayXd elabshareY, elabshareN, elabfracY, elabfracN;
 

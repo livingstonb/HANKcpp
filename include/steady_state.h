@@ -16,8 +16,6 @@ class SteadyState {
 
 		SteadyState(const Parameters& p_, const Model& model_);
 
-		void set(const double *x, SSType mode);
-
 		void compute(SSType mode);
 
 		void compute_profits();

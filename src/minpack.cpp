@@ -1146,7 +1146,7 @@ int hybrd ( void fcn ( int n, double x[], double fvec[], int &iflag ),
       if ( wa1[j-1] == 0.0 )
       {
         cerr << "  Matrix is singular.\n";
-        throw 0;
+        // throw 0;
       }
     }
 //

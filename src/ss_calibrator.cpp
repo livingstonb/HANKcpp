@@ -1,5 +1,6 @@
 #include <ss_calibrator.h>
 #include <functional>
+#include <iostream>
 
 using namespace std::placeholders;
 
@@ -52,7 +53,97 @@ SSCalibrator::SSCalibrator(const Parameters &p) {
 }
 
 void SSCalibrator::fill_fvec(const SSCalibrationArgs& args, double fvec[]) const {
-	for (int i=0; i<nvals(); ++i) {
+	for (int i=0; i<nmoments(); ++i) {
 		fvec[i] = obj_functions[i](args);
 	}
+}
+
+void SSCalibrator::fill_xguess(const Parameters &p, const Model& model, double xvec[]) {
+	int ix = 0;
+
+	// Labor market clearing
+	for (int io=0; io<p.nocc; ++io) {
+		xvec[ix] = log(p.hourtarget * p.meanlabeff * model.occdist[io]);
+		ix_occdist.push_back(ix);
+		++ix;
+	}
+
+	// Discount rate
+	if ( p.calibrateDiscountRate ) {
+		check_size(ix);
+		xvec[ix] = log(p.rho);
+		ix_rho = ix;
+		++ix;
+	}
+
+	// Liquid returns
+	if ( p.calibrateRb ) {
+		check_size(ix);
+		xvec[ix] = log(p.rb);
+		ix_rb = ix;
+		++ix;
+	}
+
+	// Labor disutility
+	if ( p.calibrateLaborDisutility ) {
+		check_size(ix);
+		xvec[ix] = log(p.chi);
+		ix_chi = ix;
+		++ix;
+	}
+
+	if ( ix == nmoments() - 1) {
+		// Use capital as the last moment
+		xvec[ix] = log(p.target_KY_ratio);
+		ix_capital = ix;
+		++ix;
+	}
+	else if ( ix < nmoments() - 1 ) {
+		std::cerr << "Too few moments\n";
+		throw 0;
+	}
+	else if ( ix > nmoments() ) {
+		std::cerr << "Too many moments\n";
+		throw 0;
+	}
+}
+
+void SSCalibrator::check_size(int ix) const {
+	if ( ix >= nmoments() ) {
+		std::cerr << "Too many guesses\n";
+		throw 0;
+	}
+}
+
+void SSCalibrator::update_params(Parameters *p, double xvec[]) const {
+	if ( ix_rho > 0 ) {
+		p->rho = exp(xvec[ix_rho]);
+		std::cout << "  rho = " << p->rho << '\n';
+	}
+
+	if ( ix_rb > 0 ) {
+		p->rb = exp(xvec[ix_rb]);
+		std::cout << "  rb = " << p->rb << '\n';
+	}
+
+	if ( ix_chi > 0 ) {
+		p->chi = exp(xvec[ix_chi]);
+		std::cout << "  chi = " << p->chi << '\n';
+	}
+
+	p->update();
+}
+
+void SSCalibrator::update_ss(const Parameters& p, SteadyState *iss, double xvec[]) const {
+	for (int io=0; io<ix_occdist.size(); ++io) {
+		iss->labor_occ.push_back(exp(xvec[ix_occdist[io]]));
+		std::cout << "  labor_" << io << " = " << exp(xvec[ix_occdist[io]]) << '\n';
+	}
+
+	if ( ix_capital > 0 ) {
+		iss->capital = exp(xvec[ix_capital]);
+		std::cout << "  capital = " << iss->capital << '\n';
+	}
+	else
+		iss->capital = p.target_KY_ratio;
 }

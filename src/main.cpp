@@ -21,16 +21,18 @@ SSCalibrator *global_calibrator_ptr = NULL;
 
 void find_initial_steady_state(int n, double x[], double fvec[], int &iflag) {
 	Parameters& p = *global_params_ptr;
+	SSCalibrator& cal = *global_calibrator_ptr;
 
-	p.rho = exp(x[0]);
-	p.rb = exp(x[p.nocc+2]);
-	p.chi = x[p.nocc+3];
-	p.update();
+	std::cout << "\nCalibration parameters updated:\n";
+
+	cal.update_params(&p, x);
 
 	Model model = Model(p, income_dir);
 
 	SteadyState iss(p, model);
-	iss.set(x, SteadyState::SSType::initial);
+	cal.update_ss(p, &iss, x);
+	std::cout << '\n';
+
 	iss.compute(SteadyState::SSType::initial);
 
 	HJB hjb(model, iss);
@@ -51,8 +53,10 @@ void find_initial_steady_state(int n, double x[], double fvec[], int &iflag) {
 		fvals[i] = fvec[i];
 
 	std::cout << "fvec = \n";
-	printvec(fvals);
-	std::cout << "fvec norm = " << fvals.norm() << '\n';
+	for (int i=0; i<n; ++i)
+		std::cout << "  " << fvec[i] << '\n';
+	std::cout << "  fvec norm = " << fvals.norm() << '\n';
+	std::cout << "--------------------------\n\n";
 }
 
 int main () {
@@ -62,17 +66,20 @@ int main () {
 	options.fast = false;
 
 	Parameters params;
-	params.rho = 0.02;
-	params.drs_N = 0.8;
+	params.rho = 0.015;
+	params.drs_N = 0;
 	params.drs_Y = 0.9;
-	params.dmax = 1e2;
+	params.dmax = 1e3;
 	params.borrowing = true;
 	// params.deathrate = 0.0;
-	params.amax = 1000;
-	params.na = 30;
+	params.amax = 500;
+	params.na = 50;
 	params.nb_pos = 30;
-	// params.depreciation = 0.001;
-	params.rb = 0.01 / 4.0;
+	params.depreciation = 0.05 / 4;
+	params.elast = 2;
+	params.nocc = 1;
+	// params.riskaver = 1.0;
+	params.rb = 0.02 / 4.0;
 
 	params.setup(options);
 	global_params_ptr = &params;
@@ -84,19 +91,13 @@ int main () {
 
 	// guess rho, chi,labor_occ, capital, and rb
 	double x[params.nocc+4];
-	x[0] = log(params.rho);
-	for (int io=0; io<params.nocc; ++io)
-		x[io+1] = log(params.hourtarget * params.meanlabeff * model.occdist[io]);
-
-	x[params.nocc+1] = params.target_KY_ratio;
-	x[params.nocc+2] = log(params.rb);
-	x[params.nocc+3] = params.chi;
+	calibrator.fill_xguess(params, model, x);
 
 	int n = params.nocc + 4;
 	double fvec[n];
 	double tol = 1.0e-9;
 
-	assert( n == calibrator.nvals() );
+	assert( n == calibrator.nmoments() );
 
 	int lwa = n * (3 * n + 13);
 	double wa[lwa];

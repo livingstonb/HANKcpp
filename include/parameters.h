@@ -35,11 +35,11 @@ class Parameters {
 		double blim = -1.0;
 
 		// Other grid parameters
-		int nocc = 1;
+		int nocc = 4;
 		int nab;
 
 		// --- PREFERENCES ---
-		double elast = 10;
+		double elast = 5;
 		double frisch = 1.0;
 		bool adjustProdGridFrisch = true;
 		double adjFrischGridFrac = 0.85;
@@ -98,7 +98,7 @@ class Parameters {
 		double meanlabeff = 1.0;
 		double hourtarget = 1.0 / 3.0;
 		bool perfectAnnuityMarkets = true;
-		double deathrate = 1.0 / (4.0 * 45.0);
+		double deathrate = 0.02 / 4;
 		double rb = 0.02 / 4.0;
 		double borrwedge = 0.025;
 		double rborr = -1.0e5; // Will be set to rb + borrwedge
@@ -109,6 +109,7 @@ class Parameters {
 		AdjustCostFnRatioMode adjCostRatioMode = AdjustCostFnRatioMode::max;
 		double target_KY_ratio;
 		double chi;
+		double USGDPperHH = 146435 / 4.0;
 
 		// --- OTHER SOLUTION PARAMETERS ---
 		double cmin = 1.0e-5;
@@ -116,11 +117,12 @@ class Parameters {
 		double facc = 1.0e-10;
 
 		// --- CALIBRATION TARGETS ---
-		WealthTarget illiqWealthTarget = WealthTarget(WealthTarget::Type::median, 11.68);
-		WealthTarget liqWealthTarget = WealthTarget(WealthTarget::Type::mean, 0.8);
-		double targetMeanIllGuess = 4.5; // Overriden if illiqWealthTarget is mean
+		WealthTarget illiqWealthTarget = WealthTarget(WealthTarget::Type::median, 84900.0);
+		WealthTarget liqWealthTarget = WealthTarget(WealthTarget::Type::mean, 177394.0);
+		double targetMeanIllGuess = 512183.0;
 		bool calibrateLaborDisutility = true;
 		bool calibrateRb = true;
+		bool calibrateDiscountRate = true;
 
 		// number of time periods
 		int Ttransition = 200;
