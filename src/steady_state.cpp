@@ -30,6 +30,8 @@ SteadyState::SteadyState(const Parameters& p_, const Model& model_) : model(mode
 void SteadyState::compute(SSType mode) {
 	ArrayXd elabshareY, elabshareN, elabfracY, elabfracN;
 
+	assert( labor_occ.size() == p.nocc );
+
 	elabshareY = (1.0 - p.alpha_Y) * price_W * p.drs_Y * model.occYsharegrid;
 	elabshareN = (1.0 - p.alpha_N) * (1.0 - price_W) * p.drs_N * model.occNsharegrid;
 	labshareY = to_vector(elabshareY);

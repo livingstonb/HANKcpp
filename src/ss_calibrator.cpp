@@ -1,6 +1,8 @@
 #include <ss_calibrator.h>
 #include <functional>
 #include <iostream>
+#include <string>
+#include <math.h>
 
 using namespace std::placeholders;
 
@@ -31,29 +33,42 @@ namespace {
 }
 
 SSCalibrator::SSCalibrator(const Parameters &p) {
-	if ( p.illiqWealthTarget.is_median() )
-		obj_functions.push_back(deviation_median_illiq_wealth);
-
-	if ( p.liqWealthTarget.is_mean() )
-		obj_functions.push_back(deviation_mean_liq_wealth);
-	else if ( p.liqWealthTarget.is_median() )
-		obj_functions.push_back(deviation_median_liq_wealth);
-
-	// Market clearing for illiquid asset
+	// Market clearing conditions
 	obj_functions.push_back(illiq_market_clearing);
+	moment_descriptions.push_back("Capital market clearing\n");
 
-	// Labor market clearing
 	for (int io=0; io<p.nocc; ++io) {
 		deviation_fn_type labclearing_io = std::bind(labor_market_clearing, _1, io);
 		obj_functions.push_back(labclearing_io);
+		moment_descriptions.push_back("Labor market clearing, occ_" + std::to_string(io) + "\n");
+	}
+
+	if ( p.illiqWealthTarget.is_median() ) {
+		obj_functions.push_back(deviation_median_illiq_wealth);
+		moment_descriptions.push_back("Median illiq wealth\n");
+	}
+
+	if ( p.liqWealthTarget.is_mean() ) {
+		obj_functions.push_back(deviation_mean_liq_wealth);
+		moment_descriptions.push_back("Mean liq wealth\n");
+	}
+	else if ( p.liqWealthTarget.is_median() ) {
+		obj_functions.push_back(deviation_median_liq_wealth);
+		moment_descriptions.push_back("Median liq wealth\n");
 	}
 
 	// Hours target
-	obj_functions.push_back(hours_target);
+	if ( calibrateLaborDisutility ) {
+		obj_functions.push_back(hours_target);
+		moment_descriptions.push_back("Hours worked\n");
+	}
+
+	// Set number of moments
+	nmoments = obj_functions.size();
 }
 
 void SSCalibrator::fill_fvec(const SSCalibrationArgs& args, double fvec[]) const {
-	for (int i=0; i<nmoments(); ++i) {
+	for (int i=0; i<nmoments; ++i) {
 		fvec[i] = obj_functions[i](args);
 	}
 }
@@ -61,15 +76,15 @@ void SSCalibrator::fill_fvec(const SSCalibrationArgs& args, double fvec[]) const
 void SSCalibrator::fill_xguess(const Parameters &p, const Model& model, double xvec[]) {
 	int ix = 0;
 
-	// Labor market clearing
+	// Labor inputs
 	for (int io=0; io<p.nocc; ++io) {
 		xvec[ix] = p.hourtarget * p.meanlabeff * model.occdist[io];
-		ix_occdist.push_back(ix);
+		ix_labor_occ.push_back(ix);
 		++ix;
 	}
 
 	// Discount rate
-	if ( p.calibrateDiscountRate ) {
+	if ( calibrateDiscountRate ) {
 		check_size(ix);
 		xvec[ix] = log(p.rho);
 		ix_rho = ix;
@@ -77,7 +92,7 @@ void SSCalibrator::fill_xguess(const Parameters &p, const Model& model, double x
 	}
 
 	// Liquid returns
-	if ( p.calibrateRb ) {
+	if ( calibrateRb ) {
 		check_size(ix);
 		xvec[ix] = log(p.rb);
 		ix_rb = ix;
@@ -85,32 +100,60 @@ void SSCalibrator::fill_xguess(const Parameters &p, const Model& model, double x
 	}
 
 	// Labor disutility
-	if ( p.calibrateLaborDisutility ) {
+	if ( calibrateLaborDisutility ) {
 		check_size(ix);
 		xvec[ix] = p.chi;
 		ix_chi = ix;
 		++ix;
 	}
 
-	if ( ix == nmoments() - 1) {
-		// Use capital as the last moment
+	if ( ix == nmoments - 1) {
+		// Use capital as the last input variable
 		xvec[ix] = p.target_KY_ratio;
 		ix_capital = ix;
-		++ix;
 	}
-	else if ( ix < nmoments() - 1 ) {
+	else if ( ix < nmoments - 1 ) {
 		std::cerr << "Too few moments\n";
 		throw 0;
 	}
-	else if ( ix > nmoments() ) {
+	else if ( ix > nmoments ) {
 		std::cerr << "Too many moments\n";
 		throw 0;
 	}
 }
 
 void SSCalibrator::check_size(int ix) const {
-	if ( ix >= nmoments() ) {
+	if ( ix >= nmoments ) {
 		std::cerr << "Too many guesses\n";
+		throw 0;
+	}
+}
+
+void SSCalibrator::perform_calibrator_assertions() const {
+	if ( (!calibrateLaborDisutility) & (ix_labor_occ.size() > 0) ) {
+		std::cerr << "Labor disutility calibration off but ix_labor_occ is non-empty";
+		throw 0;
+	}
+	else if ( calibrateLaborDisutility & (ix_labor_occ.size() == 0) ) {
+		std::cerr << "Labor disutility calibration on but ix_labor_occ is empty";
+		throw 0;
+	}
+
+	if ( (!calibrateRb) & (ix_rb >= 0) ) {
+		std::cerr << "Rb calibration off but ix_rb is non-negative";
+		throw 0;
+	}
+	else if ( calibrateRb & (ix_rb < 0) ) {
+		std::cerr << "Rb calibration on but ix_rb is negative";
+		throw 0;
+	}
+
+	if ( (!calibrateDiscountRate) & (ix_rho >= 0) ) {
+		std::cerr << "Discount rate calibration off but ix_rho is non-negative";
+		throw 0;
+	}
+	else if ( calibrateDiscountRate & (ix_rho < 0) ) {
+		std::cerr << "Discount rate calibration on but ix_rho is negative";
 		throw 0;
 	}
 }
@@ -135,9 +178,9 @@ void SSCalibrator::update_params(Parameters *p, double xvec[]) const {
 }
 
 void SSCalibrator::update_ss(const Parameters& p, SteadyState *iss, double xvec[]) const {
-	for (int io=0; io<ix_occdist.size(); ++io) {
-		iss->labor_occ.push_back(xvec[ix_occdist[io]]);
-		std::cout << "  labor_" << io << " = " << xvec[ix_occdist[io]] << '\n';
+	for (int io=0; io<ix_labor_occ.size(); ++io) {
+		iss->labor_occ.push_back(xvec[ix_labor_occ[io]]);
+		std::cout << "  labor_" << io << " = " << xvec[ix_labor_occ[io]] << '\n';
 	}
 
 	if ( ix_capital > 0 ) {
@@ -146,4 +189,17 @@ void SSCalibrator::update_ss(const Parameters& p, SteadyState *iss, double xvec[
 	}
 	else
 		iss->capital = p.target_KY_ratio;
+}
+
+void SSCalibrator::print_fvec(double fvec[]) const {
+	double norm = 0;
+	for (int im=0; im<moment_descriptions.size(); ++im) {
+		std::cout << moment_descriptions[im];
+		std::cout << "  " << fvec[im] << '\n';
+		norm += pow(fvec[im], 2.0);
+	}
+	norm = sqrt(norm);
+
+	std::cout << "\n fnorm = " << norm << "\n";
+	std::cout << "--------------------------\n\n";
 }

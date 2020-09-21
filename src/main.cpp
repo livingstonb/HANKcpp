@@ -52,11 +52,7 @@ void find_initial_steady_state(int n, double x[], double fvec[], int &iflag) {
 	for (int i=0; i<n; ++i)
 		fvals[i] = fvec[i];
 
-	std::cout << "fvec = \n";
-	for (int i=0; i<n; ++i)
-		std::cout << "  " << fvec[i] << '\n';
-	std::cout << "  fvec norm = " << fvals.norm() << '\n';
-	std::cout << "--------------------------\n\n";
+	cal.print_fvec(fvec);
 }
 
 int main () {
@@ -65,39 +61,42 @@ int main () {
 	Options options; 
 	options.fast = false;
 
+	// Parameters
 	Parameters params;
-	params.rho = 0.015;
+	params.rho = 0.022;
 	params.drs_N = 0;
 	params.drs_Y = 0.9;
-	params.dmax = 1e3;
+	params.dmax = 1e6;
 	params.borrowing = true;
-	params.deathrate = 0.0;
-	params.amax = 500;
-	params.na = 50;
-	params.nb_pos = 30;
+	// params.deathrate = 0.0;
+	params.amax = 400;
+	params.na = 40;
+	params.nb_pos = 40;
 	params.depreciation = 0.05 / 4;
 	params.elast = 2;
 	params.nocc = 1;
 	// params.riskaver = 1.0;
-	params.rb = 0.05 / 4.0;
+	params.rb = 0.03 / 4.0;
 
 	params.setup(options);
 	global_params_ptr = &params;
 
+	// Calibration
 	SSCalibrator calibrator(params);
+	calibrator.calibrateLaborDisutility = true;
+	calibrator.calibrateRb = true;
+	calibrator.calibrateDiscountRate = true;
 	global_calibrator_ptr = &calibrator;
 
 	Model model = Model(params, income_dir);
 
 	// guess rho, chi,labor_occ, capital, and rb
-	double x[params.nocc+4];
+	int n = calibrator.nmoments;
+	double x[n];
 	calibrator.fill_xguess(params, model, x);
 
-	int n = params.nocc + 4;
 	double fvec[n];
 	double tol = 1.0e-9;
-
-	assert( n == calibrator.nmoments() );
 
 	int lwa = n * (3 * n + 13);
 	double wa[lwa];

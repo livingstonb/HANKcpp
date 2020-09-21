@@ -117,12 +117,9 @@ class Parameters {
 		double facc = 1.0e-10;
 
 		// --- CALIBRATION TARGETS ---
-		WealthTarget illiqWealthTarget = WealthTarget(WealthTarget::Type::median, 84900.0);
-		WealthTarget liqWealthTarget = WealthTarget(WealthTarget::Type::mean, 177394.0);
-		double targetMeanIllGuess = 512183.0;
-		bool calibrateLaborDisutility = true;
-		bool calibrateRb = true;
-		bool calibrateDiscountRate = true;
+		WealthTarget illiqWealthTarget = WealthTarget(WealthTarget::Type::mean, 512183);
+		WealthTarget liqWealthTarget = WealthTarget(WealthTarget::Type::median, 3500);
+		double targetMeanIllGuess = 512183;
 
 		// number of time periods
 		int Ttransition = 200;

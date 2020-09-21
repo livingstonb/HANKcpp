@@ -27,7 +27,7 @@ class StationaryDist {
 
 		double gtol = 1.0e-8;
 
-		int maxiter = 2000;
+		int maxiter = 5000;
 };
 
 #endif

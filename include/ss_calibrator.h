@@ -7,6 +7,7 @@
 #include <steady_state.h>
 #include <distribution_statistics.h>
 #include <vector>
+#include <string>
 
 struct SSCalibrationArgs {
 	SSCalibrationArgs() {}
@@ -39,13 +40,25 @@ class SSCalibrator {
 
 		void update_params(Parameters *p, double xvec[]) const;
 
-		void update_ss(const Parameters& p, SteadyState *iss, double xvec[]) const;
+		void update_ss(const Parameters& p, SteadyState *iss, double xvec[]) const;\
 
-		int nmoments() const {return obj_functions.size();}
+		void print_fvec(double fvec[]) const;
+
+		int nmoments;
 
 		void check_size(int ix) const;
 
-		std::vector<int> ix_occdist;
+		void perform_calibrator_assertions() const;
+
+		bool calibrateLaborDisutility = true;
+
+		bool calibrateRb = true;
+
+		bool calibrateDiscountRate = true;
+
+		std::vector<std::string> moment_descriptions;
+
+		std::vector<int> ix_labor_occ;
 
 		int ix_rho = -1;
 
