@@ -20,7 +20,7 @@ namespace {
 	void check_dist(const MatrixXd& distcheck, const Model& model) {
 		VectorXd py = distcheck.array().colwise().sum();
 		for (int iy=0; iy<model.ny; ++iy) {
-			assert( abs(py(iy) - model.ydist(iy)) < 1.0e-6);
+			assert( abs(py(iy) - model.ydist(iy)) < 1.0e-6 );
 		}
 	}
 }

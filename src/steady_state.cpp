@@ -21,6 +21,17 @@ namespace {
 
 		return arr_out;
 	}
+
+	void print_value(const std::string& pname, double value, bool insert_endline) {
+		std::cout << "  " << pname << " = " << value;
+
+		if ( insert_endline )
+			std::cout << '\n';
+	}
+
+	void print_value(const std::string& pname, double value) {
+		print_value(pname, value, true);
+	}
 }
 
 SteadyState::SteadyState(const Parameters& p_, const Model& model_) : model(model_), p(p_) {
@@ -83,6 +94,9 @@ void SteadyState::compute(SSType mode) {
 	else if ( mode == SSType::final ) {
 	}
 	illpricedot = 0.0;
+
+	if ( global_hank_options->print_diagnostics )
+		print_values();
 }
 
 void SteadyState::compute_profits() {
@@ -145,3 +159,23 @@ void SteadyState::compute_govt() {
 		taxrev += p.labtax * p.profdistfracW * profit * (1.0 - p.corptax);
 }
 
+void SteadyState::print_values() const {
+	horzline();
+	std::cout << "COMPUTED VALUES, STEADY STATE:\n";
+	print_value("price_W", price_W);
+	print_value("capshareY", capshareY);
+	print_value("capshareN", capshareN);
+	print_value("capital_Y", capital_Y);
+	print_value("capital_N", capital_N);
+	print_value("labor_Y", labor_Y);
+	print_value("labor_N", labor_N);
+	print_value("labor", labor);
+	print_value("profit", profit);
+	print_value("ra", ra);
+	print_value("dividend_A", dividend_A);
+	print_value("dividend_B", dividend_B);
+	print_value("equity_A", equity_A);
+	print_value("equity_B", equity_B, false);
+
+	horzline();
+}
