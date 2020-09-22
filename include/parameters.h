@@ -15,6 +15,8 @@ class Parameters {
 
 		void update();
 
+		void print_values() const;
+
 		bool Borrowing = true;
 
 		// --- GRIDS ---
@@ -82,6 +84,7 @@ class Parameters {
 		};
 
 		// --- DEPOSIT COSTS --
+		DepositCostMode depositCostMode = DepositCostMode::symmetric;
 		double kappa_d_fc = 0.2;
 		std::array<double, 5> kappa_d = {
 			0.0, // kappa0_d

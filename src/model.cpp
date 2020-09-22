@@ -40,6 +40,27 @@ namespace {
 			for (int i=0; i<9; ++i)
 				grid[i] = i * grid[9] / (10.0 - 1.0);
 	}
+
+	void print_value(const std::string& pname, double value, bool insert_endline) {
+		std::cout << "  " << pname << " = " << value;
+
+		if ( insert_endline )
+			std::cout << '\n';
+	}
+
+	void print_value(const std::string& pname, double value) {
+		print_value(pname, value, true);
+	}
+
+	void check_adjcosts(const Parameters& p, const AdjustmentCosts& adjcosts) {
+		assert( p.kappa_w_fc == adjcosts.kappa_w_fc );
+		assert( p.kappa_d_fc == adjcosts.kappa_d_fc );
+
+		for (int i=0; i<5; ++i) {
+			assert( p.kappa_w[i] == adjcosts.kappa_w[i] );
+			assert( p.kappa_d[i] == adjcosts.kappa_d[i] );
+		}
+	}
 }
 
 ModelBase::ModelBase(const Parameters& p, const std::string& income_dir) {
@@ -198,7 +219,14 @@ void ModelBase::check_nbl(const Parameters& p) const {
 }
 
 Model::Model(const Parameters& p_, const std::string& income_dir)
-	: ModelBase(p_, income_dir), p(p_) {};
+	: ModelBase(p_, income_dir), p(p_) {
+	assertions();
+
+	if ( global_hank_options->print_diagnostics )
+		print_values();
+
+	check_adjcosts(p_, adjcosts);
+}
 
 double_vector Model::get_rb_effective() const {
 	double_vector rb_effective, bvec = bgrid;
@@ -238,4 +266,45 @@ double Model::util1BC(double h, double chi, double bdrift, double netwage, doubl
 	double c = bdrift + h * netwage;
 	assert( c > 0 );
 	return labdisutil1(h, chi) - util1(c) * netwage * p.labwedge / wagescale;
+}
+
+void Model::print_values() const {
+	horzline();
+	std::cout << "COMPUTED VALUES, MODEL OBJECT:\n";
+	print_value("nocc", nocc);
+	print_value("nprod", nprod);
+	print_value("ny", ny);
+
+	for (int io=0; io<nprod; ++io)
+		print_value("prodgrid[io]", prodgrid(io));
+
+	for (int io=0; io<nprod; ++io)
+		print_value("proddist[io]", proddist(io));
+
+	print_value("E[prod]", prodgrid.dot(proddist), false);
+	
+	horzline();
+}
+
+void Model::assertions() const {
+	if ( abs(1.0-proddist.sum()) > 1.0e-7 ) {
+		std::cerr << "Proddist does not sum to one\n";
+		throw 0;
+	}
+
+	if ( abs(1.0-occdist.sum()) > 1.0e-7 ) {
+		std::cerr << "Occdist does not sum to one\n";
+		throw 0;
+	}
+
+	if ( abs(1.0-ydist.sum()) > 1.0e-7 ) {
+		std::cerr << "ydist does not sum to one\n";
+		throw 0;
+	}
+
+	ArrayXd rowsums = ymarkov.rowwise().sum();
+	if ( rowsums.abs().maxCoeff() > 1.0e-7 ) {
+		std::cerr << "Markov ytrans matrix rows do not sum to zero\n";
+		throw 0;
+	}
 }

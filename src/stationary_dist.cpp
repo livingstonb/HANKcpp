@@ -16,6 +16,13 @@ namespace {
 	double_matrix make_dist_guess(const Model& model);
 
 	void check_progress(double vdiff, int freq, int ii, double vtol);
+
+	void check_dist(const MatrixXd& distcheck, const Model& model) {
+		VectorXd py = distcheck.array().colwise().sum();
+		for (int iy=0; iy<model.ny; ++iy) {
+			assert( abs(py(iy) - model.ydist(iy)) < 1.0e-6);
+		}
+	}
 }
 
 void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJB& hjb) {
@@ -76,6 +83,9 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 		for (int ib=0; ib<p.nb; ++ib)
 			for (int iy=0; iy<model.ny; ++iy)
 				density(ia, ib, iy) = gmat(TO_INDEX_1D(ia, ib, p.na, p.nb), iy);
+
+	MatrixXd distcheck = gmat.array().colwise() * model.abdelta.array();
+	check_dist(distcheck, model);
 }
 
 namespace {

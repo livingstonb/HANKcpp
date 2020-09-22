@@ -30,7 +30,9 @@ using deviation_fn_type = std::function<double(const SSCalibrationArgs&)>;
 
 class SSCalibrator {
 	public:
-		SSCalibrator(const Parameters &p);
+		SSCalibrator() {}
+
+		void setup(const Parameters &p);
 
 		std::vector<deviation_fn_type> obj_functions;
 

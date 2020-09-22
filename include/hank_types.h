@@ -3,6 +3,7 @@
 
 #include <hank_config.h>
 #include <vector>
+#include <iostream>
 
 #if STACK_LIQ_FIRST == 0
 	#define TO_INDEX_1D(a, b, y, na, nb) ((a) + (na) * (b) + (na) * (nb) * (y))
@@ -13,14 +14,6 @@
 enum class AdjustCostFnRatioMode { none, linear, max };
 
 enum class DepositCostMode { custom, symmetric, no_deposit_cost };
-
-class Options {
-	public:
-		bool calibrateDiscountRate = false;
-		bool equilibriumR = true;
-		DepositCostMode depositCostMode = DepositCostMode::symmetric;
-		bool fast = false;
-};
 
 class WealthTarget {
 	public:
@@ -78,6 +71,10 @@ class StdVector3d {
 
 		const T* data() const {return vector.data();}
 };
+
+inline void horzline() {
+	std::cout << "\n--------------------------\n";
+}
 
 #undef TO_INDEX_1D
 

@@ -94,6 +94,10 @@ class Model : private ModelBase {
 		double labdisutil1inv(double du, double chi) const;
 
 		double util1BC(double h, double chi, double bdrift, double netwage, double wagescale) const;
+
+		void print_values() const;
+
+		void assertions() const;
 };
 
 #endif

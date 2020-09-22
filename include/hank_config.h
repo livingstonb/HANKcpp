@@ -21,5 +21,14 @@
 
 #define EIGEN_MATRIXBASE_PLUGIN "matrix_base_addons.h"
 
+class Options {
+	public:
+		bool calibrateDiscountRate = false;
+		bool equilibriumR = true;
+		bool fast = false;
+		bool print_diagnostics = false;
+};
+
+extern const Options *global_hank_options;
 
 #endif

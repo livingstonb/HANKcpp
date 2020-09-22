@@ -32,7 +32,7 @@ namespace {
 	}
 }
 
-SSCalibrator::SSCalibrator(const Parameters &p) {
+void SSCalibrator::setup(const Parameters &p) {
 	// Market clearing conditions
 	obj_functions.push_back(illiq_market_clearing);
 	moment_descriptions.push_back("Capital market clearing\n");

@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <hank_config.h>
 #include <parameters.h>
 #include <hank_types.h>
 #include <model.h>
@@ -13,6 +14,8 @@
 #include <ss_calibrator.h>
 
 #include <minpack.h>
+
+const Options *global_hank_options = NULL;
 
 Parameters *global_params_ptr = NULL;
 std::string income_dir = "2point_3_5";
@@ -48,11 +51,11 @@ void find_initial_steady_state(int n, double x[], double fvec[], int &iflag) {
 	SSCalibrationArgs args(global_params_ptr, &model, &stats, &iss);
 	global_calibrator_ptr->fill_fvec(args, fvec);
 
-	VectorXd fvals(n);
-	for (int i=0; i<n; ++i)
-		fvals[i] = fvec[i];
-
 	cal.print_fvec(fvec);
+}
+
+void set_to_fortran_params(Parameters& p) {
+
 }
 
 int main () {
@@ -60,6 +63,9 @@ int main () {
 
 	Options options; 
 	options.fast = false;
+	options.print_diagnostics = true;
+
+	global_hank_options = &options;
 
 	// Parameters
 	Parameters params;
@@ -82,10 +88,11 @@ int main () {
 	global_params_ptr = &params;
 
 	// Calibration
-	SSCalibrator calibrator(params);
-	calibrator.calibrateLaborDisutility = true;
+	SSCalibrator calibrator;
+	calibrator.calibrateLaborDisutility = false;
 	calibrator.calibrateRb = true;
 	calibrator.calibrateDiscountRate = true;
+	calibrator.setup(params);
 	global_calibrator_ptr = &calibrator;
 
 	Model model = Model(params, income_dir);
