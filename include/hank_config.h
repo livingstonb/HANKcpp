@@ -14,7 +14,7 @@
 // Put liquid asset in first dimension instead of illiquid asset, for stacked variables
 #define STACK_LIQ_FIRST 1
 
-// Precision (0 - float, 1 - double, 2 - long double)
+// Precision (1 - double, 2 - long double)
 #define HANK_PRECISION 2
 
 // --- DO NOT CHANGE ---
@@ -37,11 +37,10 @@ extern const Options *global_hank_options;
 #if HANK_PRECISION == 2
 	using hank_float_type = long double;
 	#define __cminpack_long_double__
-// 	#define HANK_CMINPACK_SOLVER ldhybrd1
-// #elif HANK_PRECISION == 1
-// 	#define HANK_CMINPACK_SOLVER hybrd1
+	#define cminpack_hybrd1_fnname(args...) ldhybrd1(args)
 #elif HANK_PRECISION == 1
 	using hank_float_type = double;
+	#define cminpack_hybrd1_fnname(args...) hybrd1(args)
 #endif
 
 #endif

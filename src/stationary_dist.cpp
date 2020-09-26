@@ -29,7 +29,7 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 	const Parameters& p = model.p;
 
 	Eigen::VectorXd inv_abdelta = model.abdelta.cast<double>().cwiseInverse();
-	Eigen::MatrixXd lmat = speye(model.ny) + delta * model.ymarkovoff.cast<double>().transpose();
+	Eigen::MatrixXd lmat = deye(model.ny).cast<double>() + delta * model.ymarkovoff.cast<double>().transpose();
 	int iabx = TO_INDEX_1D(0, p.nb_neg, p.na, p.nb);
 
 	MatrixXr gmat = make_dist_guess(model);

@@ -106,4 +106,13 @@ VectorXr cumsum(const T& arr) {
 	return out;
 }
 
+inline MatrixXr deye(int n) {
+	MatrixXr mat = MatrixXr::Zero(n, n);
+
+	for (int i=0; i<n; ++i)
+		mat(i, i) = 1;
+
+	return mat;
+}
+
 #endif

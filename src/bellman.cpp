@@ -369,7 +369,7 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 		}
 
 		Eigen::VectorXd bvecd = bvec.cast<double>();
-		VectorXr v_vec = solver.solve(bvecd).cast<long double>();
+		VectorXr v_vec = solver.solve(bvecd).cast<hank_float_type>();
 		if ( solver.info() != Eigen::Success ) {
 			std::cerr << "Sparse solver failure" << '\n';
 			throw 0;

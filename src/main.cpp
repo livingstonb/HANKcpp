@@ -166,7 +166,7 @@ int main () {
 	hank_float_type wa[lwa];
 
 	void *z = NULL;
-	ldhybrd1(fcn, z, n, x, fvec, tol, wa, lwa);
+	cminpack_hybrd1_fnname(fcn, z, n, x, fvec, tol, wa, lwa);
 
 	// int iflag=0;
 	// find_initial_steady_state(n, x, fvec, iflag);
