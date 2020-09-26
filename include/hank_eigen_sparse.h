@@ -18,7 +18,7 @@ using sparse_matrix = Eigen::SparseMatrix<double>;
 	using sparse_solver = Eigen::UmfPackLU<sparse_matrix>;
 #endif
 
-using triplet_type = Eigen::Triplet<fp_type>;
+using triplet_type = Eigen::Triplet<hank_float_type>;
 
 using triplet_list = std::vector<triplet_type>;
 

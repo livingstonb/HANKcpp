@@ -60,7 +60,7 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 			Eigen::VectorXd lgmat = gmat.cast<double>() * Eigen::VectorXd(lmat.row(iy));
 			lgmat(iabx) += delta * p.deathrate * gmat.col(iy).dot(model.abdelta) / model.abdelta(iabx);
 
-			gmat_update.col(iy) = spsolvers[iy].solve(lgmat).cast<fp_type>();
+			gmat_update.col(iy) = spsolvers[iy].solve(lgmat).cast<hank_float_type>();
 			if ( spsolvers[iy].info() != Eigen::Success )
 				throw "Sparse solver failure";
 		}

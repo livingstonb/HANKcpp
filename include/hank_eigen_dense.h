@@ -8,13 +8,13 @@
 
 using Eigen::seq;
 
-using MatrixXr = Eigen::Matrix<fp_type, Eigen::Dynamic, Eigen::Dynamic>;
+using MatrixXr = Eigen::Matrix<hank_float_type, Eigen::Dynamic, Eigen::Dynamic>;
 
-using VectorXr = Eigen::Matrix<fp_type, Eigen::Dynamic, 1>;
+using VectorXr = Eigen::Matrix<hank_float_type, Eigen::Dynamic, 1>;
 
-using ArrayXXr = Eigen::Array<fp_type, Eigen::Dynamic, Eigen::Dynamic>;
+using ArrayXXr = Eigen::Array<hank_float_type, Eigen::Dynamic, Eigen::Dynamic>;
 
-using ArrayXr = Eigen::Array<fp_type, Eigen::Dynamic, 1>;
+using ArrayXr = Eigen::Array<hank_float_type, Eigen::Dynamic, 1>;
 
 using Eigen::VectorXi;
 
@@ -31,7 +31,7 @@ inline VectorXr eflatten(const MatrixXr& arr) {
 }
 
 inline VectorXr to_eigenv(const vector3dr& vec) {
-	std::vector<fp_type> vcopy = vec.vector;
+	std::vector<hank_float_type> vcopy = vec.vector;
 	VectorXr out = map_type_vec(vcopy.data(), vcopy.size());
 	return out;
 }

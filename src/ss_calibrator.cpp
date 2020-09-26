@@ -68,13 +68,13 @@ void SSCalibrator::setup(const Parameters &p) {
 	nmoments = obj_functions.size();
 }
 
-void SSCalibrator::fill_fvec(const SSCalibrationArgs& args, fp_type fvec[]) const {
+void SSCalibrator::fill_fvec(const SSCalibrationArgs& args, hank_float_type fvec[]) const {
 	for (int i=0; i<nmoments; ++i) {
 		fvec[i] = obj_functions[i](args);
 	}
 }
 
-void SSCalibrator::fill_xguess(const Parameters &p, const Model& model, fp_type xvec[]) {
+void SSCalibrator::fill_xguess(const Parameters &p, const Model& model, hank_float_type xvec[]) {
 	int ix = 0;
 
 	// Labor inputs
@@ -159,7 +159,7 @@ void SSCalibrator::perform_calibrator_assertions() const {
 	}
 }
 
-void SSCalibrator::update_params(Parameters *p, const fp_type *xvec) const {
+void SSCalibrator::update_params(Parameters *p, const hank_float_type *xvec) const {
 	if ( ix_rho > 0 ) {
 		p->rho = exp(xvec[ix_rho]);
 		std::cout << "  rho = " << p->rho << '\n';
@@ -178,8 +178,8 @@ void SSCalibrator::update_params(Parameters *p, const fp_type *xvec) const {
 	p->update();
 }
 
-void SSCalibrator::update_ss(const Parameters& p, SteadyState *iss, const fp_type *xvec) const {
-	for (int io=0; io<ix_labor_occ.size(); ++io) {
+void SSCalibrator::update_ss(const Parameters& p, SteadyState *iss, const hank_float_type *xvec) const {
+	for (unsigned int io=0; io<ix_labor_occ.size(); ++io) {
 		iss->labor_occ.push_back(xvec[ix_labor_occ[io]]);
 		std::cout << "  labor_" << io << " = " << xvec[ix_labor_occ[io]] << '\n';
 	}
@@ -192,9 +192,9 @@ void SSCalibrator::update_ss(const Parameters& p, SteadyState *iss, const fp_typ
 		iss->capital = p.target_KY_ratio;
 }
 
-void SSCalibrator::print_fvec(fp_type fvec[]) const {
-	fp_type norm = 0;
-	for (int im=0; im<moment_descriptions.size(); ++im) {
+void SSCalibrator::print_fvec(hank_float_type fvec[]) const {
+	hank_float_type norm = 0;
+	for (unsigned int im=0; im<moment_descriptions.size(); ++im) {
 		std::cout << moment_descriptions[im];
 		std::cout << "  " << fvec[im] << '\n';
 		norm += pow(fvec[im], 2.0);

@@ -72,7 +72,7 @@ class StdVector3d {
 		const T* data() const {return vector.data();}
 };
 
-using vector3dr = StdVector3d<fp_type>;
+using vector3dr = StdVector3d<hank_float_type>;
 
 inline void horzline() {
 	std::cout << "\n--------------------------\n";

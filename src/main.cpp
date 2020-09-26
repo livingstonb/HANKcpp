@@ -13,14 +13,8 @@
 #include <math.h>
 #include <ss_calibrator.h>
 
-#define CMINPACK_NO_DLL
 #include <cminpack.h>
 #include <cminpackP.h>
-
-// extern "C" {
-// 	int __cminpack_func__(ldhybrd1)(__cminpack_decl_fcn_nn__ void *p, int n, real *x, real *
-// 		fvec, real tol, real *wa, int lwa);
-// }
 
 const Options *global_hank_options = NULL;
 
@@ -29,10 +23,11 @@ std::string income_dir = "2point_3_5";
 
 SSCalibrator *global_calibrator_ptr = NULL;
 
-// void find_initial_steady_state(int n, double x[], double fvec[], int &iflag)
-int fcn(void *_p, int n, const real *x, real *fvec, int iflag) {
+int fcn(void* /* _p */, int n, const real *x, real *fvec, int /* iflag */ ) {
 	Parameters& p = *global_params_ptr;
 	SSCalibrator& cal = *global_calibrator_ptr;
+
+	assert(cal.nmoments == n);
 
 	std::cout << "\nCalibration parameters updated:\n";
 
@@ -161,16 +156,14 @@ int main () {
 
 	// guess rho, chi,labor_occ, capital, and rb
 	int n = calibrator.nmoments;
-	fp_type x[n];
+	hank_float_type x[n];
 	calibrator.fill_xguess(params, model, x);
 
-	fp_type fvec[n];
+	hank_float_type fvec[n];
 	double tol = 1.0e-9;
 
 	int lwa = n * (3 * n + 13);
-	fp_type wa[lwa];
-	// hybrd1(find_initial_steady_state, n, x, fvec, tol, wa, lwa);
-	// int info = __cminpack_func__(hybrd1)(fcn, 0, n, x, fvec, tol, wa, lwa);
+	hank_float_type wa[lwa];
 
 	void *z = NULL;
 	ldhybrd1(fcn, z, n, x, fvec, tol, wa, lwa);

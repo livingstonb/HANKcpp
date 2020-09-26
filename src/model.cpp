@@ -230,8 +230,8 @@ Model::Model(const Parameters& p_, const std::string& income_dir)
 
 VectorXr Model::get_rb_effective() const {
 	VectorXr rb_effective, bvec = bgrid;
-	rb_effective = bvec.unaryExpr([this](fp_type x) -> fp_type {
-			return (x >= static_cast<fp_type>(0.0)) ? p.rb : p.rborr;
+	rb_effective = bvec.unaryExpr([this](hank_float_type x) -> hank_float_type {
+			return (x >= static_cast<hank_float_type>(0.0)) ? p.rb : p.rborr;
 		});
 	rb_effective = rb_effective.array() + p.perfectAnnuityMarkets * p.deathrate;
 

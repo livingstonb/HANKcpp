@@ -37,15 +37,15 @@ class SSCalibrator {
 
 		std::vector<deviation_fn_type> obj_functions;
 
-		void fill_fvec(const SSCalibrationArgs& args, fp_type fvec[]) const;
+		void fill_fvec(const SSCalibrationArgs& args, hank_float_type fvec[]) const;
 
-		void fill_xguess(const Parameters &p, const Model& model, fp_type xvec[]);
+		void fill_xguess(const Parameters &p, const Model& model, hank_float_type xvec[]);
 
-		void update_params(Parameters *p, const fp_type *xvec) const;
+		void update_params(Parameters *p, const hank_float_type *xvec) const;
 
-		void update_ss(const Parameters& p, SteadyState *iss, const fp_type *xvec) const;\
+		void update_ss(const Parameters& p, SteadyState *iss, const hank_float_type *xvec) const;\
 
-		void print_fvec(fp_type fvec[]) const;
+		void print_fvec(hank_float_type fvec[]) const;
 
 		int nmoments;
 

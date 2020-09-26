@@ -335,7 +335,6 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 	sparse_matrix ldiagmat, sparseI = speye(p.na * p.nb);
 	VectorXr bdriftvec = model.get_rb_effective().array() * model.bgrid.array();
 
-	int na = p.na;
 	for ( int iy=0; iy<model.ny; ++iy ) {
 		triplet_list Aentries;
 		ycol = model.prodmarkovscale * model.ymarkovoff.row(iy);

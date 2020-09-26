@@ -16,7 +16,6 @@ sparse_matrix construct_transition_matrix(const Parameters& p, const Model& mode
 
 	VectorXr adriftvec = (ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
 
-	int na = p.na;
 	triplet_list Aentries;
 	Aentries.reserve(5 * p.na * p.nb);
 

@@ -35,13 +35,13 @@ class Options {
 extern const Options *global_hank_options;
 
 #if HANK_PRECISION == 2
-	using fp_type = long double;
+	using hank_float_type = long double;
 	#define __cminpack_long_double__
 // 	#define HANK_CMINPACK_SOLVER ldhybrd1
 // #elif HANK_PRECISION == 1
 // 	#define HANK_CMINPACK_SOLVER hybrd1
 #elif HANK_PRECISION == 1
-	using fp_type = double;
+	using hank_float_type = double;
 #endif
 
 #endif
