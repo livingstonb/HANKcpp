@@ -66,6 +66,8 @@ class HJB {
 
 		void iterate(const SteadyState& ss);
 
+		void print_values() const;
+
 		const Model& model;
 
 		const Parameters& p;

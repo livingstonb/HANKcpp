@@ -28,7 +28,7 @@ namespace {
 	}
 
 	double hours_target(const SSCalibrationArgs& args) {
-		return args.stats->Ehours / args.p->hourtarget - 1.0;
+		return (args.stats->Ehours / args.p->hourtarget - 1.0) / 100.0;
 	}
 }
 

@@ -18,6 +18,9 @@ double rtsec(std::function<double(double)> fn, double x1, double x2, double facc
 
 	f = fn(z2);
 
+	if (fabs(f) < facc)
+		return z2;
+
 	if (fabs(fl) < fabs(f)) {
 		lrtsec = z1;
 		xl = z2;

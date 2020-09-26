@@ -56,7 +56,7 @@ class SteadyState {
 
 		std::vector<double> netwagegrid;
 
-		double taxrev;
+		double taxrev, Enetwage;
 
 		double illprice, illpricedot, illshares;
 

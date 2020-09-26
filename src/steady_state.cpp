@@ -151,6 +151,7 @@ void SteadyState::compute_govt() {
 	ArrayXd wage_occ_ygrid = as_eigen<ArrayXd>(wage_occ_rep);
 	double_vector enetwagegrid = (1.0 - p.labtax) * model.yprodgrid.array() * wage_occ_ygrid;
 	netwagegrid = to_vector(enetwagegrid);
+	Enetwage = enetwagegrid.dot(model.ydist);
 
 	taxrev = p.labtax * as_eigen<VectorXd>(wage_occ).dot(as_eigen<VectorXd>(labor_occ))
 		- p.lumptransfer + p.corptax * profit;
@@ -175,7 +176,8 @@ void SteadyState::print_values() const {
 	print_value("dividend_A", dividend_A);
 	print_value("dividend_B", dividend_B);
 	print_value("equity_A", equity_A);
-	print_value("equity_B", equity_B, false);
+	print_value("equity_B", equity_B);
+	print_value("E[netwage]", Enetwage, false);
 
 	horzline();
 }
