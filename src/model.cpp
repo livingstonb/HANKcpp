@@ -7,7 +7,7 @@
 #include <hank_macros.h>
 
 namespace {
-	void fix_rounding(double_matrix& mat) {
+	void fix_rounding(MatrixXr& mat) {
 		for (int i=0; i<mat.rows(); ++i) {
 			double rowsum = mat.row(i).sum();
 			mat(i,i) -= rowsum;
@@ -15,10 +15,10 @@ namespace {
 		}
 	}
 
-	double_vector compute_grid_deltas(const double_vector& grid, const double_vector& dgrid) {
+	VectorXr compute_grid_deltas(const VectorXr& grid, const VectorXr& dgrid) {
 		int n = grid.size();
 		int n_d = n - 1;
-		double_vector deltas(n);
+		VectorXr deltas(n);
 
 		deltas(0) = 0.5 * dgrid(0);
 		deltas(seq(1,n-2)) = 0.5 * (dgrid(seq(0,n_d-2)) + dgrid(seq(1,n_d-1)));
@@ -27,7 +27,7 @@ namespace {
 		return deltas;
 	}
 
-	void powerSpacedGrid(double low, double high, double curv, grid_type& grid) {
+	void powerSpacedGrid(double low, double high, double curv, VectorXr& grid) {
 		int n = grid.size();
 		linspace(0.0, 1.0, n, grid);
 
@@ -35,7 +35,7 @@ namespace {
 			grid[i] = low + (high - low) * pow(grid[i], 1.0 / curv);
 	}
 
-	void adjustPowerSpacedGrid(grid_type& grid) {
+	void adjustPowerSpacedGrid(VectorXr& grid) {
 		if (grid.size() > 10)
 			for (int i=0; i<9; ++i)
 				grid[i] = i * grid[9] / (10.0 - 1.0);
@@ -83,19 +83,19 @@ ModelBase::ModelBase(const Parameters& p, const std::string& income_dir) {
 
 void ModelBase::make_asset_grids(const Parameters& p) {
 	// Liquid asset
-	bgrid_ = double_vector(p.nb);
+	bgrid_ = VectorXr(p.nb);
 	if ( !p.borrowing ) {
 		powerSpacedGrid(p.bmin, p.bmax, p.bcurv, bgrid_);
 	}
 	else {
-		double_vector bgridpos(p.nb_pos);
+		VectorXr bgridpos(p.nb_pos);
 		powerSpacedGrid(0.0, p.bmax, p.bcurv, bgridpos);
 
 		double nbl = -p.lumptransfer / (p.rborr + p.perfectAnnuityMarkets * p.deathrate);
 		double abl = fmax(nbl + p.cmin, p.blim);
 
 		int nn = static_cast<int>(floor(p.nb_neg / 2.0) + 1);
-		double_vector bgridneg(nn);
+		VectorXr bgridneg(nn);
 		powerSpacedGrid(abl, (abl+bgridpos[0])/2.0, p.bcurv_neg, bgridneg);
 
 		bgrid_(seq(0, nn-1)) = bgridneg;
@@ -110,12 +110,12 @@ void ModelBase::make_asset_grids(const Parameters& p) {
 
 	// Illiquid asset
 	if ( p.oneAssetNoCapital ) {
-		agrid_ = double_vector::Constant(p.na, 0.0);
-		dagrid_ = double_vector::Constant(p.na-1, 1.0);
-		adelta_ = double_vector::Constant(p.na, 1.0);
+		agrid_ = VectorXr::Constant(p.na, 0.0);
+		dagrid_ = VectorXr::Constant(p.na-1, 1.0);
+		adelta_ = VectorXr::Constant(p.na, 1.0);
 	}
 	else {
-		agrid_ = double_vector(p.na);
+		agrid_ = VectorXr(p.na);
 		powerSpacedGrid(p.amin, p.amax, p.acurv, agrid_);
 		adjustPowerSpacedGrid(agrid_);
 
@@ -180,11 +180,11 @@ void ModelBase::create_income_process(
 void ModelBase::create_combined_variables(const Parameters& p) {
 	int ny = nprod_ * nocc_;
 
-	ymarkov_ = double_matrix::Zero(ny, ny);
-	ymarkovdiag_ = double_matrix::Zero(ny, ny);
-	yprodgrid_ = double_vector(ny);
-	yoccgrid_ = double_vector::Zero(ny);
-	ydist_ = double_vector(ny);
+	ymarkov_ = MatrixXr::Zero(ny, ny);
+	ymarkovdiag_ = MatrixXr::Zero(ny, ny);
+	yprodgrid_ = VectorXr(ny);
+	yoccgrid_ = VectorXr::Zero(ny);
+	ydist_ = VectorXr(ny);
 
 	int iy = 0;
 	for (int io=0; io<nocc_; ++io) {
@@ -228,10 +228,10 @@ Model::Model(const Parameters& p_, const std::string& income_dir)
 	check_adjcosts(p_, adjcosts);
 }
 
-double_vector Model::get_rb_effective() const {
-	double_vector rb_effective, bvec = bgrid;
-	rb_effective = bvec.unaryExpr([this](double x) {
-			return (x >= 0.0) ? p.rb : p.rborr;
+VectorXr Model::get_rb_effective() const {
+	VectorXr rb_effective, bvec = bgrid;
+	rb_effective = bvec.unaryExpr([this](fp_type x) -> fp_type {
+			return (x >= static_cast<fp_type>(0.0)) ? p.rb : p.rborr;
 		});
 	rb_effective = rb_effective.array() + p.perfectAnnuityMarkets * p.deathrate;
 
@@ -302,7 +302,7 @@ void Model::assertions() const {
 		throw 0;
 	}
 
-	ArrayXd rowsums = ymarkov.rowwise().sum();
+	ArrayXr rowsums = ymarkov.rowwise().sum();
 	if ( rowsums.abs().maxCoeff() > 1.0e-7 ) {
 		std::cerr << "Markov ytrans matrix rows do not sum to zero\n";
 		throw 0;

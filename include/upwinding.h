@@ -24,7 +24,7 @@ class Policies {
 	public:
 		Policies(const std::vector<int> dims) : c(dims), h(dims), s(dims), d(dims), u(dims) {};
 
-		StdVector3d<double> c, h, s, d, u;
+		vector3dr c, h, s, d, u;
 
 		void update_c(int ia, int ib, int iy, const ConUpwind& uwF, const ConUpwind& uwB, const ConUpwind& uw0);
 

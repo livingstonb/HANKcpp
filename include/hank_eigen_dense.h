@@ -8,46 +8,38 @@
 
 using Eigen::seq;
 
-typedef Eigen::Map<Eigen::MatrixXd> map_type;
+using MatrixXr = Eigen::Matrix<fp_type, Eigen::Dynamic, Eigen::Dynamic>;
 
-typedef Eigen::Map<Eigen::VectorXd> map_type_vec;
+using VectorXr = Eigen::Matrix<fp_type, Eigen::Dynamic, 1>;
 
-typedef Eigen::VectorXd double_vector;
+using ArrayXXr = Eigen::Array<fp_type, Eigen::Dynamic, Eigen::Dynamic>;
 
-typedef Eigen::ArrayXXd double_array;
-
-typedef Eigen::ArrayXd double_array_vector;
-
-typedef Eigen::MatrixXd double_matrix;
-
-typedef Eigen::Matrix<bool, Eigen::Dynamic, 1> bool_vector;
-
-typedef double_vector grid_type;
-
-using Eigen::ArrayXd;
-
-using Eigen::VectorXd;
-
-using Eigen::MatrixXd;
+using ArrayXr = Eigen::Array<fp_type, Eigen::Dynamic, 1>;
 
 using Eigen::VectorXi;
 
-inline double_vector eflatten(const double_matrix& arr) {
-	const Eigen::Map<const double_vector> arr_map(arr.data(), arr.size());
-	double_vector flattened = arr_map;
+typedef Eigen::Map<MatrixXr> map_type;
+
+typedef Eigen::Map<VectorXr> map_type_vec;
+
+typedef Eigen::Matrix<bool, Eigen::Dynamic, 1> bool_vector;
+
+inline VectorXr eflatten(const MatrixXr& arr) {
+	const Eigen::Map<const VectorXr> arr_map(arr.data(), arr.size());
+	VectorXr flattened = arr_map;
 	return flattened;
 }
 
-inline double_vector to_eigenv(const StdVector3d<double>& vec) {
-	std::vector<double> vcopy = vec.vector;
-	double_vector out = map_type_vec(vcopy.data(), vcopy.size());
+inline VectorXr to_eigenv(const vector3dr& vec) {
+	std::vector<fp_type> vcopy = vec.vector;
+	VectorXr out = map_type_vec(vcopy.data(), vcopy.size());
 	return out;
 }
 
 template<typename T>
-double_vector vector2eigenv(const T& vec)
+VectorXr vector2eigenv(const T& vec)
 {
-	double_vector out(vec.size());
+	VectorXr out(vec.size());
 
 	for (size_t i=0; i<vec.size(); ++i)
 		out[i] = vec[i];	
@@ -56,9 +48,9 @@ double_vector vector2eigenv(const T& vec)
 }
 
 template<typename T>
-double_matrix vector2eigenm(const T& vec, int n, int m)
+MatrixXr vector2eigenm(const T& vec, int n, int m)
 {
-	double_matrix out(n, m);
+	MatrixXr out(n, m);
 
 	assert(vec.size() == static_cast<size_t>(m * n));
 
@@ -87,13 +79,23 @@ V as_eigen(const std::vector<double>& arr) {
 }
 
 template<typename V>
-V as_eigen(const StdVector3d<double>& arr) {
+V as_eigen(const std::vector<long double>& arr) {
+	V out(arr.size());
+
+	for (unsigned int i=0; i<arr.size(); ++i)
+		out(i) = arr[i];
+
+	return out;
+}
+
+template<typename V>
+V as_eigen(const vector3dr& arr) {
 	return as_eigen<V>(arr.vector);
 }
 
 template<typename T>
-VectorXd cumsum(const T& arr) {
-	VectorXd out(arr.size());
+VectorXr cumsum(const T& arr) {
+	VectorXr out(arr.size());
 	double val = 0.0;
 
 	for (unsigned int i=0; i<arr.size(); ++i) {

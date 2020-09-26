@@ -1,6 +1,7 @@
 #ifndef _SS_DEVIATIONS_H
 #define _SS_DEVIATIONS_H
 
+#include <hank_config.h>
 #include <hank_types.h>
 #include <parameters.h>
 #include <model.h>
@@ -36,15 +37,15 @@ class SSCalibrator {
 
 		std::vector<deviation_fn_type> obj_functions;
 
-		void fill_fvec(const SSCalibrationArgs& args, double fvec[]) const;
+		void fill_fvec(const SSCalibrationArgs& args, fp_type fvec[]) const;
 
-		void fill_xguess(const Parameters &p, const Model& model, double xvec[]);
+		void fill_xguess(const Parameters &p, const Model& model, fp_type xvec[]);
 
-		void update_params(Parameters *p, double xvec[]) const;
+		void update_params(Parameters *p, const fp_type *xvec) const;
 
-		void update_ss(const Parameters& p, SteadyState *iss, double xvec[]) const;\
+		void update_ss(const Parameters& p, SteadyState *iss, const fp_type *xvec) const;\
 
-		void print_fvec(double fvec[]) const;
+		void print_fvec(fp_type fvec[]) const;
 
 		int nmoments;
 

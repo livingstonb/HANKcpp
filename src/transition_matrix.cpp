@@ -14,7 +14,7 @@ sparse_matrix construct_transition_matrix(const Parameters& p, const Model& mode
 	int iab;
 	Bellman::Drifts drifts;
 
-	double_vector adriftvec = (ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
+	VectorXr adriftvec = (ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
 
 	int na = p.na;
 	triplet_list Aentries;

@@ -34,13 +34,13 @@ namespace {
 			std::cout << "Converged after " << ii << " iterations." << '\n';
 	}
 
-	StdVector3d<double> make_value_guess(const Model& model, const SteadyState& ss) {
+	vector3dr make_value_guess(const Model& model, const SteadyState& ss) {
 		const Parameters& p = model.p;
 
-		StdVector3d<double> V(p.na, p.nb, model.ny);
+		vector3dr V(p.na, p.nb, model.ny);
 		double lc, u;
-		ArrayXd bdriftnn = model.get_rb_effective().array() * model.bgrid.array();
-		ArrayXd adriftnn = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
+		ArrayXr bdriftnn = model.get_rb_effective().array() * model.bgrid.array();
+		ArrayXr adriftnn = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
 
 		for (int ia=0; ia<p.na; ++ia) {
 			for (int ib=0; ib<p.nb; ++ib) {
@@ -86,15 +86,15 @@ void HJB::iterate(const SteadyState& ss) {
 	int ii = 0;
 	double lVdiff = 1.0;
 
-	VectorXd lastV = as_eigen<VectorXd>(V);
+	VectorXr lastV = as_eigen<VectorXr>(V);
 	Upwinding::Policies policies(model.dims);
 	while ( (ii < maxiter) & (lVdiff > vtol) ) {
 		policies = update_policies(ss);
 		update_value_fn(ss, policies);
 
-		VectorXd newV = as_eigen<VectorXd>(V);
+		VectorXr newV = as_eigen<VectorXr>(V);
 		lVdiff = (lastV - newV).lpNorm<Eigen::Infinity>();
-		lastV = as_eigen<VectorXd>(V);
+		lastV = as_eigen<VectorXr>(V);
 
 		check_progress(lVdiff, dispfreq, ii, vtol);
 
@@ -130,11 +130,11 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 	else
 		prof_keep = 1.0;
 
-	ArrayXd proftot = prof_keep * p.profdistfracW
+	ArrayXr proftot = prof_keep * p.profdistfracW
 		* (1.0 - p.corptax) * ss.profit * model.profsharegrid.array();
 	proftot += p.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
 
-	double_vector bdrift = model.get_rb_effective().array() * model.bgrid.array();
+	VectorXr bdrift = model.get_rb_effective().array() * model.bgrid.array();
 
 	std::function<Upwinding::ConUpwind(double, double, double, double)> opt_c;
 	if ( p.endogLabor )
@@ -326,14 +326,14 @@ Upwinding::ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift
 }
 
 void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& policies) {
-	double_vector bvec(p.nb * p.na);
-	double_vector ycol, vcol(model.ny);
+	VectorXr bvec(p.nb * p.na);
+	VectorXr ycol, vcol(model.ny);
 	int iab;
 	Bellman::Drifts drifts;
 	bool kfe = false;
 
 	sparse_matrix ldiagmat, sparseI = speye(p.na * p.nb);
-	double_vector bdriftvec = model.get_rb_effective().array() * model.bgrid.array();
+	VectorXr bdriftvec = model.get_rb_effective().array() * model.bgrid.array();
 
 	int na = p.na;
 	for ( int iy=0; iy<model.ny; ++iy ) {
@@ -359,15 +359,18 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 		ldiagmat = sparseI * ldiag;
 		sparse_matrix B = ldiagmat - delta * A;
 		B.makeCompressed();
+		// Eigen::SparseMatrix<double> Bd = B.cast<double>();
 
 		sparse_solver solver;
 		solver.compute(B);
+		// solver.compute(Bd);
 		if ( solver.info() != Eigen::Success ) {
 			std::cerr << "Sparse solver failure" << '\n';
 			throw 0;
 		}
 
-		double_vector v_vec = solver.solve(bvec);
+		Eigen::VectorXd bvecd = bvec.cast<double>();
+		VectorXr v_vec = solver.solve(bvecd).cast<long double>();
 		if ( solver.info() != Eigen::Success ) {
 			std::cerr << "Sparse solver failure" << '\n';
 			throw 0;

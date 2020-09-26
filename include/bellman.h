@@ -72,7 +72,7 @@ class HJB {
 
 		const Parameters& p;
 
-		StdVector3d<double> V;
+		vector3dr V;
 		int maxiter = 500;
 		int dispfreq = 50;
 		double vtol = 1.0e-8;

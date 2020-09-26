@@ -39,7 +39,7 @@ SteadyState::SteadyState(const Parameters& p_, const Model& model_) : model(mode
 }
 
 void SteadyState::compute(SSType mode) {
-	ArrayXd elabshareY, elabshareN, elabfracY, elabfracN;
+	ArrayXr elabshareY, elabshareN, elabfracY, elabfracN;
 
 	assert( labor_occ.size() == p.nocc );
 
@@ -61,13 +61,13 @@ void SteadyState::compute(SSType mode) {
 	// Output and varieties
 
 	capital_Y = capfracY * capital;
-	ArrayXd labor_Yocc = elabfracY * as_eigen<ArrayXd>(labor_occ);
+	ArrayXr labor_Yocc = elabfracY * as_eigen<ArrayXr>(labor_occ);
 	labor_Y = labor_Yocc.pow(model.occYsharegrid.array()).prod();
 
 	capital_N = capfracN * capital;
-	ArrayXd labor_Nocc = elabfracN * as_eigen<ArrayXd>(labor_occ);
+	ArrayXr labor_Nocc = elabfracN * as_eigen<ArrayXr>(labor_occ);
 	labor_N = labor_Nocc.pow(model.occNsharegrid.array()).prod();
-	labor = as_eigen<VectorXd>(labor_occ).dot(model.occdist);
+	labor = as_eigen<VectorXr>(labor_occ).dot(model.occdist);
 
 	double yterm = pow(capital_Y, p.alpha_Y) * pow(labor_Y, 1.0-p.alpha_Y);
 	double nterm = pow(capital_N, p.alpha_N) * pow(labor_N, 1.0-p.alpha_N);
@@ -110,8 +110,8 @@ void SteadyState::compute_factor_prices() {
 	double cap_term, lab_term;
 
 	rcapital = (capshareY + capshareN) * output / capital;
-	double_array_vector labsharesum = as_eigen<ArrayXd>(labshareN) + as_eigen<ArrayXd>(labshareY);
-	wage_occ = to_vector(labsharesum * output * as_eigen<ArrayXd>(labor_occ).inverse());
+	ArrayXr labsharesum = as_eigen<ArrayXr>(labshareN) + as_eigen<ArrayXr>(labshareY);
+	wage_occ = to_vector(labsharesum * output * as_eigen<ArrayXr>(labor_occ).inverse());
 
 	// Wholesale
 	if ( (p.alpha_Y == 1.0) | (p.drs_Y == 0.0) )
@@ -148,12 +148,12 @@ void SteadyState::compute_dividends() {
 
 void SteadyState::compute_govt() {
 	std::vector<double> wage_occ_rep = repeat(wage_occ, model.nprod);
-	ArrayXd wage_occ_ygrid = as_eigen<ArrayXd>(wage_occ_rep);
-	double_vector enetwagegrid = (1.0 - p.labtax) * model.yprodgrid.array() * wage_occ_ygrid;
+	ArrayXr wage_occ_ygrid = as_eigen<ArrayXr>(wage_occ_rep);
+	VectorXr enetwagegrid = (1.0 - p.labtax) * model.yprodgrid.array() * wage_occ_ygrid;
 	netwagegrid = to_vector(enetwagegrid);
 	Enetwage = enetwagegrid.dot(model.ydist);
 
-	taxrev = p.labtax * as_eigen<VectorXd>(wage_occ).dot(as_eigen<VectorXd>(labor_occ))
+	taxrev = p.labtax * as_eigen<VectorXr>(wage_occ).dot(as_eigen<VectorXr>(labor_occ))
 		- p.lumptransfer + p.corptax * profit;
 
 	if ( p.taxHHProfitIncome )

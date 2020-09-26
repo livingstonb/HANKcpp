@@ -30,7 +30,7 @@ class DistributionStatistics {
 
 		void print();
 
-		double Ehours, Ea, Eb, Enetworth;
+		double Ehours, Ea, Eb, Enetworth, Elabor;
 
 		std::vector<double> Elabor_occ, a_pctiles, b_pctiles, nw_pctiles;
 

@@ -13,7 +13,14 @@
 #include <math.h>
 #include <ss_calibrator.h>
 
-#include <minpack.h>
+#define CMINPACK_NO_DLL
+#include <cminpack.h>
+#include <cminpackP.h>
+
+// extern "C" {
+// 	int __cminpack_func__(ldhybrd1)(__cminpack_decl_fcn_nn__ void *p, int n, real *x, real *
+// 		fvec, real tol, real *wa, int lwa);
+// }
 
 const Options *global_hank_options = NULL;
 
@@ -22,7 +29,8 @@ std::string income_dir = "2point_3_5";
 
 SSCalibrator *global_calibrator_ptr = NULL;
 
-void find_initial_steady_state(int n, double x[], double fvec[], int &iflag) {
+// void find_initial_steady_state(int n, double x[], double fvec[], int &iflag)
+int fcn(void *_p, int n, const real *x, real *fvec, int iflag) {
 	Parameters& p = *global_params_ptr;
 	SSCalibrator& cal = *global_calibrator_ptr;
 
@@ -52,6 +60,8 @@ void find_initial_steady_state(int n, double x[], double fvec[], int &iflag) {
 	global_calibrator_ptr->fill_fvec(args, fvec);
 
 	cal.print_fvec(fvec);
+
+	return 0;
 }
 
 void set_to_fortran_params(Parameters& p) {
@@ -112,7 +122,7 @@ int main () {
 
 	Options options; 
 	options.fast = false;
-	options.print_diagnostics = true;
+	options.print_diagnostics = false;
 
 	global_hank_options = &options;
 
@@ -148,20 +158,22 @@ int main () {
 	global_calibrator_ptr = &calibrator;
 
 	Model model = Model(params, income_dir);
-	std::cout << "agrid:\n" << model.agrid << '\n';
-	std::cout << "bgrid:\n" << model.bgrid << '\n';
 
 	// guess rho, chi,labor_occ, capital, and rb
 	int n = calibrator.nmoments;
-	double x[n];
+	fp_type x[n];
 	calibrator.fill_xguess(params, model, x);
 
-	double fvec[n];
+	fp_type fvec[n];
 	double tol = 1.0e-9;
 
 	int lwa = n * (3 * n + 13);
-	double wa[lwa];
-	hybrd1(find_initial_steady_state, n, x, fvec, tol, wa, lwa);
+	fp_type wa[lwa];
+	// hybrd1(find_initial_steady_state, n, x, fvec, tol, wa, lwa);
+	// int info = __cminpack_func__(hybrd1)(fcn, 0, n, x, fvec, tol, wa, lwa);
+
+	void *z = NULL;
+	ldhybrd1(fcn, z, n, x, fvec, tol, wa, lwa);
 
 	// int iflag=0;
 	// find_initial_steady_state(n, x, fvec, iflag);

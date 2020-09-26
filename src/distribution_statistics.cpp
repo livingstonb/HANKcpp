@@ -7,7 +7,7 @@
 #include <iostream>
 #include <algorithm>
 #include <hank_numerics.h>
-#include <utility>
+#include <utilities.h>
 
 #include <hank_macros.h>
 
@@ -16,7 +16,7 @@ namespace {
 		std::cout << expr << " = " << val << '\n';
 	}
 
-	VectorXi sort_by_values(VectorXd& vals, VectorXd& dist) {
+	VectorXi sort_by_values(VectorXr& vals, VectorXr& dist) {
 		assert(vals.size() == dist.size());
 		std::vector<std::pair<int, double>> zipped(vals.size());
 		VectorXi indices(vals.size());
@@ -26,8 +26,8 @@ namespace {
 		std::sort(zipped.begin(), zipped.end(),
 			[](auto a, auto b) {return a.second < b.second;});
 
-		VectorXd vcopy = vals;
-		VectorXd dcopy = dist;
+		VectorXr vcopy = vals;
+		VectorXr dcopy = dist;
 
 		for (unsigned int i=0; i<vals.size(); ++i)
 			indices[i] = zipped[i].first;
@@ -44,11 +44,11 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 
 	const Upwinding::Policies& policies = hjb.optimal_decisions;
 
-	MatrixXd nw_aby(p.nab, model.ny);
-	MatrixXd agrid_aby(p.nab, model.ny);
-	MatrixXd bgrid_aby(p.nab, model.ny);
-	MatrixXd labor_aby(p.nab, model.ny);
-	MatrixXd h_aby(p.nab, model.ny);
+	MatrixXr nw_aby(p.nab, model.ny);
+	MatrixXr agrid_aby(p.nab, model.ny);
+	MatrixXr bgrid_aby(p.nab, model.ny);
+	MatrixXr labor_aby(p.nab, model.ny);
+	MatrixXr h_aby(p.nab, model.ny);
 
 	int iab;
 	for (int ia=0; ia<p.na; ++ia) {
@@ -65,15 +65,15 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 	}
 
 	// Distribution
-	ArrayXd gdistvec = as_eigen<ArrayXd>(sdist.density);
-	MatrixXd gdistmat = Eigen::Map<MatrixXd>(gdistvec.data(), p.nab, model.ny);
+	ArrayXr gdistvec = as_eigen<ArrayXr>(sdist.density);
+	MatrixXr gdistmat = Eigen::Map<MatrixXr>(gdistvec.data(), p.nab, model.ny);
 
-	MatrixXd pdistmat = gdistmat.array().colwise() * model.abdelta.array();
-	VectorXd pdistvec = eflatten(pdistmat);
+	MatrixXr pdistmat = gdistmat.array().colwise() * model.abdelta.array();
+	VectorXr pdistvec = eflatten(pdistmat);
 
 	// Joint asset-income distributions
-	MatrixXd p_ay = MatrixXd::Zero(p.na, model.ny);
-	MatrixXd p_by = MatrixXd::Zero(p.nb, model.ny);
+	MatrixXr p_ay = MatrixXr::Zero(p.na, model.ny);
+	MatrixXr p_by = MatrixXr::Zero(p.nb, model.ny);
 
 	for (int ia=0; ia<p.na; ++ia) {
 		for (int ib=0; ib<p.nb; ++ib) {
@@ -86,40 +86,40 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 	}
 
 	// Marginal distributions over illiq assets, liq assets
-	VectorXd p_a = p_ay.rowwise().sum();
-	VectorXd p_b = p_by.rowwise().sum();
-	VectorXd pcum_a = cumsum(p_a);
-	VectorXd pcum_b = cumsum(p_b);
+	VectorXr p_a = p_ay.rowwise().sum();
+	VectorXr p_b = p_by.rowwise().sum();
+	VectorXr pcum_a = cumsum(p_a);
+	VectorXr pcum_b = cumsum(p_b);
 
 	// Marginal distribution over net worth
-	VectorXd nw_grid = nw_aby.col(0);
-	VectorXd g_nw = gdistmat.rowwise().sum();
+	VectorXr nw_grid = nw_aby.col(0);
+	VectorXr g_nw = gdistmat.rowwise().sum();
 	VectorXi nw_order = sort_by_values(nw_grid, g_nw);
 
-	VectorXd nwdelta(p.nab);
+	VectorXr nwdelta(p.nab);
 	nwdelta(seq(0, p.nab-2)) = 0.5 * (nw_grid(seq(1, p.nab-1)) - nw_grid(seq(0, p.nab-2)));
 	nwdelta(seq(1, p.nab-1)) += 0.5 * (nw_grid(seq(1, p.nab-1)) - nw_grid(seq(0, p.nab-2)));
 
-	VectorXd p_nw(p.nab);
+	VectorXr p_nw(p.nab);
 	int inw;
 	for (int iab=0; iab<p.nab; ++iab) {
 		inw = nw_order(iab);
 		p_nw(iab) = model.abdelta(inw) * gdistmat.row(inw).sum();
 	}
-	VectorXd pcum_nw = cumsum(p_nw);
+	VectorXr pcum_nw = cumsum(p_nw);
 
 	// Moments
 	Ehours = pdistvec.dot(to_eigenv(policies.h));
 	Enetworth = pdistvec.dot(eflatten(nw_aby));
 	Ea = pdistvec.dot(eflatten(agrid_aby));
 	Eb = pdistvec.dot(eflatten(bgrid_aby));
+	Elabor = pdistvec.dot(eflatten(labor_aby));
 
 	Elabor_occ.resize(p.nocc);
 	std::fill(Elabor_occ.begin(), Elabor_occ.end(), 0.0);
 
 	int iy = 0;
 	double pocc;
-	VectorXd labor_ab, pmass_ab;
 	for (int io=0; io<p.nocc; ++io) {
 		pocc = 0;
 		for (int ip=0; ip<model.nprod; ++ip) {
@@ -128,6 +128,10 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 			++iy;
 		}
 		Elabor_occ[io] /= pocc;
+
+		std::cout << "pocc = " << pocc << '\n';
+		std::cout << "Elabor_occ0 = \n";
+		printvec(Elabor_occ);
 	}
 
 	// Percentiles
@@ -163,6 +167,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 void DistributionStatistics::print() {
 	std::cout << '\n' << '\n' << "--------------------------\n" << "Output:\n";
 	print_result("E[h]", Ehours);
+	print_result("E[labor]", Elabor);
 	print_result("E[nw]", Enetworth);
 	print_result("E[a]", Ea);
 	print_result("E[b]", Eb);

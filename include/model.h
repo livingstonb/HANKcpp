@@ -13,16 +13,16 @@ class ModelBase {
 	public:
 		ModelBase(const Parameters& p, const std::string& income_dir);
 
-		double_vector bgrid_, dbgrid_, bdelta_;
-		double_vector agrid_, dagrid_, adelta_;
-		double_vector abdelta_;
-		double_vector occgrid_, occdist_;
-		double_vector logprodgrid_, prodgrid_;
-		double_vector proddist_, profsharegrid_;
-		double_vector yprodgrid_, yoccgrid_, ydist_;
-		double_matrix prodmarkov_, ymarkov_, ymarkovdiag_, ymarkovoff_;
+		VectorXr bgrid_, dbgrid_, bdelta_;
+		VectorXr agrid_, dagrid_, adelta_;
+		VectorXr abdelta_;
+		VectorXr occgrid_, occdist_;
+		VectorXr logprodgrid_, prodgrid_;
+		VectorXr proddist_, profsharegrid_;
+		VectorXr yprodgrid_, yoccgrid_, ydist_;
+		MatrixXr prodmarkov_, ymarkov_, ymarkovdiag_, ymarkovoff_;
 
-		double_vector occYsharegrid_, occNsharegrid_;
+		VectorXr occYsharegrid_, occNsharegrid_;
 
 		int nocc_, nprod_;
 
@@ -46,26 +46,26 @@ class Model : private ModelBase {
 
 		const Parameters p;
 		const AdjustmentCosts& adjcosts = adjcosts_;
-		const double_vector& bgrid = bgrid_;
-		const double_vector& dbgrid = dbgrid_;
-		const double_vector& bdelta = bdelta_;
-		const double_vector& agrid = agrid_;
-		const double_vector& dagrid = dagrid_;
-		const double_vector& adelta = adelta_;
-		const double_vector& abdelta = abdelta_;
-		const double_vector& occgrid = occgrid_;
-		const double_vector& occdist = occdist_;
-		const double_vector& logprodgrid = logprodgrid_;
-		const double_vector& prodgrid = prodgrid_;
-		const double_vector& proddist = proddist_;
-		const double_vector& profsharegrid = profsharegrid_;
-		const double_matrix& prodmarkov = prodmarkov_;
-		const double_vector& yprodgrid = yprodgrid_;
-		const double_vector& yoccgrid = yoccgrid_;
-		const double_vector& ydist = ydist_;
-		const double_matrix& ymarkov = ymarkov_;
-		const double_matrix& ymarkovdiag = ymarkovdiag_;
-		const double_matrix& ymarkovoff = ymarkovoff_;
+		const VectorXr& bgrid = bgrid_;
+		const VectorXr& dbgrid = dbgrid_;
+		const VectorXr& bdelta = bdelta_;
+		const VectorXr& agrid = agrid_;
+		const VectorXr& dagrid = dagrid_;
+		const VectorXr& adelta = adelta_;
+		const VectorXr& abdelta = abdelta_;
+		const VectorXr& occgrid = occgrid_;
+		const VectorXr& occdist = occdist_;
+		const VectorXr& logprodgrid = logprodgrid_;
+		const VectorXr& prodgrid = prodgrid_;
+		const VectorXr& proddist = proddist_;
+		const VectorXr& profsharegrid = profsharegrid_;
+		const MatrixXr& prodmarkov = prodmarkov_;
+		const VectorXr& yprodgrid = yprodgrid_;
+		const VectorXr& yoccgrid = yoccgrid_;
+		const VectorXr& ydist = ydist_;
+		const MatrixXr& ymarkov = ymarkov_;
+		const MatrixXr& ymarkovdiag = ymarkovdiag_;
+		const MatrixXr& ymarkovoff = ymarkovoff_;
 		const int nb = p.nb;
 		const int na = p.na;
 		const int nocc = nocc_;
@@ -76,10 +76,10 @@ class Model : private ModelBase {
 		const std::vector<int> dims = {p.na, p.nb, ny};
 		const double prodmarkovscale = 1.0;
 
-		const double_vector& occYsharegrid = occYsharegrid_;
-		const double_vector& occNsharegrid = occNsharegrid_;
+		const VectorXr& occYsharegrid = occYsharegrid_;
+		const VectorXr& occNsharegrid = occNsharegrid_;
 
-		double_vector get_rb_effective() const;
+		VectorXr get_rb_effective() const;
 
 		double util(double c) const;
 

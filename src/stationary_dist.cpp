@@ -13,12 +13,12 @@
 #include <hank_macros.h>
 
 namespace {
-	double_matrix make_dist_guess(const Model& model);
+	MatrixXr make_dist_guess(const Model& model);
 
 	void check_progress(double vdiff, int freq, int ii, double vtol);
 
-	void check_dist(const MatrixXd& distcheck, const Model& model) {
-		VectorXd py = distcheck.array().colwise().sum();
+	void check_dist(const MatrixXr& distcheck, const Model& model) {
+		VectorXr py = distcheck.array().colwise().sum();
 		for (int iy=0; iy<model.ny; ++iy) {
 			assert( abs(py(iy) - model.ydist(iy)) < 1.0e-6 );
 		}
@@ -28,12 +28,12 @@ namespace {
 void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJB& hjb) {
 	const Parameters& p = model.p;
 
-	double_vector inv_abdelta = model.abdelta.cwiseInverse();
-	double_matrix lmat = speye(model.ny) + delta * model.ymarkovoff.transpose();
+	Eigen::VectorXd inv_abdelta = model.abdelta.cast<double>().cwiseInverse();
+	Eigen::MatrixXd lmat = speye(model.ny) + delta * model.ymarkovoff.cast<double>().transpose();
 	int iabx = TO_INDEX_1D(0, p.nb_neg, p.na, p.nb);
 
-	double_matrix gmat = make_dist_guess(model);
-	double_matrix gmat_update(p.nab, model.ny);
+	MatrixXr gmat = make_dist_guess(model);
+	MatrixXr gmat_update(p.nab, model.ny);
 
 	std::vector<sparse_matrix> B(model.ny);
 	std::vector<sparse_solver> spsolvers(model.ny);
@@ -42,7 +42,7 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 			hjb.optimal_decisions, iy);
 
 		// Adjust A' matrix for non-linearly spaced grids
-		B[iy] = inv_abdelta.asDiagonal() * A.transpose() * model.abdelta.asDiagonal();
+		B[iy] = inv_abdelta.asDiagonal() * A.transpose() * model.abdelta.cast<double>().asDiagonal();
 		B[iy] *= -delta;
 		B[iy] += speye(p.na * p.nb) * (1.0 + delta * p.deathrate - delta * model.ymarkovdiag(iy,iy));
 		B[iy].makeCompressed();
@@ -57,10 +57,10 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 	int ii = 0;
 	while ( (diff > gtol) & (ii < maxiter) ) {
 		for (int iy=0; iy<model.ny; ++iy) {
-			double_vector lgmat = gmat * double_vector(lmat.row(iy));
+			Eigen::VectorXd lgmat = gmat.cast<double>() * Eigen::VectorXd(lmat.row(iy));
 			lgmat(iabx) += delta * p.deathrate * gmat.col(iy).dot(model.abdelta) / model.abdelta(iabx);
 
-			gmat_update.col(iy) = spsolvers[iy].solve(lgmat);
+			gmat_update.col(iy) = spsolvers[iy].solve(lgmat).cast<fp_type>();
 			if ( spsolvers[iy].info() != Eigen::Success )
 				throw "Sparse solver failure";
 		}
@@ -78,20 +78,20 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 	double pmass = (gmat.array().colwise() * model.abdelta.array()).matrix().sum();
 	assert( abs(1.0 - pmass) < 1.0e-6 );
 
-	density = StdVector3d<double>(p.na, p.nb, model.ny);
+	density = vector3dr(p.na, p.nb, model.ny);
 	for (int ia=0; ia<p.na; ++ia)
 		for (int ib=0; ib<p.nb; ++ib)
 			for (int iy=0; iy<model.ny; ++iy)
 				density(ia, ib, iy) = gmat(TO_INDEX_1D(ia, ib, p.na, p.nb), iy);
 
-	MatrixXd distcheck = gmat.array().colwise() * model.abdelta.array();
+	MatrixXr distcheck = gmat.array().colwise() * model.abdelta.array();
 	check_dist(distcheck, model);
 }
 
 namespace {
-	MatrixXd make_dist_guess(const Model& model) {
+	MatrixXr make_dist_guess(const Model& model) {
 		const Parameters& p = model.p;
-		MatrixXd gmat = MatrixXd::Zero(p.nab, model.ny);
+		MatrixXr gmat = MatrixXr::Zero(p.nab, model.ny);
 
 		double gmass;
 		int bpos;
