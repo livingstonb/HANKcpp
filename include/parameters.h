@@ -15,7 +15,7 @@ class Parameters {
 
 		void update();
 
-		void print_values() const;
+		void print_variables() const;
 
 		bool Borrowing = true;
 
@@ -66,6 +66,7 @@ class Parameters {
 		double profdistfracW = 0.667;
 		double profdistfracL = 0.0;
 		double priceadjcost = 100.0;
+		bool make_profit_correction = true;
 
 		// --- LABOR MARKET PARAMETERS ---
 		bool imposeMaxHours = true;

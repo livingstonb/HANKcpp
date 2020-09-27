@@ -26,7 +26,7 @@ class SteadyState {
 
 		void compute_govt();
 
-		void print_values() const;
+		void print_variables() const;
 
 		const Model& model;
 

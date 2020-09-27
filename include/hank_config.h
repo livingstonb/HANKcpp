@@ -20,6 +20,7 @@
 // --- DO NOT CHANGE ---
 #if HANK_TURN_OFF_EIGEN_DEBUG == 1
 	#define NDEBUG
+	#define EIGEN_NO_STATIC_ASSERT
 #endif
 
 #define EIGEN_MATRIXBASE_PLUGIN "matrix_base_addons.h"

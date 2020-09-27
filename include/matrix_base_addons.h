@@ -20,3 +20,9 @@ inline Scalar as3d(uint i, uint j, uint k) const {
 inline Scalar& as3d(uint i, uint j, uint k) {
 	return this->operator()(i + subdim0 * j, k);
 }
+
+// template<typename ScalarThis, typename ScalarR>
+// struct auto_cast
+
+
+// operator

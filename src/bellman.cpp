@@ -13,6 +13,7 @@
 #include <functional>
 #include <algorithm>
 #include <math.h>
+#include <string>
 
 #include <hank_macros.h>
 
@@ -65,17 +66,6 @@ namespace {
 		dupwind.Hd = Va * dupwind.d - Vb * (dupwind.d + model.adjcosts.cost(dupwind.d, a));
 		return dupwind;
 	}
-
-	void print_value(const std::string& pname, double value, bool insert_endline) {
-		std::cout << "  " << pname << " = " << value;
-
-		if ( insert_endline )
-			std::cout << '\n';
-	}
-
-	void print_value(const std::string& pname, double value) {
-		print_value(pname, value, true);
-	}
 }
 
 HJB::HJB(const Model& model_, const SteadyState& ss) : model(model_), p(model_.p), V(p.na, p.nb, model.ny), optimal_decisions(model.dims) {
@@ -107,7 +97,7 @@ void HJB::iterate(const SteadyState& ss) {
 	optimal_decisions = policies;
 
 	if ( global_hank_options->print_diagnostics )
-		print_values();
+		print_variables();
 }
 
 Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
@@ -333,7 +323,6 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 	bool kfe = false;
 
 	sparse_matrix ldiagmat, sparseI = speye(p.na * p.nb);
-	VectorXr bdriftvec = model.get_rb_effective().array() * model.bgrid.array();
 
 	for ( int iy=0; iy<model.ny; ++iy ) {
 		triplet_list Aentries;
@@ -351,18 +340,17 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 			}
 		}
 
-		sparse_matrix A = construct_transition_matrix(p, model, ss.ra, policies, iy, kfe);
+		SparseMatContainer Acont = construct_transition_matrix(p, model, ss.ra, policies, iy, kfe);
+		SparseXd& A = Acont.matrix;
 
 		// Construct B matrix = I + delta * (rho * I - A)
 		double ldiag = 1.0 + delta * (p.rho + p.deathrate) - delta * model.prodmarkovscale * model.ymarkovdiag(iy,iy);
 		ldiagmat = sparseI * ldiag;
 		sparse_matrix B = ldiagmat - delta * A;
 		B.makeCompressed();
-		// Eigen::SparseMatrix<double> Bd = B.cast<double>();
 
 		sparse_solver solver;
 		solver.compute(B);
-		// solver.compute(Bd);
 		if ( solver.info() != Eigen::Success ) {
 			std::cerr << "Sparse solver failure" << '\n';
 			throw 0;
@@ -381,19 +369,39 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 	}
 }
 
-void HJB::print_values() const {
+void HJB::print_variables() const {
+	std::cout << '\n';
 	horzline();
 	std::cout << "SELECTED OUTPUT FROM BELLMAN:\n";
 
-	print_value("c(1,1,1)", optimal_decisions.c(1,1,1));
-	print_value("c(1,10,1)", optimal_decisions.c(1,10,1));
-	print_value("c(10,1,1)", optimal_decisions.c(10,1,1));
-	print_value("c(20,20,5)", optimal_decisions.c(20,20,5));
+	std::vector<std::string> names;
+	std::vector<double> values;
 
-	print_value("d(1,1,1)", optimal_decisions.d(1,1,1));
-	print_value("d(1,10,1)", optimal_decisions.d(1,10,1));
-	print_value("d(10,1,1)", optimal_decisions.d(10,1,1));
-	print_value("d(20,20,5)", optimal_decisions.d(20,20,5), false);
+	names.push_back("c(1,1,1)");
+	values.push_back(optimal_decisions.c(1,1,1));
+
+	names.push_back("c(1,10,1)");
+	values.push_back(optimal_decisions.c(1,10,1));
+
+	names.push_back("c(10,1,1)");
+	values.push_back(optimal_decisions.c(10,1,1));
+
+	names.push_back("c(20,20,5)");
+	values.push_back(optimal_decisions.c(20,20,5));
+
+	names.push_back("d(1,1,1)");
+	values.push_back(optimal_decisions.d(1,1,1));
+
+	names.push_back("d(1,10,1)");
+	values.push_back(optimal_decisions.d(1,10,1));
+
+	names.push_back("d(10,1,1)");
+	values.push_back(optimal_decisions.d(10,1,1));
+
+	names.push_back("d(20,20,5)");
+	values.push_back(optimal_decisions.d(20,20,5));
+
+	print_values(names, values);
 
 	horzline();
 }

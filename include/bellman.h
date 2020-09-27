@@ -7,11 +7,6 @@
 #include <math.h>
 
 // Forward declarations
-namespace Upwinding {
-	class ConUpwind;
-	class Policies;
-}
-
 class Model;
 
 class SteadyState;
@@ -66,7 +61,7 @@ class HJB {
 
 		void iterate(const SteadyState& ss);
 
-		void print_values() const;
+		void print_variables() const;
 
 		const Model& model;
 

@@ -74,10 +74,6 @@ class StdVector3d {
 
 using vector3dr = StdVector3d<hank_float_type>;
 
-inline void horzline() {
-	std::cout << "\n--------------------------\n";
-}
-
 #undef TO_INDEX_1D
 
 #endif

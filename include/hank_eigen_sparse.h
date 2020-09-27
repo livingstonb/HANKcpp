@@ -7,6 +7,13 @@
 
 using sparse_matrix = Eigen::SparseMatrix<double>;
 
+using SparseXd = Eigen::SparseMatrix<double>;
+
+struct SparseMatContainer {
+	SparseMatContainer(SparseXd matrix_) : matrix(matrix_) {}
+	SparseXd matrix;
+};
+
 #if HANK_EIGEN_SPARSE_SOLVER == 0
 	#include <Eigen/SparseQR>
 	using sparse_solver = Eigen::SparseQR<sparse_matrix, Eigen::COLAMDOrdering<int>>;

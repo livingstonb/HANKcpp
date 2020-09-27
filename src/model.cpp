@@ -1,5 +1,6 @@
 #include <model.h>
 #include <utilities.h>
+#include <hank_numerics.h>
 #include <functions.h>
 #include <cmath>
 #include <boost/algorithm/string.hpp>
@@ -29,7 +30,7 @@ namespace {
 
 	void powerSpacedGrid(double low, double high, double curv, VectorXr& grid) {
 		int n = grid.size();
-		linspace(0.0, 1.0, n, grid);
+		HankNumerics::linspace(0.0, 1.0, n, grid);
 
 		for (int i=0; i<n; ++i)
 			grid[i] = low + (high - low) * pow(grid[i], 1.0 / curv);
@@ -281,7 +282,7 @@ void Model::print_values() const {
 	for (int io=0; io<nprod; ++io)
 		print_value("proddist[io]", proddist(io));
 
-	print_value("E[prod]", prodgrid.dot(proddist), false);
+	print_value("E[prod]", prodgrid.dot(proddist));
 	
 	horzline();
 }

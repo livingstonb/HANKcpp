@@ -38,8 +38,9 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 	std::vector<sparse_matrix> B(model.ny);
 	std::vector<sparse_solver> spsolvers(model.ny);
 	for (int iy=0; iy<model.ny; ++iy) {
-		sparse_matrix A = get_kfe_transition_matrix(p, model, ss.ra,
+		SparseMatContainer Acont = get_kfe_transition_matrix(p, model, ss.ra,
 			hjb.optimal_decisions, iy);
+		SparseXd& A = Acont.matrix;
 
 		// Adjust A' matrix for non-linearly spaced grids
 		B[iy] = inv_abdelta.asDiagonal() * A.transpose() * model.abdelta.cast<double>().asDiagonal();

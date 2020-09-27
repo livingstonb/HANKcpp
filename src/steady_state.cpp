@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <iostream>
 #include <assert.h>
+#include <utilities.h>
 
 namespace {
 
@@ -21,17 +22,6 @@ namespace {
 
 		return arr_out;
 	}
-
-	void print_value(const std::string& pname, double value, bool insert_endline) {
-		std::cout << "  " << pname << " = " << value;
-
-		if ( insert_endline )
-			std::cout << '\n';
-	}
-
-	void print_value(const std::string& pname, double value) {
-		print_value(pname, value, true);
-	}
 }
 
 SteadyState::SteadyState(const Parameters& p_, const Model& model_) : model(model_), p(p_) {
@@ -41,7 +31,7 @@ SteadyState::SteadyState(const Parameters& p_, const Model& model_) : model(mode
 void SteadyState::compute(SSType mode) {
 	ArrayXr elabshareY, elabshareN, elabfracY, elabfracN;
 
-	assert( labor_occ.size() == p.nocc );
+	assert( static_cast<int>(labor_occ.size()) == p.nocc );
 
 	elabshareY = (1.0 - p.alpha_Y) * price_W * p.drs_Y * model.occYsharegrid;
 	elabshareN = (1.0 - p.alpha_N) * (1.0 - price_W) * p.drs_N * model.occNsharegrid;
@@ -96,7 +86,7 @@ void SteadyState::compute(SSType mode) {
 	illpricedot = 0.0;
 
 	if ( global_hank_options->print_diagnostics )
-		print_values();
+		print_variables();
 }
 
 void SteadyState::compute_profits() {
@@ -160,24 +150,60 @@ void SteadyState::compute_govt() {
 		taxrev += p.labtax * p.profdistfracW * profit * (1.0 - p.corptax);
 }
 
-void SteadyState::print_values() const {
+void SteadyState::print_variables() const {
+	std::cout << '\n';
 	horzline();
 	std::cout << "COMPUTED VALUES, STEADY STATE:\n";
-	print_value("price_W", price_W);
-	print_value("capshareY", capshareY);
-	print_value("capshareN", capshareN);
-	print_value("capital_Y", capital_Y);
-	print_value("capital_N", capital_N);
-	print_value("labor_Y", labor_Y);
-	print_value("labor_N", labor_N);
-	print_value("labor", labor);
-	print_value("profit", profit);
-	print_value("ra", ra);
-	print_value("dividend_A", dividend_A);
-	print_value("dividend_B", dividend_B);
-	print_value("equity_A", equity_A);
-	print_value("equity_B", equity_B);
-	print_value("E[netwage]", Enetwage, false);
+
+	std::vector<std::string> names;
+	std::vector<double> values;
+
+	names.push_back("price_W");
+	values.push_back(price_W);
+
+	names.push_back("capshareY");
+	values.push_back(capshareY);
+
+	names.push_back("capshareN");
+	values.push_back(capshareN);
+
+	names.push_back("capital_Y");
+	values.push_back(capital_Y);
+
+	names.push_back("capital_N");
+	values.push_back(capital_N);
+
+	names.push_back("labor_Y");
+	values.push_back(labor_Y);
+
+	names.push_back("labor_N");
+	values.push_back(labor_N);
+
+	names.push_back("labor");
+	values.push_back(labor);
+
+	names.push_back("profit");
+	values.push_back(profit);
+
+	names.push_back("ra");
+	values.push_back(ra);
+
+	names.push_back("dividend_A");
+	values.push_back(dividend_A);
+
+	names.push_back("dividend_B");
+	values.push_back(dividend_B);
+
+	names.push_back("equity_A");
+	values.push_back(equity_A);
+
+	names.push_back("equity_B");
+	values.push_back(equity_B);
+
+	names.push_back("E[netwage]");
+	values.push_back(Enetwage);
+
+	print_values(names, values);
 
 	horzline();
 }

@@ -96,6 +96,7 @@ void set_to_fortran_params(Parameters& p) {
 	p.labtax = 0.25;
 	p.lumptransfer = 0.05;
 	p.corptax = 0;
+	p.make_profit_correction = false;
 
 	// ParamConfig
 	p.elast = 6.0;

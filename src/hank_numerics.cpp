@@ -48,4 +48,33 @@ double rtsec(std::function<double(double)> fn, double x1, double x2, double facc
 	throw 0;
 }
 
+double lininterp1(int n, const hank_float_type *x, const hank_float_type *y, double xi) {
+	hank_float_type xL, xH, yL, yH, maxel;
+	int locL = -1;
+
+	maxel = -1e12;
+	for (int i=1; i<n; ++i) {
+		if ( (xi > x[i]) & (x[i] > maxel) ) {
+			maxel = x[i];
+			locL = i;
+		}
+	}
+
+	if ( xi <= x[0] )
+		locL = 0;
+
+	if ( locL >= n-1 )
+		locL = n - 2;
+
+	xL = x[locL];
+	xH = x[locL+1];
+	yL = y[locL];
+	yH = y[locL+1];
+
+	if ( abs(xL-xH) < 1.0e-12 )
+		return 0.5 * (yL + yH);
+	else
+		return yL  + ((xi - xL) / (xH - xL)) * (yH - yL);
+}
+
 }
