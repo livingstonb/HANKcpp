@@ -24,11 +24,12 @@ namespace {
 	}
 }
 
-SteadyState::SteadyState(const Parameters& p_, const Model& model_) : model(model_), p(p_) {
+SteadyState::SteadyState(const Parameters& p_, const Model& model_, SSType mode_) : model(model_), p(p_) {
 	price_W = 1.0 - 1.0 / p.elast;
+	mode = mode_;
 }
 
-void SteadyState::compute(SSType mode) {
+void SteadyState::compute() {
 	ArrayXr elabshareY, elabshareN, elabfracY, elabfracN;
 
 	assert( static_cast<int>(labor_occ.size()) == p.nocc );

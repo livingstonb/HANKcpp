@@ -14,9 +14,9 @@ class SteadyState {
 	public:
 		enum class SSType { initial, final };
 
-		SteadyState(const Parameters& p_, const Model& model_);
+		SteadyState(const Parameters& p_, const Model& model_, SSType mode_);
 
-		void compute(SSType mode);
+		void compute();
 
 		void compute_profits();
 
@@ -31,6 +31,8 @@ class SteadyState {
 		const Model& model;
 
 		const Parameters& p;
+
+		SSType mode = SSType::initial;
 
 		double output = 1.0;
 
@@ -60,7 +62,7 @@ class SteadyState {
 
 		double illprice, illpricedot, illshares;
 
-		double chi;
+		double chi, riskaver;
 
 		double mpshock = 0;
 };

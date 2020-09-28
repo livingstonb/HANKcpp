@@ -35,7 +35,7 @@ namespace {
 			std::cout << "Converged after " << ii << " iterations." << '\n';
 	}
 
-	vector3dr make_value_guess(const Model& model, const SteadyState& ss) {
+	vector3dr make_value_guess(const Model& model, const SteadyState& ss, double riskaver) {
 		const Parameters& p = model.p;
 
 		vector3dr V(p.na, p.nb, model.ny);
@@ -47,7 +47,7 @@ namespace {
 			for (int ib=0; ib<p.nb; ++ib) {
 				for (int iy=0; iy<model.ny; ++iy) {
 					lc = ss.netwagegrid[iy] + p.lumptransfer + bdriftnn(ib) + adriftnn(ia);
-					u = model.util(lc);
+					u = model.util(lc, riskaver);
 					V(ia,ib,iy) = u / (p.rho + p.deathrate);
 				}
 			}
@@ -69,7 +69,13 @@ namespace {
 }
 
 HJB::HJB(const Model& model_, const SteadyState& ss) : model(model_), p(model_.p), V(p.na, p.nb, model.ny), optimal_decisions(model.dims) {
-	V = make_value_guess(model, ss);
+	riskaver = p.riskaver;
+	V = make_value_guess(model, ss, riskaver);
+}
+
+HJB::HJB(const Model& model_, const SteadyState& ss, double riskaver_) : model(model_), p(model_.p), V(p.na, p.nb, model.ny), optimal_decisions(model.dims) {
+	riskaver = riskaver_;
+	V = make_value_guess(model, ss, riskaver);
 }
 
 void HJB::iterate(const SteadyState& ss) {
@@ -188,7 +194,7 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 				// Deposit decision: a backward, b backward
 				if ( ia > 0 ) {
 					if ( ib == 0 )
-						derivs.VbB = model.util1(upwindB.c);
+						derivs.VbB = model.util1(upwindB.c, riskaver);
 
 					depositBB = optimal_deposits(model, derivs.VaB, derivs.VbB, illiq);
 					worth_adjusting = ( depositBB.d > -model.adjcosts.cost(depositBB.d, illiq) );
@@ -203,9 +209,9 @@ Upwinding::Policies HJB::update_policies(const SteadyState& ss) {
 				// Update u
 				labdisutil = idioscale * model.labdisutil(policies.h(ia,ib,iy), chi);
 				if ( p.endogLabor )
-					policies.u(ia,ib,iy) = model.util(policies.c(ia,ib,iy)) - labdisutil / p.labwedge;
+					policies.u(ia,ib,iy) = model.util(policies.c(ia,ib,iy), riskaver) - labdisutil / p.labwedge;
 				else
-					policies.u(ia,ib,iy) = model.util(policies.c(ia,ib,iy));
+					policies.u(ia,ib,iy) = model.util(policies.c(ia,ib,iy), riskaver);
 			}
 		}
 	}
@@ -245,7 +251,7 @@ Upwinding::ConUpwind HJB::optimal_consumption_no_laborsupply(double Vb, double b
 	upwind.h = 1.0;
 
 	if ( !is_stationary_pt_or_limit(Vb)) {
-		upwind.c = model.util1inv(Vb);
+		upwind.c = model.util1inv(Vb, riskaver);
 		upwind.s = bdrift + upwind.h * netwage - upwind.c;
 	}
 	else {
@@ -254,7 +260,7 @@ Upwinding::ConUpwind HJB::optimal_consumption_no_laborsupply(double Vb, double b
 	}
 
 	if ( upwind.c > 0.0 )
-		upwind.Hc = model.util(upwind.c) + Vb * upwind.s;
+		upwind.Hc = model.util(upwind.c, riskaver) + Vb * upwind.s;
 	else
 		upwind.Hc = -1.0e12;
 
@@ -270,12 +276,12 @@ Upwinding::ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift
 	else {
 		double hmin = fmax(-bdrift / netwage + 1.0e-5, 0.0);
 		double hmax = ( p.imposeMaxHours ) ? 1 : 100;
-		double v1_at_min = model.util1BC(hmin, chi, bdrift, netwage, idioscale);
-		double v1_at_max = model.util1BC(hmax, chi, bdrift, netwage, idioscale);
+		double v1_at_min = model.util1BC(hmin, riskaver, chi, bdrift, netwage, idioscale);
+		double v1_at_max = model.util1BC(hmax, riskaver, chi, bdrift, netwage, idioscale);
 
 		if ( (v1_at_max > 0) & (v1_at_min < 0) ) {
 			std::function<double(double)> objective = std::bind(
-				&Model::util1BC, model, _1, chi, bdrift, netwage, idioscale);
+				&Model::util1BC, model, _1, riskaver, chi, bdrift, netwage, idioscale);
 			double facc = 1.0e-8;
 			upwind.h = HankNumerics::rtsec(objective, hmin, hmax, facc);
 		}
@@ -297,7 +303,7 @@ Upwinding::ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift
 	double labdisutil = idioscale * model.labdisutil(upwind.h, chi);
 
 	if ( !is_stationary_pt_or_limit(Vb) ) {
-		upwind.c = model.util1inv(Vb);
+		upwind.c = model.util1inv(Vb, riskaver);
 		upwind.s = bdrift + upwind.h * netwage - upwind.c;
 	}
 	else {
@@ -306,9 +312,9 @@ Upwinding::ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift
 	}
 
 	if ( (upwind.c > 0.0) & (!is_stationary_pt_or_limit(Vb)) )
-		upwind.Hc = model.util(upwind.c) - labdisutil / p.labwedge + Vb * upwind.s;
+		upwind.Hc = model.util(upwind.c, riskaver) - labdisutil / p.labwedge + Vb * upwind.s;
 	else if ( upwind.c > 0.0 )
-		upwind.Hc = model.util(upwind.c) - labdisutil / p.labwedge;
+		upwind.Hc = model.util(upwind.c, riskaver) - labdisutil / p.labwedge;
 	else
 		upwind.Hc = -1.0e12;
 

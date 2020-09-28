@@ -41,11 +41,11 @@ int fcn(void* /* _p */, int n, const real *x, real *fvec, int /* iflag */ ) {
 	Model model = Model(p, income_dir);
 	global_current_model_ptr = &model;
 
-	SteadyState iss(p, model);
+	SteadyState iss(p, model, SteadyState::SSType::initial);
 	cal.update_ss(p, &iss, x);
 	std::cout << '\n';
 
-	iss.compute(SteadyState::SSType::initial);
+	iss.compute();
 	global_current_iss_ptr = &iss;
 
 	HJB hjb(model, iss);

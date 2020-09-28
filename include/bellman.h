@@ -59,6 +59,8 @@ class HJB {
 	public:
 		HJB(const Model& model_, const SteadyState& ss);
 
+		HJB(const Model& model_, const SteadyState& ss, double riskaver_);
+
 		void iterate(const SteadyState& ss);
 
 		void print_variables() const;
@@ -74,6 +76,7 @@ class HJB {
 		double delta = 1.0e6;
 		double dVamin = 1.0e-8;
 		double dVbmin = 1.0e-8;
+		double riskaver;
 		Upwinding::Policies optimal_decisions;
 };
 

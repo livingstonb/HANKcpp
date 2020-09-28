@@ -240,16 +240,16 @@ VectorXr Model::get_rb_effective() const {
 	return rb_effective;
 }
 
-double Model::util(double c) const {
-	return HankFunctions::utility(c, p.prefshock, p.riskaver);
+double Model::util(double c, double riskaver) const {
+	return HankFunctions::utility(c, p.prefshock, riskaver);
 }
 
-double Model::util1(double c) const {
-	return HankFunctions::utility1(c, p.prefshock, p.riskaver);
+double Model::util1(double c, double riskaver) const {
+	return HankFunctions::utility1(c, p.prefshock, riskaver);
 }
 
-double Model::util1inv(double u) const {
-	return HankFunctions::utility1inv(u, p.prefshock, p.riskaver);
+double Model::util1inv(double u, double riskaver) const {
+	return HankFunctions::utility1inv(u, p.prefshock, riskaver);
 }
 
 double Model::labdisutil(double h, double chi) const {
@@ -264,10 +264,10 @@ double Model::labdisutil1inv(double du, double chi) const {
 	return HankFunctions::labor_disutility1inv(du, p.frisch, chi);
 }
 
-double Model::util1BC(double h, double chi, double bdrift, double netwage, double wagescale) const {
+double Model::util1BC(double h, double riskaver, double chi, double bdrift, double netwage, double wagescale) const {
 	double c = bdrift + h * netwage;
 	assert( c > 0 );
-	return labdisutil1(h, chi) - util1(c) * netwage * p.labwedge / wagescale;
+	return labdisutil1(h, chi) - util1(c, riskaver) * netwage * p.labwedge / wagescale;
 }
 
 void Model::print_values() const {

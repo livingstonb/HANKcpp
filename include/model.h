@@ -81,11 +81,11 @@ class Model : private ModelBase {
 
 		VectorXr get_rb_effective() const;
 
-		double util(double c) const;
+		double util(double c, double riskaver) const;
 
-		double util1(double c) const;
+		double util1(double c, double riskaver) const;
 
-		double util1inv(double u) const;
+		double util1inv(double u, double riskaver) const;
 
 		double labdisutil(double h, double chi) const;
 
@@ -93,7 +93,7 @@ class Model : private ModelBase {
 
 		double labdisutil1inv(double du, double chi) const;
 
-		double util1BC(double h, double chi, double bdrift, double netwage, double wagescale) const;
+		double util1BC(double h, double riskaver, double chi, double bdrift, double netwage, double wagescale) const;
 
 		void print_values() const;
 
