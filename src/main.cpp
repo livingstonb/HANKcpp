@@ -28,36 +28,6 @@ const Model *global_current_model_ptr = NULL;
 
 const SteadyState *global_current_iss_ptr = NULL;
 
-void check_cminpack_success(int info) {
-	std::cout << '\n';
-	horzline();
-	horzline();
-	horzline();
-	if ( info == 0 ) {
-		std::cout << "improper hybrd1 input parameters\n";
-		throw 0;
-	}
-	else if ( info == 1 ) {
-		std::cout << "hybrd1 has converged\n";
-	}
-	else if ( info == 2 ) {
-		std::cout << "hybrd1 number of fcn calls has reached maximum\n";
-		throw 0;
-	}
-	else if ( info == 3 ) {
-		std::cout << "hybrd1 tol is too small, no further improvement possible\n";
-		throw 0;
-	}
-	else if ( info == 4 ) {
-		std::cout << "hybrd1 not making good progress\n";
-		throw 0;
-	}
-	horzline();
-	horzline();
-	horzline();
-	std::cout << '\n';
-}
-
 int fcn(void* /* _p */, int n, const real *x, real *fvec, int /* iflag */ ) {
 	Parameters& p = *global_params_ptr;
 	SSCalibrator& cal = *global_calibrator_ptr;
@@ -205,7 +175,7 @@ int main () {
 
 	void *z = NULL;
 	int info = cminpack_hybrd1_fnname(fcn, z, n, x, fvec, tol, wa, lwa);
-	check_cminpack_success(info);
+	HankUtilities::check_cminpack_success(info);
 
 	IRF irf(params, *global_current_model_ptr, *global_current_iss_ptr);
 	irf.shock.type = ShockType::tfp_Y;

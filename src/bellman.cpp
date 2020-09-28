@@ -371,7 +371,7 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 
 void HJB::print_variables() const {
 	std::cout << '\n';
-	horzline();
+	HankUtilities::horzline();
 	std::cout << "SELECTED OUTPUT FROM BELLMAN:\n";
 
 	std::vector<std::string> names;
@@ -401,7 +401,7 @@ void HJB::print_variables() const {
 	names.push_back("d(20,20,5)");
 	values.push_back(optimal_decisions.d(20,20,5));
 
-	print_values(names, values);
+	HankUtilities::print_values(names, values);
 
-	horzline();
+	HankUtilities::horzline();
 }

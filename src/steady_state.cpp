@@ -152,7 +152,7 @@ void SteadyState::compute_govt() {
 
 void SteadyState::print_variables() const {
 	std::cout << '\n';
-	horzline();
+	HankUtilities::horzline();
 	std::cout << "COMPUTED VALUES, STEADY STATE:\n";
 
 	std::vector<std::string> names;
@@ -203,7 +203,7 @@ void SteadyState::print_variables() const {
 	names.push_back("E[netwage]");
 	values.push_back(Enetwage);
 
-	print_values(names, values);
+	HankUtilities::print_values(names, values);
 
-	horzline();
+	HankUtilities::horzline();
 }

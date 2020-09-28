@@ -92,7 +92,7 @@ void Parameters::update() {
 
 void Parameters::print_variables() const {
 	std::cout << '\n';
-	horzline();
+	HankUtilities::horzline();
 	std::cout << "PARAMETER VALUES:\n";
 
 	std::vector<std::string> names;
@@ -162,7 +162,7 @@ void Parameters::print_variables() const {
 	names.push_back("targetMeanIllGuess");
 	values.push_back(targetMeanIllGuess);
 
-	print_values(names, values);
+	HankUtilities::print_values(names, values);
 
-	horzline();
+	HankUtilities::horzline();
 }

@@ -43,6 +43,11 @@ void IRF::setup() {
 
 	shock.setup();
 
+	if ( permanentShock & (shock.type == ShockType::riskaver) )
+		trans_equm.ss_riskaver = p.riskaver + shock.size;
+	else
+		trans_equm.ss_riskaver = p.riskaver;
+
 	construct_delta_trans_vectors();
 }
 
@@ -63,10 +68,21 @@ void IRF::construct_delta_trans_vectors() {
 }
 
 void IRF::compute() {
+	set_shock_paths();
+}
+
+void IRF::set_shock_paths() {
 	if ( shock.type == ShockType::tfp_Y )
 		trans_equm.tfp_Y = get_AR1_path_logs(Ttrans, iss.tfp_Y, shock.size, shock.pers, deltatransvec, nendtrans);
 	else if ( shock.type == ShockType::monetary ) {
 		trans_equm.mpshock = get_AR1_path_levels(Ttrans, iss.mpshock, shock.size, shock.pers, deltatransvec, nendtrans);
+		trans_equm.mpshock(seq(1, Ttrans-1)) = VectorXr::Constant(Ttrans-1, 0.0);
+	}
+	else if ( shock.type == ShockType::riskaver ) {
+		if ( permanentShock )
+			trans_equm.riskaver = VectorXr::Constant(Ttrans, trans_equm.ss_riskaver);
+		else
+			trans_equm.riskaver = get_AR1_path_logs(Ttrans, p.riskaver, shock.size, shock.pers, deltatransvec, nendtrans);
 	}
 }
 

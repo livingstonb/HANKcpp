@@ -9,6 +9,8 @@
 #include <assert.h>
 #include <fstream>
 
+namespace HankUtilities {
+
 std::vector<double> read_matrix(const std::string& file_loc);
 
 std::size_t find_multiple(const std::string& line, int pos);
@@ -28,6 +30,10 @@ inline void print_values(const std::vector<std::string>& names, const std::vecto
 	for (unsigned int i=0; i<names.size(); ++i) {
 		std::cout << "  " << names[i] << " = " << values[i] << '\n';
 	}
+}
+
+void check_cminpack_success(int info);
+
 }
 
 #endif

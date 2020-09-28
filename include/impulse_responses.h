@@ -12,7 +12,9 @@ class SteadyState;
 
 class TransEquilibrium {
 	public:
-		VectorXr tfp_Y, mpshock;
+		VectorXr tfp_Y, mpshock, riskaver;
+
+		double ss_riskaver;
 };
 
 enum class ShockType { tfp_Y, monetary, riskaver, none };
@@ -41,6 +43,8 @@ class IRF {
 
 		void compute();
 
+		void set_shock_paths();
+
 		TransShock shock;
 
 		double shock_size = 0;
@@ -58,6 +62,10 @@ class IRF {
 		bool solveFlexPriceTransitions = false;
 
 		bool solveStickyPriceTransitions = true;
+
+		bool permanentShock = false;
+
+		double trans_riskaver;
 
 		VectorXr deltatransvec, cumdeltatrans;
 

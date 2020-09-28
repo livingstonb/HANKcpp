@@ -131,7 +131,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 
 		std::cout << "pocc = " << pocc << '\n';
 		std::cout << "Elabor_occ0 = \n";
-		printvec(Elabor_occ);
+		HankUtilities::printvec(Elabor_occ);
 	}
 
 	// Percentiles

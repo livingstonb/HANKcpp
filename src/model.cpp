@@ -157,10 +157,10 @@ void ModelBase::create_income_process(
 	const std::string& income_dir, const Parameters& p) {
 
 	std::string grid_loc = "../input/" + income_dir + "/ygrid_combined.txt";
-	logprodgrid_ = vector2eigenv(read_matrix(grid_loc));
+	logprodgrid_ = vector2eigenv(HankUtilities::read_matrix(grid_loc));
 
 	std::string dist_loc = "../input/" + income_dir + "/ydist_combined.txt";
-	proddist_ = vector2eigenv(read_matrix(dist_loc));
+	proddist_ = vector2eigenv(HankUtilities::read_matrix(dist_loc));
 
 	std::string markov_loc = "../input/" + income_dir + "/ymarkov_combined.txt";
 
@@ -168,7 +168,7 @@ void ModelBase::create_income_process(
 		logprodgrid_ = logprodgrid_ / (1.0 + p.adjFrischGridFrac * p.frisch);
 
 	int k = proddist_.size();
-	prodmarkov_ = vector2eigenm(read_matrix(markov_loc), k, k);
+	prodmarkov_ = vector2eigenm(HankUtilities::read_matrix(markov_loc), k, k);
 	fix_rounding(prodmarkov_);
 
 	prodgrid_ = logprodgrid_.array().exp();
@@ -271,7 +271,7 @@ double Model::util1BC(double h, double chi, double bdrift, double netwage, doubl
 }
 
 void Model::print_values() const {
-	horzline();
+	HankUtilities::horzline();
 	std::cout << "COMPUTED VALUES, MODEL OBJECT:\n";
 	print_value("nocc", nocc);
 	print_value("nprod", nprod);
@@ -285,7 +285,7 @@ void Model::print_values() const {
 
 	print_value("E[prod]", prodgrid.dot(proddist));
 	
-	horzline();
+	HankUtilities::horzline();
 }
 
 void Model::assertions() const {
