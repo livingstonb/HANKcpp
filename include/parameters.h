@@ -67,6 +67,8 @@ class Parameters {
 		double profdistfracL = 0.0;
 		double priceadjcost = 100.0;
 		bool make_profit_correction = true;
+		double capadjcost = 0.0;
+		double invadjcost = 0.01;
 
 		// --- LABOR MARKET PARAMETERS ---
 		bool imposeMaxHours = true;
@@ -106,14 +108,17 @@ class Parameters {
 		double rb = 0.02 / 4.0;
 		double borrwedge = 0.025;
 		double rborr = -1.0e5; // Will be set to rb + borrwedge
-		double corptax = 0.0;
-		double labtax = 0.25;
-		double lumptransfer = 0.05;
 		bool prodispshock = false;
 		AdjustCostFnRatioMode adjCostRatioMode = AdjustCostFnRatioMode::max;
 		double target_KY_ratio;
 		double chi;
 		double USGDPperHH = 146435 / 4.0;
+
+		// --- GOVERNMENT PARAMETERS ---
+		double corptax = 0.0;
+		double labtax = 0.25;
+		double lumptransfer = 0.05;
+		GovBCAdjType adjGovBudgetConstraint = GovBCAdjType::fiscal;
 
 		// --- OTHER SOLUTION PARAMETERS ---
 		double cmin = 1.0e-5;

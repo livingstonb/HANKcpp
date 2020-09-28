@@ -6,6 +6,7 @@
 #include <boost/algorithm/string.hpp>
 #include <assert.h>
 #include <hank_macros.h>
+#include <adjustment_costs.h>
 
 namespace {
 	void fix_rounding(MatrixXr& mat) {

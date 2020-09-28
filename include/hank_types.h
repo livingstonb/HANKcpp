@@ -15,6 +15,8 @@ enum class AdjustCostFnRatioMode { none, linear, max };
 
 enum class DepositCostMode { custom, symmetric, no_deposit_cost };
 
+enum class GovBCAdjType { spending, lumptax, debt, proptax, ftpl, none, fiscal };
+
 class WealthTarget {
 	public:
 		enum class Type { mean, median, none };

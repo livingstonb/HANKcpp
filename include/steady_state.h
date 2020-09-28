@@ -61,6 +61,8 @@ class SteadyState {
 		double illprice, illpricedot, illshares;
 
 		double chi;
+
+		double mpshock = 0;
 };
 
 #endif
