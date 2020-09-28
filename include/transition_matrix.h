@@ -1,8 +1,6 @@
 #ifndef _TRANSITION_MATRIX_H
 #define _TRANSITION_MATRIX_H
 
-// #include <hank_eigen_sparse.h>
-
 class Parameters;
 
 class Model;

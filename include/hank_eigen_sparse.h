@@ -11,7 +11,10 @@ using SparseXd = Eigen::SparseMatrix<double>;
 
 struct SparseMatContainer {
 	SparseMatContainer(SparseXd matrix_) : matrix(matrix_) {}
+
 	SparseXd matrix;
+
+	SparseXd& get() {return matrix;}
 };
 
 #if HANK_EIGEN_SPARSE_SOLVER == 0

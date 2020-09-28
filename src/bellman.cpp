@@ -341,7 +341,7 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 		}
 
 		SparseMatContainer Acont = construct_transition_matrix(p, model, ss.ra, policies, iy, kfe);
-		SparseXd& A = Acont.matrix;
+		SparseXd& A = Acont.get();
 
 		// Construct B matrix = I + delta * (rho * I - A)
 		double ldiag = 1.0 + delta * (p.rho + p.deathrate) - delta * model.prodmarkovscale * model.ymarkovdiag(iy,iy);

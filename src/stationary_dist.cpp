@@ -40,7 +40,7 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 	for (int iy=0; iy<model.ny; ++iy) {
 		SparseMatContainer Acont = get_kfe_transition_matrix(p, model, ss.ra,
 			hjb.optimal_decisions, iy);
-		SparseXd& A = Acont.matrix;
+		SparseXd& A = Acont.get();
 
 		// Adjust A' matrix for non-linearly spaced grids
 		B[iy] = inv_abdelta.asDiagonal() * A.transpose() * model.abdelta.cast<double>().asDiagonal();
