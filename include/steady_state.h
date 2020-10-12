@@ -16,6 +16,13 @@ class SteadyState {
 
 		SteadyState(const Parameters& p_, const Model& model_, SSType mode_);
 
+		SteadyState& operator=(const SteadyState& other_ss) {
+			*this = other_ss;
+			return *this;
+		}
+
+		void guess_labor_occ();
+
 		void compute();
 
 		void compute_profits();

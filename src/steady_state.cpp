@@ -29,6 +29,14 @@ SteadyState::SteadyState(const Parameters& p_, const Model& model_, SSType mode_
 	mode = mode_;
 }
 
+void SteadyState::guess_labor_occ() {
+	for (int io=0; io<p.nocc; ++io) {
+		labor_occ.push_back(p.hourtarget * p.meanlabeff * model.occdist[io]);
+	}
+
+	capital = p.target_KY_ratio;
+}
+
 void SteadyState::compute() {
 	ArrayXr elabshareY, elabshareN, elabfracY, elabfracN;
 

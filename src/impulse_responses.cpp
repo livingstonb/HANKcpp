@@ -49,6 +49,7 @@ void IRF::setup() {
 		trans_equm.ss_riskaver = p.riskaver;
 
 	construct_delta_trans_vectors();
+	set_shock_paths();
 }
 
 void IRF::construct_delta_trans_vectors() {
@@ -68,7 +69,23 @@ void IRF::construct_delta_trans_vectors() {
 }
 
 void IRF::compute() {
-	set_shock_paths();
+	// Final steady state
+	SteadyState finalss = SteadyState(p, model, SteadyState::SSType::final);
+	if ( !permanentShock ) {
+		finalss = iss;
+		finalss.mode = SteadyState::SSType::final;
+	}
+
+	// Guess log deviations from steady state
+	VectorXr xguess(npricetrans);
+	if ( !permanentShock ) {
+		xguess = VectorXr::Zero(npricetrans);
+
+		if ( shock.type == ShockType::tfp_Y ) {
+			VectorXr leveldev = fmax(p.capadjcost, 1.0) * trans_equm.tfp_Y / iss.tfp_Y;
+			xguess(seq(0, Ttrans-1)) = leveldev.array().log();
+		}
+	}
 }
 
 void IRF::set_shock_paths() {

@@ -28,6 +28,8 @@ const Model *global_current_model_ptr = NULL;
 
 const SteadyState *global_current_iss_ptr = NULL;
 
+const DistributionStatistics *global_current_stats_ptr = NULL;
+
 int fcn(void* /* _p */, int n, const real *x, real *fvec, int /* iflag */ ) {
 	Parameters& p = *global_params_ptr;
 	SSCalibrator& cal = *global_calibrator_ptr;
@@ -56,11 +58,11 @@ int fcn(void* /* _p */, int n, const real *x, real *fvec, int /* iflag */ ) {
 	sdist.compute(model, iss, hjb);
 
 	DistributionStatistics stats(p, model, hjb, sdist);
+	global_current_stats_ptr = &stats;
 	stats.print();
 
 	SSCalibrationArgs args(global_params_ptr, &model, &stats, &iss);
-	global_calibrator_ptr->fill_fvec(args, fvec);
-
+	cal.fill_fvec(args, fvec);
 	cal.print_fvec(fvec);
 
 	return 0;
@@ -126,6 +128,7 @@ int main () {
 	Options options; 
 	options.fast = false;
 	options.print_diagnostics = false;
+	options.skip_calibration = true;
 
 	global_hank_options = &options;
 
@@ -149,35 +152,58 @@ int main () {
 	set_to_fortran_params(params);
 
 	params.setup(options);
-	global_params_ptr = &params;
-
-	// Calibration
-	SSCalibrator calibrator;
-	calibrator.calibrateLaborDisutility = false;
-	calibrator.calibrateRb = true;
-	calibrator.calibrateDiscountRate = true;
-	set_to_fortran_params(calibrator);
-	calibrator.setup(params);
-	global_calibrator_ptr = &calibrator;
 
 	Model model = Model(params, income_dir);
 
-	// guess rho, chi,labor_occ, capital, and rb
-	int n = calibrator.nmoments;
-	hank_float_type x[n];
-	calibrator.fill_xguess(params, model, x);
+	if ( options.skip_calibration ) {
+		SteadyState iss(params, model, SteadyState::SSType::initial);
+		iss.guess_labor_occ();
+		iss.compute();
+		global_current_iss_ptr = &iss;
 
-	hank_float_type fvec[n];
-	double tol = 1.0e-9;
+		HJB hjb(model, iss);
+		hjb.iterate(iss);
 
-	int lwa = n * (3 * n + 13);
-	hank_float_type wa[lwa];
+		StationaryDist sdist;
+		sdist.gtol = 1.0e-9;
+		sdist.compute(model, iss, hjb);
 
-	void *z = NULL;
-	int info = cminpack_hybrd1_fnname(fcn, z, n, x, fvec, tol, wa, lwa);
-	HankUtilities::check_cminpack_success(info);
+		DistributionStatistics stats(params, model, hjb, sdist);
+		global_current_stats_ptr = &stats;
+		stats.print();
+	}
+	else {
+		// Calibrate
+		global_params_ptr = &params;
 
-	IRF irf(params, *global_current_model_ptr, *global_current_iss_ptr);
+		SSCalibrator calibrator;
+		calibrator.calibrateLaborDisutility = false;
+		calibrator.calibrateRb = true;
+		calibrator.calibrateDiscountRate = true;
+		set_to_fortran_params(calibrator);
+		calibrator.setup(params);
+		global_calibrator_ptr = &calibrator;
+
+		// Guess rho, chi,labor_occ, capital, and rb
+		int n = calibrator.nmoments;
+		hank_float_type x[n];
+		calibrator.fill_xguess(params, model, x);
+
+		hank_float_type fvec[n];
+		double tol = 1.0e-9;
+
+		int lwa = n * (3 * n + 13);
+		hank_float_type wa[lwa];
+
+		void *z = NULL;
+		int info = cminpack_hybrd1_fnname(fcn, z, n, x, fvec, tol, wa, lwa);
+		HankUtilities::check_cminpack_success(info);
+
+		// Update model variable
+		model = *global_current_model_ptr;
+	}
+
+	IRF irf(params, model, *global_current_iss_ptr);
 	irf.shock.type = ShockType::tfp_Y;
 	irf.setup();
 

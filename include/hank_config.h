@@ -31,6 +31,7 @@ class Options {
 		bool equilibriumR = true;
 		bool fast = false;
 		bool print_diagnostics = false;
+		bool skip_calibration = false;
 };
 
 extern const Options *global_hank_options;
