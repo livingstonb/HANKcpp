@@ -22,6 +22,13 @@ void printvec(const T& vec) {
 	}
 }
 
+template<typename T>
+void printvec(const T* vec, int n) {
+	for (int i=0; i<n; ++i) {
+		std::cout << vec[i] << '\n';
+	}
+}
+
 inline void horzline() {
 	std::cout << "----------------------------\n";
 }

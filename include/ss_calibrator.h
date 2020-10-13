@@ -43,7 +43,7 @@ class SSCalibrator {
 
 		void update_params(Parameters *p, const hank_float_type *xvec) const;
 
-		void update_ss(const Parameters& p, SteadyState *iss, const hank_float_type *xvec) const;\
+		void update_ss(const Parameters* p, SteadyState *iss, const hank_float_type *xvec) const;\
 
 		void print_fvec(hank_float_type fvec[]) const;
 

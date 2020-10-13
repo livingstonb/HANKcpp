@@ -29,6 +29,25 @@ SteadyState::SteadyState(const Parameters& p_, const Model& model_, SSType mode_
 	mode = mode_;
 }
 
+SteadyState& SteadyState::operator=(SteadyState&& other_ss) {
+	SteadyStateBase *ssbase = this;
+	*ssbase = other_ss;
+
+	return *this;
+}
+
+SteadyState& SteadyState::operator=(const SteadyState& other_ss) {
+	SteadyStateBase *ssbase = this;
+	*ssbase = other_ss;
+
+	return *this;
+}
+
+SteadyState::SteadyState(const SteadyState& other_ss) : model(other_ss.model), p(other_ss.p) {
+	SteadyStateBase *ssbase = this;
+	*ssbase = other_ss;
+}
+
 void SteadyState::guess_labor_occ() {
 	for (int io=0; io<p.nocc; ++io) {
 		labor_occ.push_back(p.hourtarget * p.meanlabeff * model.occdist[io]);

@@ -160,17 +160,17 @@ void SSCalibrator::perform_calibrator_assertions() const {
 }
 
 void SSCalibrator::update_params(Parameters *p, const hank_float_type *xvec) const {
-	if ( ix_rho > 0 ) {
+	if ( ix_rho >= 0 ) {
 		p->rho = exp(xvec[ix_rho]);
 		std::cout << "  rho = " << p->rho << '\n';
 	}
 
-	if ( ix_rb > 0 ) {
+	if ( ix_rb >= 0 ) {
 		p->rb = exp(xvec[ix_rb]);
 		std::cout << "  rb = " << p->rb << '\n';
 	}
 
-	if ( ix_chi > 0 ) {
+	if ( ix_chi >= 0 ) {
 		p->chi = xvec[ix_chi];
 		std::cout << "  chi = " << p->chi << '\n';
 	}
@@ -178,18 +178,18 @@ void SSCalibrator::update_params(Parameters *p, const hank_float_type *xvec) con
 	p->update();
 }
 
-void SSCalibrator::update_ss(const Parameters& p, SteadyState *iss, const hank_float_type *xvec) const {
+void SSCalibrator::update_ss(const Parameters* p, SteadyState *iss, const hank_float_type *xvec) const {
 	for (unsigned int io=0; io<ix_labor_occ.size(); ++io) {
 		iss->labor_occ.push_back(xvec[ix_labor_occ[io]]);
 		std::cout << "  labor_" << io << " = " << xvec[ix_labor_occ[io]] << '\n';
 	}
 
-	if ( ix_capital > 0 ) {
+	if ( ix_capital >= 0 ) {
 		iss->capital = xvec[ix_capital];
 		std::cout << "  capital = " << iss->capital << '\n';
 	}
 	else
-		iss->capital = p.target_KY_ratio;
+		iss->capital = p->target_KY_ratio;
 }
 
 void SSCalibrator::print_fvec(hank_float_type fvec[]) const {

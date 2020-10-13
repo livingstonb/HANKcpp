@@ -12,7 +12,11 @@ class SteadyState;
 
 class TransEquilibrium {
 	public:
+		TransEquilibrium() {};
+
 		VectorXr tfp_Y, mpshock, riskaver;
+
+		VectorXr output;
 
 		double ss_riskaver;
 };
@@ -37,13 +41,19 @@ class IRF {
 	public:
 		IRF(const Parameters& p_, const Model& model_, const SteadyState& iss_);
 
+		enum class SolverType { hybrd1, broyden };
+
 		void setup();
 
 		void construct_delta_trans_vectors();
 
 		void compute();
 
+		void transition_fcn(int n, const hank_float_type *x, hank_float_type *z);
+
 		void set_shock_paths();
+
+		SolverType solver = SolverType::broyden;
 
 		TransShock shock;
 
@@ -64,6 +74,10 @@ class IRF {
 		bool solveStickyPriceTransitions = true;
 
 		bool permanentShock = false;
+
+		double min_price_W = 0.05;
+
+		double max_price_W = 1.0 - 1.0e-6;
 
 		double trans_riskaver;
 

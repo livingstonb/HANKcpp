@@ -44,11 +44,6 @@ class Model : private ModelBase {
 	public:
 		Model(const Parameters& p_, const std::string& income_dir);
 
-		Model& operator=(const Model& other_model) {
-			*this = other_model;
-			return *this;
-		}
-
 		const Parameters p;
 		const AdjustmentCosts& adjcosts = adjcosts_;
 		const VectorXr& bgrid = bgrid_;

@@ -40,7 +40,9 @@ namespace {
 }
 
 DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model& model,
-	const HJB& hjb, const StationaryDist& sdist) : p(p_) {
+	const HJB& hjb, const StationaryDist& sdist) {
+
+	const Parameters& p = p_;
 
 	const Upwinding::Policies& policies = hjb.optimal_decisions;
 

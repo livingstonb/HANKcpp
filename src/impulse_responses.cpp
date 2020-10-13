@@ -4,6 +4,10 @@
 #include <steady_state.h>
 #include <math.h>
 #include <iostream>
+#include <functional>
+#include <utilities.h>
+
+using namespace std::placeholders;
 
 namespace {
 	VectorXr get_AR1_path_logs(int T, double x0, double eps, double rho, const VectorXr& deltas, int nback);
@@ -70,9 +74,8 @@ void IRF::construct_delta_trans_vectors() {
 
 void IRF::compute() {
 	// Final steady state
-	SteadyState finalss = SteadyState(p, model, SteadyState::SSType::final);
+	SteadyState finalss = iss;
 	if ( !permanentShock ) {
-		finalss = iss;
 		finalss.mode = SteadyState::SSType::final;
 	}
 
@@ -86,6 +89,32 @@ void IRF::compute() {
 			xguess(seq(0, Ttrans-1)) = leveldev.array().log();
 		}
 	}
+
+	if ( solver == SolverType::broyden ) {
+		std::function<void(int, const hank_float_type*, hank_float_type*)>
+			obj_fn = std::bind(&IRF::transition_fcn, *this, _1, _2, _3);
+
+		hank_float_type* z = new hank_float_type[npricetrans];
+		for (int i=0; i<npricetrans; ++i)
+			z[i] = 0.0;
+
+		obj_fn(npricetrans, xguess.data(), z);
+
+		delete[] z;
+	}
+	else {
+		std::cerr << "Must select Broyden solver\n";
+		throw 0;
+	}
+}
+
+void IRF::transition_fcn(int n, const hank_float_type *x, hank_float_type *z) {
+	// Guesses
+	trans_equm.output = VectorXr(Ttrans);
+
+	for (int i=0; i<Ttrans; ++i)
+		trans_equm.output(i) = iss.output * x[i];
+
 }
 
 void IRF::set_shock_paths() {

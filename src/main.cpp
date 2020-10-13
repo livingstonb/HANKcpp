@@ -13,57 +13,52 @@
 #include <math.h>
 #include <ss_calibrator.h>
 #include <impulse_responses.h>
+#include <memory>
 
 #include <cminpack.h>
 #include <cminpackP.h>
 
 const Options *global_hank_options = NULL;
 
-Parameters *global_params_ptr = NULL;
+std::unique_ptr<Parameters> global_params_ptr(nullptr);
 std::string income_dir = "2point_3_5";
 
-SSCalibrator *global_calibrator_ptr = NULL;
+std::unique_ptr<SSCalibrator> global_calibrator_ptr(nullptr);
 
-const Model *global_current_model_ptr = NULL;
+std::unique_ptr<Model> global_current_model_ptr(nullptr);
 
-const SteadyState *global_current_iss_ptr = NULL;
+std::unique_ptr<SteadyState> global_current_iss_ptr(nullptr);
 
-const DistributionStatistics *global_current_stats_ptr = NULL;
+std::unique_ptr<DistributionStatistics> global_current_stats_ptr(nullptr);
 
 int fcn(void* /* _p */, int n, const real *x, real *fvec, int /* iflag */ ) {
-	Parameters& p = *global_params_ptr;
-	SSCalibrator& cal = *global_calibrator_ptr;
-
-	assert(cal.nmoments == n);
+	assert(global_calibrator_ptr->nmoments == n);
 
 	std::cout << "\nCalibration parameters updated:\n";
 
-	cal.update_params(&p, x);
+	global_calibrator_ptr->update_params(global_params_ptr.get(), x);
 
-	Model model = Model(p, income_dir);
-	global_current_model_ptr = &model;
+	global_current_model_ptr.reset(new Model(*global_params_ptr, income_dir));
 
-	SteadyState iss(p, model, SteadyState::SSType::initial);
-	cal.update_ss(p, &iss, x);
+	global_current_iss_ptr.reset(new SteadyState(*global_params_ptr, *global_current_model_ptr, SteadyState::SSType::initial));
+	global_calibrator_ptr->update_ss(global_params_ptr.get(), global_current_iss_ptr.get(), x);
 	std::cout << '\n';
 
-	iss.compute();
-	global_current_iss_ptr = &iss;
+	global_current_iss_ptr->compute();
 
-	HJB hjb(model, iss);
-	hjb.iterate(iss);
+	HJB hjb(*global_current_model_ptr, *global_current_iss_ptr);
+	hjb.iterate(*global_current_iss_ptr);
 
 	StationaryDist sdist;
 	sdist.gtol = 1.0e-9;
-	sdist.compute(model, iss, hjb);
+	sdist.compute(*global_current_model_ptr, *global_current_iss_ptr, hjb);
 
-	DistributionStatistics stats(p, model, hjb, sdist);
-	global_current_stats_ptr = &stats;
-	stats.print();
+	global_current_stats_ptr.reset(new DistributionStatistics(*global_params_ptr, *global_current_model_ptr, hjb, sdist));
+	global_current_stats_ptr->print();
 
-	SSCalibrationArgs args(global_params_ptr, &model, &stats, &iss);
-	cal.fill_fvec(args, fvec);
-	cal.print_fvec(fvec);
+	SSCalibrationArgs args(global_params_ptr.get(), global_current_model_ptr.get(), global_current_stats_ptr.get(), global_current_iss_ptr.get());
+	global_calibrator_ptr->fill_fvec(args, fvec);
+	global_calibrator_ptr->print_fvec(fvec);
 
 	return 0;
 }
@@ -105,15 +100,22 @@ void set_to_fortran_params(Parameters& p) {
 	p.labtax = 0.25;
 	p.lumptransfer = 0.05;
 	p.corptax = 0;
-	p.make_profit_correction = false;
+	p.make_profit_correction = true;
 
 	// ParamConfig
-	p.elast = 6.0;
-	p.drs_Y = 0.934;
-	p.drs_N = 0.73;
-	p.alpha_Y = 0.32;
-	p.alpha_N = 0;
-	p.depreciation = 0.07 / 4.0;
+	// p.elast = 6.0;
+	// p.drs_Y = 0.934;
+	// p.drs_N = 0.73;
+	// p.alpha_Y = 0.32;
+	// p.alpha_N = 0;
+	// p.depreciation = 0.07 / 4.0;
+
+	// ParamConfig 2
+	p.elast = 6.89655172413793;
+	p.drs_Y = 1.0;
+	p.drs_N = 0.310344827586207;
+	p.alpha_N = 0.3333333333333;
+	p.alpha_Y = 0.3333333333333;
 }
 
 void set_to_fortran_params(SSCalibrator& cal) {
@@ -128,12 +130,13 @@ int main () {
 	Options options; 
 	options.fast = false;
 	options.print_diagnostics = false;
-	options.skip_calibration = true;
+	options.skip_calibration = false;
 
 	global_hank_options = &options;
 
 	// Parameters
-	Parameters params;
+	global_params_ptr.reset(new Parameters);
+	Parameters& params = *global_params_ptr;
 	params.rho = 0.022;
 	params.drs_N = 0;
 	params.drs_Y = 0.9;
@@ -141,8 +144,8 @@ int main () {
 	params.borrowing = true;
 	// params.deathrate = 0.0;
 	params.amax = 400;
-	params.na = 40;
-	params.nb_pos = 40;
+	params.na = 25;
+	params.nb_pos = 25;
 	params.depreciation = 0.05 / 4;
 	params.elast = 2;
 	params.nocc = 1;
@@ -153,41 +156,38 @@ int main () {
 
 	params.setup(options);
 
-	Model model = Model(params, income_dir);
+	global_current_model_ptr.reset(new Model(params, income_dir));
+	Model& model = *global_current_model_ptr;
+
+	global_current_iss_ptr.reset(new SteadyState(params, model, SteadyState::SSType::initial));
 
 	if ( options.skip_calibration ) {
-		SteadyState iss(params, model, SteadyState::SSType::initial);
-		iss.guess_labor_occ();
-		iss.compute();
-		global_current_iss_ptr = &iss;
+		global_current_iss_ptr->guess_labor_occ();
+		global_current_iss_ptr->compute();
 
-		HJB hjb(model, iss);
-		hjb.iterate(iss);
+		HJB hjb(model, *global_current_iss_ptr);
+		hjb.iterate(*global_current_iss_ptr);
 
 		StationaryDist sdist;
 		sdist.gtol = 1.0e-9;
-		sdist.compute(model, iss, hjb);
+		sdist.compute(model, *global_current_iss_ptr, hjb);
 
-		DistributionStatistics stats(params, model, hjb, sdist);
-		global_current_stats_ptr = &stats;
-		stats.print();
+		global_current_stats_ptr.reset(new DistributionStatistics(params, model, hjb, sdist));
+		global_current_stats_ptr->print();
 	}
 	else {
 		// Calibrate
-		global_params_ptr = &params;
-
-		SSCalibrator calibrator;
-		calibrator.calibrateLaborDisutility = false;
-		calibrator.calibrateRb = true;
-		calibrator.calibrateDiscountRate = true;
-		set_to_fortran_params(calibrator);
-		calibrator.setup(params);
-		global_calibrator_ptr = &calibrator;
+		global_calibrator_ptr.reset(new SSCalibrator);
+		global_calibrator_ptr->calibrateLaborDisutility = false;
+		global_calibrator_ptr->calibrateRb = true;
+		global_calibrator_ptr->calibrateDiscountRate = true;
+		set_to_fortran_params(*global_calibrator_ptr);
+		global_calibrator_ptr->setup(params);
 
 		// Guess rho, chi,labor_occ, capital, and rb
-		int n = calibrator.nmoments;
+		int n = global_calibrator_ptr->nmoments;
 		hank_float_type x[n];
-		calibrator.fill_xguess(params, model, x);
+		global_calibrator_ptr->fill_xguess(params, model, x);
 
 		hank_float_type fvec[n];
 		double tol = 1.0e-9;
@@ -198,14 +198,13 @@ int main () {
 		void *z = NULL;
 		int info = cminpack_hybrd1_fnname(fcn, z, n, x, fvec, tol, wa, lwa);
 		HankUtilities::check_cminpack_success(info);
-
-		// Update model variable
-		model = *global_current_model_ptr;
 	}
 
-	IRF irf(params, model, *global_current_iss_ptr);
+	IRF irf(params, *global_current_model_ptr, *global_current_iss_ptr);
 	irf.shock.type = ShockType::tfp_Y;
 	irf.setup();
+
+	irf.compute();
 
 	// int iflag=0;
 	// find_initial_steady_state(n, x, fvec, iflag);

@@ -16,6 +16,10 @@ using ArrayXXr = Eigen::Array<hank_float_type, Eigen::Dynamic, Eigen::Dynamic>;
 
 using ArrayXr = Eigen::Array<hank_float_type, Eigen::Dynamic, 1>;
 
+using MapVectorXr = Eigen::Map<VectorXr>;
+
+using MapMatrixXr = Eigen::Map<MatrixXr>;
+
 using Eigen::VectorXi;
 
 typedef Eigen::Map<MatrixXr> map_type;
@@ -91,6 +95,16 @@ V as_eigen(const std::vector<long double>& arr) {
 template<typename V>
 V as_eigen(const vector3dr& arr) {
 	return as_eigen<V>(arr.vector);
+}
+
+template<typename V>
+V as_eigen(int n, const hank_float_type *arr) {
+	V out(n);
+
+	for (int i=0; i<n; ++i)
+		out(i) = arr[i];
+
+	return out;
 }
 
 template<typename T>

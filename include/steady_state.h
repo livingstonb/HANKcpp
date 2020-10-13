@@ -10,34 +10,9 @@ class Model;
 class Parameters;
 
 // Provides attributes and methods for steady state computations
-class SteadyState {
+class SteadyStateBase {
 	public:
 		enum class SSType { initial, final };
-
-		SteadyState(const Parameters& p_, const Model& model_, SSType mode_);
-
-		SteadyState& operator=(const SteadyState& other_ss) {
-			*this = other_ss;
-			return *this;
-		}
-
-		void guess_labor_occ();
-
-		void compute();
-
-		void compute_profits();
-
-		void compute_factor_prices();
-
-		void compute_dividends();
-
-		void compute_govt();
-
-		void print_variables() const;
-
-		const Model& model;
-
-		const Parameters& p;
 
 		SSType mode = SSType::initial;
 
@@ -69,9 +44,38 @@ class SteadyState {
 
 		double illprice, illpricedot, illshares;
 
-		double chi, riskaver;
+		double riskaver;
 
 		double mpshock = 0;
+};
+
+class SteadyState : public SteadyStateBase {
+	public:
+		SteadyState(const Parameters& p_, const Model& model_, SSType mode_);
+
+		SteadyState(const SteadyState& other_ss);
+
+		SteadyState& operator=(const SteadyState& other_ss);
+
+		SteadyState& operator=(SteadyState&& other_ss);
+
+		void guess_labor_occ();
+
+		void compute();
+
+		void compute_profits();
+
+		void compute_factor_prices();
+
+		void compute_dividends();
+
+		void compute_govt();
+
+		void print_variables() const;
+
+		const Model& model;
+
+		const Parameters& p;
 };
 
 #endif

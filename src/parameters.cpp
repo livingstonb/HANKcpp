@@ -70,6 +70,8 @@ void Parameters::setup(const Options& opts) {
 	illiqWealthTarget.value /= USGDPperHH;
 	liqWealthTarget.value /= USGDPperHH;
 
+	chi = meanlabeff / (pow(0.7, -riskaver) * pow(hourtarget, 1.0 / frisch));
+
 	update();
 }
 
@@ -84,7 +86,6 @@ void Parameters::update() {
 
 	double price_W = 1.0 - 1.0 / elast;
 	target_KY_ratio = compute_ss_capital_output_ratio(*this, price_W);
-	chi = meanlabeff / (pow(0.7, -riskaver) * pow(hourtarget, 1.0 / frisch));
 
 	if ( global_hank_options->print_diagnostics )
 		print_variables();
