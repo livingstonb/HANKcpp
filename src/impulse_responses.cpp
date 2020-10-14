@@ -6,6 +6,7 @@
 #include <iostream>
 #include <functional>
 #include <utilities.h>
+#include <hank_numerics.h>
 
 using namespace std::placeholders;
 
@@ -100,6 +101,9 @@ void IRF::compute() {
 		finalss.mode = SteadyState::SSType::final;
 		final_equm = Equilibrium(p, iss);
 	}
+	else {
+		// Compute final steady state
+	}
 
 	// Guess log deviations from steady state
 	VectorXr xguess = VectorXr::Zero(npricetrans);
@@ -116,12 +120,18 @@ void IRF::compute() {
 			obj_fn = std::bind(&IRF::transition_fcn, *this, _1, _2, _3);
 
 		hank_float_type* z = new hank_float_type[npricetrans];
-		for (int i=0; i<npricetrans; ++i)
-			z[i] = 0.0;
+		HankUtilities::fillarr(z, 0.0, npricetrans);
 
 		obj_fn(npricetrans, xguess.data(), z);
 
+		double jacstepprice = 1.0e-6;
+		hank_float_type* fjac = new hank_float_type[npricetrans * npricetrans];
+		HankNumerics::jacobian_square(obj_fn, npricetrans, xguess.data(), z, fjac, jacstepprice);
+
+		HankUtilities::printvec(fjac, npricetrans * npricetrans);
+
 		delete[] z;
+		delete[] fjac;
 	}
 	else {
 		std::cerr << "Must select Broyden solver\n";
@@ -134,7 +144,6 @@ void IRF::transition_fcn(int n, const hank_float_type *x, hank_float_type *z) {
 	bool set_rb = (shock.type != ShockType::monetary) | solveFlexPriceTransitions;
 	bool set_pi = (shock.type == ShockType::monetary) & (!solveFlexPriceTransitions);
 
-	bool shock_is_monetary = (shock.type == ShockType::monetary);
 	for (int it=0; it<Ttrans; ++it) {
 		trans_equm.output(it) = initial_equm.output * exp(x[it]);
 

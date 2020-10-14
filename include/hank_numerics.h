@@ -16,6 +16,10 @@ void linspace(double x, double y, int n, T& cont) {
 		cont[i] = x + i * (y - x) / (n - 1);
 }
 
+using broyden_fn_type = std::function<void(int, const hank_float_type*, hank_float_type*)>;
+
+void jacobian_square(const broyden_fn_type& fn, int n, const hank_float_type *x, hank_float_type *z, hank_float_type *fjac, double step);
+
 }
 
 #endif

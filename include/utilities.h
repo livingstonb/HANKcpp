@@ -41,6 +41,25 @@ inline void print_values(const std::vector<std::string>& names, const std::vecto
 
 void check_cminpack_success(int info);
 
+template<typename T, typename V>
+void fillarr(T* arr, V val, int n) {
+	for (int i=0; i<n; ++i)
+		arr[i] = val;
+}
+
+template<typename T, typename V>
+void fillarr(T* arr, V val, int n, int m) {
+	for (int i=0; i<n; ++i)
+		for (int j=0; j<m; ++j)
+			arr[i + n * j] = val;
+}
+
+template<typename T, typename V>
+void copyarr(const T* arr_in, V* arr_out, int n) {
+	for (int i=0; i<n; ++i)
+		arr_out[i] = arr_in[i];
+}
+
 }
 
 #endif
