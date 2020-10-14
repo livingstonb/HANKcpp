@@ -34,6 +34,23 @@ void TransShock::setup() {
 		pers = exp(-0.5);
 }
 
+void TransEquilibrium::set_array_sizes(const Parameters& p, int T) {
+	tfp_Y = VectorXr::Zero(T);
+	mpshock = VectorXr::Zero(T);
+	riskaver = VectorXr::Zero(T);
+	output = VectorXr::Zero(T);
+	pi = VectorXr::Zero(T);
+	rb = VectorXr::Zero(T);
+	labor_occ = MatrixXr::Zero(T, p.nocc);
+}
+
+Equilibrium::Equilibrium(const Parameters& p, const SteadyState& ss) {
+	rb = p.rb;
+	pi = p.pi;
+	output = ss.output;
+	labor_occ = ss.labor_occ;
+}
+
 IRF::IRF(const Parameters& p_, const Model& model_, const SteadyState& iss_) : p(p_), model(model_), iss(iss_) {}
 
 void IRF::setup() {
@@ -46,6 +63,8 @@ void IRF::setup() {
 		++npricetrans;
 
 	shock.setup();
+
+	trans_equm.set_array_sizes(p, Ttrans);
 
 	if ( permanentShock & (shock.type == ShockType::riskaver) )
 		trans_equm.ss_riskaver = p.riskaver + shock.size;
@@ -75,16 +94,18 @@ void IRF::construct_delta_trans_vectors() {
 void IRF::compute() {
 	// Final steady state
 	SteadyState finalss = iss;
+	initial_equm = Equilibrium(p, iss);
+	
 	if ( !permanentShock ) {
 		finalss.mode = SteadyState::SSType::final;
+		final_equm = Equilibrium(p, iss);
 	}
 
 	// Guess log deviations from steady state
-	VectorXr xguess(npricetrans);
+	VectorXr xguess = VectorXr::Zero(npricetrans);
 	if ( !permanentShock ) {
-		xguess = VectorXr::Zero(npricetrans);
-
 		if ( shock.type == ShockType::tfp_Y ) {
+			// Guess output changes so capital constant
 			VectorXr leveldev = fmax(p.capadjcost, 1.0) * trans_equm.tfp_Y / iss.tfp_Y;
 			xguess(seq(0, Ttrans-1)) = leveldev.array().log();
 		}
@@ -110,11 +131,34 @@ void IRF::compute() {
 
 void IRF::transition_fcn(int n, const hank_float_type *x, hank_float_type *z) {
 	// Guesses
-	trans_equm.output = VectorXr(Ttrans);
+	bool set_rb = (shock.type != ShockType::monetary) | solveFlexPriceTransitions;
+	bool set_pi = (shock.type == ShockType::monetary) & (!solveFlexPriceTransitions);
 
-	for (int i=0; i<Ttrans; ++i)
-		trans_equm.output(i) = iss.output * x[i];
+	bool shock_is_monetary = (shock.type == ShockType::monetary);
+	for (int it=0; it<Ttrans; ++it) {
+		trans_equm.output(it) = initial_equm.output * exp(x[it]);
 
+		// Guess for rb
+		if ( set_rb & (it == Ttrans - 1) ) {
+			trans_equm.rb(Ttrans-1) = final_equm.rb;
+		}
+		else if ( set_rb ) {
+			trans_equm.rb(it) = initial_equm.rb + x[Ttrans + it];
+		}
+
+		// Guess for pi
+		if ( set_pi & (it == Ttrans - 1) ) {
+			trans_equm.pi(Ttrans-1) = final_equm.pi;
+		}
+		else if ( set_pi ) {
+			trans_equm.pi(it) = initial_equm.pi + x[Ttrans + it];
+		}
+
+		// Guess for labor
+		for (int io=0; io<p.nocc; ++io) {
+			trans_equm.labor_occ(it, io) = initial_equm.labor_occ[io];
+		}
+	}
 }
 
 void IRF::set_shock_paths() {

@@ -113,6 +113,7 @@ class Parameters {
 		double target_KY_ratio;
 		double chi;
 		double USGDPperHH = 146435 / 4.0;
+		double pi = 0; // Steady state inflation target
 
 		// --- GOVERNMENT PARAMETERS ---
 		double corptax = 0.0;

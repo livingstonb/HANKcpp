@@ -16,6 +16,7 @@ class Parameters;
 // Container for value function derivatives
 struct ValueFnDerivatives {
 	static const int StationaryPtOrLimit = -999.9;
+
 	double VaF, VaB, VbF, VbB;
 };
 
@@ -23,20 +24,9 @@ namespace Bellman {
 	class Drifts {
 		public:
 			Drifts() {}
-			Drifts(double s, double d, double areturn, double acost, bool kfe) {
-				if ( kfe ) {
-					aB = fmin(d + areturn, 0.0);
-					aF = fmax(d + areturn, 0.0);
-					bB = fmin(s - d - acost, 0.0);
-					bF = fmax(s - d - acost, 0.0);
-				}
-				else {
-					aB = fmin(d, 0.0) + fmin(areturn, 0.0);
-					aF = fmax(d, 0.0) + fmax(areturn, 0.0);
-					bB = fmin(-d - acost, 0) + fmin(s, 0.0);
-					bF = fmax(-d - acost, 0) + fmax(s, 0.0);
-				}
-			}
+
+			Drifts(double s, double d, double areturn, double acost, bool kfe);
+
 			double aB, aF, bB, bF;
 	};
 }
@@ -70,13 +60,21 @@ class HJB {
 		const Parameters& p;
 
 		vector3dr V;
+
 		int maxiter = 500;
+
 		int dispfreq = 50;
+
 		double vtol = 1.0e-8;
+
 		double delta = 1.0e6;
+
 		double dVamin = 1.0e-8;
+
 		double dVbmin = 1.0e-8;
+
 		double riskaver;
+
 		Upwinding::Policies optimal_decisions;
 };
 

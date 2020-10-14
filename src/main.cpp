@@ -130,7 +130,7 @@ int main () {
 	Options options; 
 	options.fast = false;
 	options.print_diagnostics = false;
-	options.skip_calibration = false;
+	options.skip_calibration = true;
 
 	global_hank_options = &options;
 
@@ -162,6 +162,10 @@ int main () {
 	global_current_iss_ptr.reset(new SteadyState(params, model, SteadyState::SSType::initial));
 
 	if ( options.skip_calibration ) {
+		// params.na = 25;
+		// params.nb_pos = 25;
+		// params.nb_neg = 5;
+		// params.update();
 		global_current_iss_ptr->guess_labor_occ();
 		global_current_iss_ptr->compute();
 

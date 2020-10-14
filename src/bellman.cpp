@@ -29,6 +29,23 @@ namespace {
 	Upwinding::DepositUpwind optimal_deposits(const Model& model, double Va, double Vb, double a);
 }
 
+namespace Bellman {
+	Drifts::Drifts(double s, double d, double areturn, double acost, bool kfe) {
+		if ( kfe ) {
+			aB = fmin(d + areturn, 0.0);
+			aF = fmax(d + areturn, 0.0);
+			bB = fmin(s - d - acost, 0.0);
+			bF = fmax(s - d - acost, 0.0);
+		}
+		else {
+			aB = fmin(d, 0.0) + fmin(areturn, 0.0);
+			aF = fmax(d, 0.0) + fmax(areturn, 0.0);
+			bB = fmin(-d - acost, 0) + fmin(s, 0.0);
+			bF = fmax(-d - acost, 0) + fmax(s, 0.0);
+		}
+	}
+}
+
 HJB::HJB(const Model& model_, const SteadyState& ss) : model(model_), p(model_.p), V(p.na, p.nb, model.ny), optimal_decisions(model.dims) {
 	riskaver = p.riskaver;
 	V = make_value_guess(model, ss, riskaver);

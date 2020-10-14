@@ -12,13 +12,28 @@ class SteadyState;
 
 class TransEquilibrium {
 	public:
-		TransEquilibrium() {};
+		TransEquilibrium() {}
 
-		VectorXr tfp_Y, mpshock, riskaver;
+		void set_array_sizes(const Parameters& p, int T);
+
+		VectorXr tfp_Y, mpshock, riskaver, rb, pi;
 
 		VectorXr output;
 
+		MatrixXr labor_occ;
+
 		double ss_riskaver;
+};
+
+class Equilibrium {
+	public:
+		Equilibrium() {}
+
+		Equilibrium(const Parameters& p, const SteadyState& ss);
+
+		double rb, pi, output;
+
+		std::vector<double> labor_occ;
 };
 
 enum class ShockType { tfp_Y, monetary, riskaver, none };
@@ -84,6 +99,8 @@ class IRF {
 		VectorXr deltatransvec, cumdeltatrans;
 
 		TransEquilibrium trans_equm;
+
+		Equilibrium initial_equm, final_equm;
 
 		const Parameters& p;
 
