@@ -74,7 +74,7 @@ SparseMatContainer construct_transition_matrix(const Parameters& p, const Model&
 		}
 	}
 
-	sparse_matrix A = sparse_matrix(p.na * p.nb, p.na * p.nb);
+	SparseXd A = SparseXd(p.na * p.nb, p.na * p.nb);
 	A.setFromTriplets(Aentries.begin(), Aentries.end());
 	return SparseMatContainer(A);
 }

@@ -22,12 +22,6 @@ using MapMatrixXr = Eigen::Map<MatrixXr>;
 
 using Eigen::VectorXi;
 
-typedef Eigen::Map<MatrixXr> map_type;
-
-typedef Eigen::Map<VectorXr> map_type_vec;
-
-typedef Eigen::Matrix<bool, Eigen::Dynamic, 1> bool_vector;
-
 inline VectorXr eflatten(const MatrixXr& arr) {
 	const Eigen::Map<const VectorXr> arr_map(arr.data(), arr.size());
 	VectorXr flattened = arr_map;
@@ -36,7 +30,7 @@ inline VectorXr eflatten(const MatrixXr& arr) {
 
 inline VectorXr to_eigenv(const vector3dr& vec) {
 	std::vector<hank_float_type> vcopy = vec.vector;
-	VectorXr out = map_type_vec(vcopy.data(), vcopy.size());
+	VectorXr out = MapVectorXr(vcopy.data(), vcopy.size());
 	return out;
 }
 

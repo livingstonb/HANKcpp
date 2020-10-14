@@ -9,19 +9,7 @@
 #include <utilities.h>
 
 namespace {
-
-	std::vector<double> repeat(const std::vector<double>& arr_in, int r) {
-		std::vector<double> arr_out(arr_in.size() * r);
-		int n = arr_in.size();
-
-		auto iter = arr_out.begin();
-		for (int i=0; i<n; ++i) {
-			std::fill(iter, iter + r, arr_in[i]);
-			iter += r;
-		}
-
-		return arr_out;
-	}
+	std::vector<double> repeat(const std::vector<double>& arr_in, int r);
 }
 
 SteadyState::SteadyState(const Parameters& p_, const Model& model_, SSType mode_) : model(model_), p(p_) {
@@ -234,4 +222,19 @@ void SteadyState::print_variables() const {
 	HankUtilities::print_values(names, values);
 
 	HankUtilities::horzline();
+}
+
+namespace {
+	std::vector<double> repeat(const std::vector<double>& arr_in, int r) {
+		std::vector<double> arr_out(arr_in.size() * r);
+		int n = arr_in.size();
+
+		auto iter = arr_out.begin();
+		for (int i=0; i<n; ++i) {
+			std::fill(iter, iter + r, arr_in[i]);
+			iter += r;
+		}
+
+		return arr_out;
+	}
 }

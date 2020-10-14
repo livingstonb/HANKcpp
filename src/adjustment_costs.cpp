@@ -15,10 +15,9 @@ AdjustmentCosts::AdjustmentCosts(AdjustCostFnRatioMode mode_, bool exponential_c
 	adjcost1max = adjcost1max_;
 
 	if ( exponential_costs ) {
-		cost = [this](double d, double a) {return cost_fn_exponential(d, a);};
-		cost1 = [this](double d, double a) {return cost_deriv_exponential(d, a);};
-		cost1inv = [this](double chi, double a) {return cost_deriv_inv_exponential(chi, a);};
-
+		cost = std::bind(&AdjustmentCosts::cost_fn_exponential, *this, _1, _2);
+		cost1 = std::bind(&AdjustmentCosts::cost_deriv_exponential, *this, _1, _2);
+		cost1inv = std::bind(&AdjustmentCosts::cost_deriv_inv_exponential, *this, _1, _2);
 	}
 	else {
 		cost = std::bind(&AdjustmentCosts::cost_fn_other, *this, _1, _2);

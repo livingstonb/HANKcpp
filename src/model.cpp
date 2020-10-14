@@ -9,60 +9,19 @@
 #include <adjustment_costs.h>
 
 namespace {
-	void fix_rounding(MatrixXr& mat) {
-		for (int i=0; i<mat.rows(); ++i) {
-			double rowsum = mat.row(i).sum();
-			mat(i,i) -= rowsum;
-			assert( abs(mat.row(i).sum()) < 1e-7 );
-		}
-	}
+	void fix_rounding(MatrixXr& mat);
 
-	VectorXr compute_grid_deltas(const VectorXr& grid, const VectorXr& dgrid) {
-		int n = grid.size();
-		int n_d = n - 1;
-		VectorXr deltas(n);
+	VectorXr compute_grid_deltas(const VectorXr& grid, const VectorXr& dgrid);
 
-		deltas(0) = 0.5 * dgrid(0);
-		deltas(seq(1,n-2)) = 0.5 * (dgrid(seq(0,n_d-2)) + dgrid(seq(1,n_d-1)));
-		deltas(n-1) = 0.5 * dgrid(n_d-1);
+	void powerSpacedGrid(double low, double high, double curv, VectorXr& grid);
 
-		return deltas;
-	}
+	void adjustPowerSpacedGrid(VectorXr& grid);
 
-	void powerSpacedGrid(double low, double high, double curv, VectorXr& grid) {
-		int n = grid.size();
-		HankNumerics::linspace(0.0, 1.0, n, grid);
+	void print_value(const std::string& pname, double value, bool insert_endline);
 
-		for (int i=0; i<n; ++i)
-			grid[i] = low + (high - low) * pow(grid[i], 1.0 / curv);
-	}
+	void print_value(const std::string& pname, double value);
 
-	void adjustPowerSpacedGrid(VectorXr& grid) {
-		if (grid.size() > 10)
-			for (int i=0; i<9; ++i)
-				grid[i] = i * grid[9] / (10.0 - 1.0);
-	}
-
-	void print_value(const std::string& pname, double value, bool insert_endline) {
-		std::cout << "  " << pname << " = " << value;
-
-		if ( insert_endline )
-			std::cout << '\n';
-	}
-
-	void print_value(const std::string& pname, double value) {
-		print_value(pname, value, true);
-	}
-
-	void check_adjcosts(const Parameters& p, const AdjustmentCosts& adjcosts) {
-		assert( p.kappa_w_fc == adjcosts.kappa_w_fc );
-		assert( p.kappa_d_fc == adjcosts.kappa_d_fc );
-
-		for (int i=0; i<5; ++i) {
-			assert( p.kappa_w[i] == adjcosts.kappa_w[i] );
-			assert( p.kappa_d[i] == adjcosts.kappa_d[i] );
-		}
-	}
+	void check_adjcosts(const Parameters& p, const AdjustmentCosts& adjcosts);
 }
 
 ModelBase::ModelBase(const Parameters& p, const std::string& income_dir) {
@@ -308,5 +267,62 @@ void Model::assertions() const {
 	if ( rowsums.abs().maxCoeff() > 1.0e-7 ) {
 		std::cerr << "Markov ytrans matrix rows do not sum to zero\n";
 		throw 0;
+	}
+}
+
+namespace {
+	void fix_rounding(MatrixXr& mat) {
+		for (int i=0; i<mat.rows(); ++i) {
+			double rowsum = mat.row(i).sum();
+			mat(i,i) -= rowsum;
+			assert( abs(mat.row(i).sum()) < 1e-7 );
+		}
+	}
+
+	VectorXr compute_grid_deltas(const VectorXr& grid, const VectorXr& dgrid) {
+		int n = grid.size();
+		int n_d = n - 1;
+		VectorXr deltas(n);
+
+		deltas(0) = 0.5 * dgrid(0);
+		deltas(seq(1,n-2)) = 0.5 * (dgrid(seq(0,n_d-2)) + dgrid(seq(1,n_d-1)));
+		deltas(n-1) = 0.5 * dgrid(n_d-1);
+
+		return deltas;
+	}
+
+	void powerSpacedGrid(double low, double high, double curv, VectorXr& grid) {
+		int n = grid.size();
+		HankNumerics::linspace(0.0, 1.0, n, grid);
+
+		for (int i=0; i<n; ++i)
+			grid[i] = low + (high - low) * pow(grid[i], 1.0 / curv);
+	}
+
+	void adjustPowerSpacedGrid(VectorXr& grid) {
+		if (grid.size() > 10)
+			for (int i=0; i<9; ++i)
+				grid[i] = i * grid[9] / (10.0 - 1.0);
+	}
+
+	void print_value(const std::string& pname, double value, bool insert_endline) {
+		std::cout << "  " << pname << " = " << value;
+
+		if ( insert_endline )
+			std::cout << '\n';
+	}
+
+	void print_value(const std::string& pname, double value) {
+		print_value(pname, value, true);
+	}
+
+	void check_adjcosts(const Parameters& p, const AdjustmentCosts& adjcosts) {
+		assert( p.kappa_w_fc == adjcosts.kappa_w_fc );
+		assert( p.kappa_d_fc == adjcosts.kappa_d_fc );
+
+		for (int i=0; i<5; ++i) {
+			assert( p.kappa_w[i] == adjcosts.kappa_w[i] );
+			assert( p.kappa_d[i] == adjcosts.kappa_d[i] );
+		}
 	}
 }

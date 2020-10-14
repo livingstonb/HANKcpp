@@ -5,8 +5,6 @@
 #include <Eigen/SparseCore>
 #include <vector>
 
-using sparse_matrix = Eigen::SparseMatrix<double>;
-
 using SparseXd = Eigen::SparseMatrix<double>;
 
 struct SparseMatContainer {
@@ -19,21 +17,21 @@ struct SparseMatContainer {
 
 #if HANK_EIGEN_SPARSE_SOLVER == 0
 	#include <Eigen/SparseQR>
-	using sparse_solver = Eigen::SparseQR<sparse_matrix, Eigen::COLAMDOrdering<int>>;
+	using sparse_solver = Eigen::SparseQR<SparseXd, Eigen::COLAMDOrdering<int>>;
 #elif HANK_EIGEN_SPARSE_SOLVER == 1
 	#include <Eigen/SparseLU>
-	using sparse_solver = Eigen::SparseLU<sparse_matrix, Eigen::COLAMDOrdering<int>>;
+	using sparse_solver = Eigen::SparseLU<SparseXd, Eigen::COLAMDOrdering<int>>;
 #elif HANK_EIGEN_SPARSE_SOLVER == 2
 	#include <Eigen/UmfPackSupport>
-	using sparse_solver = Eigen::UmfPackLU<sparse_matrix>;
+	using sparse_solver = Eigen::UmfPackLU<SparseXd>;
 #endif
 
 using triplet_type = Eigen::Triplet<hank_float_type>;
 
 using triplet_list = std::vector<triplet_type>;
 
-inline sparse_matrix speye(int n) {
-	sparse_matrix mat(n, n);
+inline SparseXd speye(int n) {
+	SparseXd mat(n, n);
 	triplet_list trips;
 	trips.reserve(n);
 

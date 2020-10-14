@@ -12,31 +12,9 @@
 #include <hank_macros.h>
 
 namespace {
-	void print_result(const std::string& expr, double val) {
-		std::cout << expr << " = " << val << '\n';
-	}
+	void print_result(const std::string& expr, double val);
 
-	VectorXi sort_by_values(VectorXr& vals, VectorXr& dist) {
-		assert(vals.size() == dist.size());
-		std::vector<std::pair<int, double>> zipped(vals.size());
-		VectorXi indices(vals.size());
-		for (unsigned int i=0; i<vals.size(); ++i)
-			zipped[i] = std::make_pair(i, vals[i]);
-
-		std::sort(zipped.begin(), zipped.end(),
-			[](auto a, auto b) {return a.second < b.second;});
-
-		VectorXr vcopy = vals;
-		VectorXr dcopy = dist;
-
-		for (unsigned int i=0; i<vals.size(); ++i)
-			indices[i] = zipped[i].first;
-
-		vals = vcopy(indices);
-		dist = dcopy(indices);
-
-		return indices;
-	}
+	VectorXi sort_by_values(VectorXr& vals, VectorXr& dist);
 }
 
 DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model& model,
@@ -177,4 +155,32 @@ void DistributionStatistics::print() {
 	print_result("Median(nw)", nw_pctiles[5]);
 	print_result("Median(b)", b_pctiles[5]);
 	std::cout << "--------------------------\n";
+}
+
+namespace {
+	void print_result(const std::string& expr, double val) {
+		std::cout << expr << " = " << val << '\n';
+	}
+
+	VectorXi sort_by_values(VectorXr& vals, VectorXr& dist) {
+		assert(vals.size() == dist.size());
+		std::vector<std::pair<int, double>> zipped(vals.size());
+		VectorXi indices(vals.size());
+		for (unsigned int i=0; i<vals.size(); ++i)
+			zipped[i] = std::make_pair(i, vals[i]);
+
+		std::sort(zipped.begin(), zipped.end(),
+			[](auto a, auto b) {return a.second < b.second;});
+
+		VectorXr vcopy = vals;
+		VectorXr dcopy = dist;
+
+		for (unsigned int i=0; i<vals.size(); ++i)
+			indices[i] = zipped[i].first;
+
+		vals = vcopy(indices);
+		dist = dcopy(indices);
+
+		return indices;
+	}
 }

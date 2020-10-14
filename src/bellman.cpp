@@ -20,52 +20,13 @@
 using namespace std::placeholders;
 
 namespace {
-	constexpr bool is_stationary_pt_or_limit(double Vb) {
-		return (Vb <= ValueFnDerivatives::StationaryPtOrLimit);
-	}
+	constexpr bool is_stationary_pt_or_limit(double Vb);
 
-	void check_progress(double vdiff, int freq, int ii, double vtol) {
-		if ( ii == 0 )
-			return;
-		else if ( (ii == 1) | (ii % freq == 0) ) {
-			std::cout << "Iteration " << ii << ", diff = " << vdiff << '\n';
-		}
+	void check_progress(double vdiff, int freq, int ii, double vtol);
 
-		if ( vdiff <= vtol )
-			std::cout << "Converged after " << ii << " iterations." << '\n';
-	}
+	vector3dr make_value_guess(const Model& model, const SteadyState& ss, double riskaver);
 
-	vector3dr make_value_guess(const Model& model, const SteadyState& ss, double riskaver) {
-		const Parameters& p = model.p;
-
-		vector3dr V(p.na, p.nb, model.ny);
-		double lc, u;
-		ArrayXr bdriftnn = model.get_rb_effective().array() * model.bgrid.array();
-		ArrayXr adriftnn = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
-
-		for (int ia=0; ia<p.na; ++ia) {
-			for (int ib=0; ib<p.nb; ++ib) {
-				for (int iy=0; iy<model.ny; ++iy) {
-					lc = ss.netwagegrid[iy] + p.lumptransfer + bdriftnn(ib) + adriftnn(ia);
-					u = model.util(lc, riskaver);
-					V(ia,ib,iy) = u / (p.rho + p.deathrate);
-				}
-			}
-		}
-
-		return V;
-	}
-
-	Upwinding::DepositUpwind optimal_deposits(const Model& model, double Va, double Vb, double a) {
-		Upwinding::DepositUpwind dupwind;
-
-		dupwind.d = model.adjcosts.cost1inv(Va / Vb - 1.0, a);
-		// dupwind.d = fmin(dupwind.d, model.p.dmax);
-		// dupwind.d = fmax(dupwind.d, -model.p.dmax);
-
-		dupwind.Hd = Va * dupwind.d - Vb * (dupwind.d + model.adjcosts.cost(dupwind.d, a));
-		return dupwind;
-	}
+	Upwinding::DepositUpwind optimal_deposits(const Model& model, double Va, double Vb, double a);
 }
 
 HJB::HJB(const Model& model_, const SteadyState& ss) : model(model_), p(model_.p), V(p.na, p.nb, model.ny), optimal_decisions(model.dims) {
@@ -328,7 +289,7 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 	Bellman::Drifts drifts;
 	bool kfe = false;
 
-	sparse_matrix ldiagmat, sparseI = speye(p.na * p.nb);
+	SparseXd ldiagmat, sparseI = speye(p.na * p.nb);
 
 	for ( int iy=0; iy<model.ny; ++iy ) {
 		triplet_list Aentries;
@@ -352,7 +313,7 @@ void HJB::update_value_fn(const SteadyState& ss, const Upwinding::Policies& poli
 		// Construct B matrix = I + delta * (rho * I - A)
 		double ldiag = 1.0 + delta * (p.rho + p.deathrate) - delta * model.prodmarkovscale * model.ymarkovdiag(iy,iy);
 		ldiagmat = sparseI * ldiag;
-		sparse_matrix B = ldiagmat - delta * A;
+		SparseXd B = ldiagmat - delta * A;
 		B.makeCompressed();
 
 		sparse_solver solver;
@@ -410,4 +371,50 @@ void HJB::print_variables() const {
 	HankUtilities::print_values(names, values);
 
 	HankUtilities::horzline();
+}
+
+namespace {
+	constexpr bool is_stationary_pt_or_limit(double Vb) {
+		return (Vb <= ValueFnDerivatives::StationaryPtOrLimit);
+	}
+
+	void check_progress(double vdiff, int freq, int ii, double vtol) {
+		if ( ii == 0 )
+			return;
+		else if ( (ii == 1) | (ii % freq == 0) ) {
+			std::cout << "Iteration " << ii << ", diff = " << vdiff << '\n';
+		}
+
+		if ( vdiff <= vtol )
+			std::cout << "Converged after " << ii << " iterations." << '\n';
+	}
+
+	vector3dr make_value_guess(const Model& model, const SteadyState& ss, double riskaver) {
+		const Parameters& p = model.p;
+
+		vector3dr V(p.na, p.nb, model.ny);
+		double lc, u;
+		ArrayXr bdriftnn = model.get_rb_effective().array() * model.bgrid.array();
+		ArrayXr adriftnn = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
+
+		for (int ia=0; ia<p.na; ++ia) {
+			for (int ib=0; ib<p.nb; ++ib) {
+				for (int iy=0; iy<model.ny; ++iy) {
+					lc = ss.netwagegrid[iy] + p.lumptransfer + bdriftnn(ib) + adriftnn(ia);
+					u = model.util(lc, riskaver);
+					V(ia,ib,iy) = u / (p.rho + p.deathrate);
+				}
+			}
+		}
+
+		return V;
+	}
+
+	Upwinding::DepositUpwind optimal_deposits(const Model& model, double Va, double Vb, double a) {
+		Upwinding::DepositUpwind dupwind;
+		dupwind.d = model.adjcosts.cost1inv(Va / Vb - 1.0, a);
+
+		dupwind.Hd = Va * dupwind.d - Vb * (dupwind.d + model.adjcosts.cost(dupwind.d, a));
+		return dupwind;
+	}
 }

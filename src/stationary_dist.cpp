@@ -17,12 +17,7 @@ namespace {
 
 	void check_progress(double vdiff, int freq, int ii, double vtol);
 
-	void check_dist(const MatrixXr& distcheck, const Model& model) {
-		VectorXr py = distcheck.array().colwise().sum();
-		for (int iy=0; iy<model.ny; ++iy) {
-			assert( abs(py(iy) - model.ydist(iy)) < 1.0e-6 );
-		}
-	}
+	void check_dist(const MatrixXr& distcheck, const Model& model);
 }
 
 void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJB& hjb) {
@@ -35,7 +30,7 @@ void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJ
 	MatrixXr gmat = make_dist_guess(model);
 	MatrixXr gmat_update(p.nab, model.ny);
 
-	std::vector<sparse_matrix> B(model.ny);
+	std::vector<SparseXd> B(model.ny);
 	std::vector<sparse_solver> spsolvers(model.ny);
 	for (int iy=0; iy<model.ny; ++iy) {
 		SparseMatContainer Acont = get_kfe_transition_matrix(p, model, ss.ra,
@@ -121,5 +116,12 @@ namespace {
 
 		if ( gdiff <= gtol )
 			std::cout << "Converged after " << ii << " iterations." << '\n';
+	}
+
+	void check_dist(const MatrixXr& distcheck, const Model& model) {
+		VectorXr py = distcheck.array().colwise().sum();
+		for (int iy=0; iy<model.ny; ++iy) {
+			assert( abs(py(iy) - model.ydist(iy)) < 1.0e-6 );
+		}
 	}
 }
