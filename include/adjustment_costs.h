@@ -26,10 +26,10 @@ class AdjustmentCosts {
 		AdjustmentCosts(AdjustCostFnRatioMode mode_, bool exponential_costs_,
 			double kappa_w_fc_, double kappa_d_fc_, const std::array<double, 5>& kappa_w_,
 			const std::array<double, 5>& kappa_d_, double adjcost1max, double dmax);
-		
-		double scale_factor(double a) const;
 
 		std::function<double(double, double)> cost, cost1, cost1inv;
+
+		std::function<double(double)> scale_factor;
 
 		AdjustCostFnRatioMode mode;
 

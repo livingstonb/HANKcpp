@@ -14,6 +14,19 @@ AdjustmentCosts::AdjustmentCosts(AdjustCostFnRatioMode mode_, bool exponential_c
 	dmax = dmax_;
 	adjcost1max = adjcost1max_;
 
+	double kappaw3 = kappa_w[3];
+	switch ( mode ) {
+		case AdjustCostFnRatioMode::none:
+			scale_factor = [](double) {return 1.0;};
+			break;
+		case AdjustCostFnRatioMode::linear:
+			scale_factor = [=](double a) {return 1.0 / (kappaw3 + a);};
+			break;
+		case AdjustCostFnRatioMode::max:
+			scale_factor = [=](double a) {return 1.0 / fmax(a, kappaw3);};
+			break;
+	}
+
 	if ( exponential_costs ) {
 		cost = std::bind(&AdjustmentCosts::cost_fn_exponential, *this, _1, _2);
 		cost1 = std::bind(&AdjustmentCosts::cost_deriv_exponential, *this, _1, _2);
@@ -24,22 +37,6 @@ AdjustmentCosts::AdjustmentCosts(AdjustCostFnRatioMode mode_, bool exponential_c
 		cost1 = std::bind(&AdjustmentCosts::cost_deriv_other, *this, _1, _2);
 		cost1inv = std::bind(&AdjustmentCosts::cost_deriv_inv_other, *this, _1, _2);
 	}
-}
-
-double AdjustmentCosts::scale_factor(double a) const {
-	double scale = 0;
-	switch ( mode ) {
-		case AdjustCostFnRatioMode::none:
-			scale = 1;
-			break;
-		case AdjustCostFnRatioMode::linear:
-			scale = 1 / (kappa_w[3] + a);
-			break;
-		case AdjustCostFnRatioMode::max:
-			scale = 1 / fmax(a, kappa_w[3]);
-			break;
-	}
-	return scale;
 }
 
 double AdjustmentCosts::cost_fn_exponential(double d, double a) const {
