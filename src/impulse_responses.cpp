@@ -35,26 +35,9 @@ void TransShock::setup() {
 		pers = exp(-0.5);
 }
 
-void TransEquilibrium::set_array_sizes(const Parameters& p, int T) {
-	tfp_Y = VectorXr::Zero(T);
-	mpshock = VectorXr::Zero(T);
-	riskaver = VectorXr::Zero(T);
-	output = VectorXr::Zero(T);
-	pi = VectorXr::Zero(T);
-	rb = VectorXr::Zero(T);
-	rnom = VectorXr::Zero(T);
-	qcapital = VectorXr::Zero(T);
-	pricelev = VectorXr::Zero(T);
-	labor_occ = MatrixXr::Zero(T, p.nocc);
-	priceadjust = VectorXr::Zero(T);
-	pidot = VectorXr::Zero(T);
-	logydot = VectorXr::Zero(T);
-	elast = VectorXr::Zero(T);
-	price_W = VectorXr::Zero(T);
-}
-
 Equilibrium::Equilibrium(const Parameters& p, const SteadyState& ss) {
 	rb = p.rb;
+	ra = ss.ra;
 	pi = p.pi;
 	rnom = rb - pi;
 	output = ss.output;
@@ -75,7 +58,9 @@ void IRF::setup() {
 
 	shock.setup();
 
-	trans_equm.set_array_sizes(p, Ttrans);
+	trans_equm.reset(Ttrans);
+	for (int i=0; i<Ttrans; ++i)
+		trans_equm[i].labor_occ.resize(p.nocc);
 
 	if ( permanentShock & (shock.type == ShockType::riskaver) )
 		trans_equm.ss_riskaver = p.riskaver + shock.size;
@@ -120,14 +105,15 @@ void IRF::compute() {
 	if ( !permanentShock ) {
 		if ( shock.type == ShockType::tfp_Y ) {
 			// Guess output changes so capital constant
-			VectorXr leveldev = fmax(p.capadjcost, 1.0) * trans_equm.tfp_Y / iss.tfp_Y;
-			xguess(seq(0, Ttrans-1)) = leveldev.array().log();
+			for (int it=0; it<Ttrans; ++it) {
+				xguess(it) = log(fmax(p.capadjcost, 1.0) * trans_equm[it].tfp_Y / iss.tfp_Y);
+			}
 		}
 	}
 
 	if ( solver == SolverType::broyden ) {
 		std::function<void(int, const hank_float_type*, hank_float_type*)>
-			obj_fn = std::bind(&IRF::transition_fcn, *this, _1, _2, _3);
+			obj_fn = std::bind(&IRF::transition_fcn, this, _1, _2, _3);
 
 		hank_float_type* z = new hank_float_type[npricetrans];
 		HankUtilities::fillarr(z, 0.0, npricetrans);
@@ -158,36 +144,36 @@ void IRF::transition_fcn(int n, const hank_float_type *x, hank_float_type *z) {
 	assert( set_rb | set_pi );
 
 	for (int it=0; it<Ttrans; ++it) {
-		trans_equm.output(it) = initial_equm.output * exp(x[it]);
+		trans_equm[it].output = initial_equm.output * exp(x[it]);
 
 		// Guess for rb
 		if ( set_rb & (it == Ttrans - 1) ) {
-			trans_equm.rb(Ttrans-1) = final_equm.rb;
+			trans_equm[Ttrans-1].rb = final_equm.rb;
 		}
 		else if ( set_rb ) {
-			trans_equm.rb(it) = initial_equm.rb + x[Ttrans + it];
+			trans_equm[it].rb = initial_equm.rb + x[Ttrans + it];
 		}
 
 		// Guess for pi
 		if ( set_pi & (it == Ttrans - 1) ) {
-			trans_equm.pi(Ttrans-1) = final_equm.pi;
+			trans_equm[Ttrans-1].rb = final_equm.pi;
 		}
 		else if ( set_pi ) {
-			trans_equm.pi(it) = initial_equm.pi + x[Ttrans + it];
+			trans_equm[it].pi = initial_equm.pi + x[Ttrans + it];
 		}
 
 		// Guess for labor
 		for (int io=0; io<p.nocc; ++io) {
-			trans_equm.labor_occ(it, io) = initial_equm.labor_occ[io];
+			trans_equm[it].labor_occ[io] = initial_equm.labor_occ[io];
 		}
 
 		// Guess for capital
 		for (int it=0; it<Ttrans; ++it) {
 			if ( (p.capadjcost > 0) | (p.invadjcost > 0) ) {
-				trans_equm.qcapital(it) = initial_equm.qcapital + exp(x[Ttrans * (p.nocc + 2) + it - 1]);
+				trans_equm[it].qcapital = initial_equm.qcapital + exp(x[Ttrans * (p.nocc + 2) + it - 1]);
 			}
 			else
-				trans_equm.qcapital(it) = 1.0;
+				trans_equm[it].qcapital = 1.0;
 		}
 
 		// Guess for tax increase
@@ -196,69 +182,107 @@ void IRF::transition_fcn(int n, const hank_float_type *x, hank_float_type *z) {
 			initlumpincr = x[Ttrans * (p.nocc + 2) - 1];
 
 		// Inflation and nominal interest rate
-		double ygap =  log(trans_equm.output(it) / initial_equm.output);
+		double ygap =  log(trans_equm[it].output / initial_equm.output);
 		if ( p.taylor.use_feedback_rule ) {
 			if ( set_rb )
-				trans_equm.rnom(it) = (initial_equm.rnom - p.taylor.coeff_pi * trans_equm.pi(it) + ygap + trans_equm.mpshock(it)) / (1.0 - p.taylor.coeff_pi);
+				trans_equm[it].rnom = (initial_equm.rnom - p.taylor.coeff_pi * trans_equm[it].pi + ygap + trans_equm[it].mpshock) / (1.0 - p.taylor.coeff_pi);
 			else if ( set_pi )
-				trans_equm.rnom(it) = initial_equm.rnom + p.taylor.coeff_pi * trans_equm.pi(it) + p.taylor.coeff_y * ygap + trans_equm.mpshock(it);
+				trans_equm[it].rnom = initial_equm.rnom + p.taylor.coeff_pi * trans_equm[it].pi + p.taylor.coeff_y * ygap + trans_equm[it].mpshock;
 		}
 		else {
 			// Partial adjustment rule
 			if ( it == 0 )
-				trans_equm.rnom(it) = initial_equm.rnom + trans_equm.mpshock(it);
+				trans_equm[it].rnom = initial_equm.rnom + trans_equm[it].mpshock;
 			else
-				trans_equm.rnom(it) = (trans_equm.rnom(it-1) + deltatransvec(it-1) * p.taylor.pers
-					* (initial_equm.rnom + p.taylor.coeff_pi * trans_equm.pi(it) + p.taylor.coeff_y * ygap + trans_equm.mpshock(it))) / (1.0 + deltatransvec(it-1) * p.taylor.pers); 
+				trans_equm[it].rnom = (trans_equm[it-1].rnom + deltatransvec(it-1) * p.taylor.pers
+					* (initial_equm.rnom + p.taylor.coeff_pi * trans_equm[it].pi + p.taylor.coeff_y * ygap + trans_equm[it].mpshock)) / (1.0 + deltatransvec(it-1) * p.taylor.pers); 
 		}
 
 		if ( set_rb )
-			trans_equm.pi(it) = trans_equm.rnom(it) - trans_equm.rb(it);
+			trans_equm[it].pi = trans_equm[it].rnom - trans_equm[it].rb;
 		else
-			trans_equm.rb(it) = trans_equm.rnom(it) - trans_equm.pi(it);
+			trans_equm[it].rb = trans_equm[it].rnom - trans_equm[it].pi;
 
 		// Guess price level
 		if ( it == 0 )
-			trans_equm.pricelev(it) = 1.0;
+			trans_equm[it].pricelev = 1.0;
 		else
-			trans_equm.pricelev(it) = trans_equm.pricelev(it-1) / (1.0 - deltatransvec(it-1) * trans_equm.pi(it-1));
+			trans_equm[it].pricelev = trans_equm[it-1].pricelev / (1.0 - deltatransvec(it-1) * trans_equm[it-1].pi);
 
 		// Guess price adj cost
 		if ( solveFlexPriceTransitions )
-			trans_equm.priceadjust(it) = 0.0;
+			trans_equm[it].priceadjust = 0.0;
 		else
-			trans_equm.priceadjust(it) = (p.priceadjcost / 2.0) * pow(trans_equm.pi(it), 2) * trans_equm.output(it);
-
-		// Guess wholesale price
-		if ( solveFlexPriceTransitions )
-			trans_equm.price_W(it) = 1.0 - 1.0 / trans_equm.elast(it);
+			trans_equm[it].priceadjust = (p.priceadjcost / 2.0) * pow(trans_equm[it].pi, 2) * trans_equm[it].output;
 	}
 
 	// Guess inflation and output growth
-	trans_equm.pidot(Ttrans-1) = 0;
-	trans_equm.logydot(Ttrans-1) = 0;
+	trans_equm[Ttrans-1].pidot = 0;
+	trans_equm[Ttrans-1].logydot = 0;
 
 	for (int it=Ttrans-2; it>0; --it) {
-		trans_equm.pidot(it) = (trans_equm.pi(it+1) - trans_equm.pi(it)) / deltatransvec(it);
-		trans_equm.logydot(it) = (log(trans_equm.output(it+1)) - log(trans_equm.output(it))) / deltatransvec(it);
+		trans_equm[it].pidot = (trans_equm[it].pi - trans_equm[it].pi) / deltatransvec(it);
+		trans_equm[it].logydot = (log(trans_equm[it+1].output) - log(trans_equm[it].output)) / deltatransvec(it);
 	}
 
+	for (int it=0; it<Ttrans; ++it) {
+		// Guess wholesale price
+		if ( solveFlexPriceTransitions ) {
+			trans_equm[it].price_W = 1.0 - 1.0 / trans_equm[it].elast;
+			trans_equm[it].firmdiscount = -1e6;
+		}
+		else {
+			// Phillips curve for marginal costs
+			switch ( p.firm_discount_rate_type ) {
+				case FirmDiscountRateType::rho:
+					trans_equm[it].firmdiscount = p.rho;
+					break;
+				case FirmDiscountRateType::rb_iss:
+					trans_equm[it].firmdiscount = initial_equm.rb;
+					break;
+				case FirmDiscountRateType::ra_iss:
+					trans_equm[it].firmdiscount = initial_equm.ra;
+					break;
+				case FirmDiscountRateType::rb_trans:
+					trans_equm[it].firmdiscount = trans_equm[it].rb;
+					break;
+				case FirmDiscountRateType::ra_trans:
+					trans_equm[it].firmdiscount = trans_equm[it].ra;
+					break;
+			}
 
+			// Guess wholesale price
+			hank_float_type mkup = (trans_equm[it].elast - 1.0) / trans_equm[it].elast;
+			trans_equm[it].price_W = (trans_equm[it].firmdiscount - trans_equm[it].logydot) * trans_equm[it].pi * p.priceadjcost / trans_equm[it].elast
+				+ mkup - trans_equm[it].pidot * p.priceadjcost / trans_equm[it].elast;
+			trans_equm[it].price_W = fmin(max_price_W, fmax(min_price_W, trans_equm[it].price_W));
+		}
+	}
 
 }
 
 void IRF::set_shock_paths() {
+	VectorXr tfp_Y, mpshock, riskaver;
 	if ( shock.type == ShockType::tfp_Y )
-		trans_equm.tfp_Y = get_AR1_path_logs(Ttrans, iss.tfp_Y, shock.size, shock.pers, deltatransvec, nendtrans);
+		tfp_Y = get_AR1_path_logs(Ttrans, iss.tfp_Y, shock.size, shock.pers, deltatransvec, nendtrans);
 	else if ( shock.type == ShockType::monetary ) {
-		trans_equm.mpshock = get_AR1_path_levels(Ttrans, iss.mpshock, shock.size, shock.pers, deltatransvec, nendtrans);
-		trans_equm.mpshock(seq(1, Ttrans-1)) = VectorXr::Constant(Ttrans-1, 0.0);
+		mpshock = get_AR1_path_levels(Ttrans, iss.mpshock, shock.size, shock.pers, deltatransvec, nendtrans);
+		mpshock(seq(1, Ttrans-1)) = VectorXr::Constant(Ttrans-1, 0.0);
 	}
 	else if ( shock.type == ShockType::riskaver ) {
 		if ( permanentShock )
-			trans_equm.riskaver = VectorXr::Constant(Ttrans, trans_equm.ss_riskaver);
+			riskaver = VectorXr::Constant(Ttrans, trans_equm.ss_riskaver);
 		else
-			trans_equm.riskaver = get_AR1_path_logs(Ttrans, p.riskaver, shock.size, shock.pers, deltatransvec, nendtrans);
+			riskaver = get_AR1_path_logs(Ttrans, p.riskaver, shock.size, shock.pers, deltatransvec, nendtrans);
+	}
+
+	for (int it=0; it<Ttrans; ++it) {
+		if ( shock.type == ShockType::tfp_Y )
+			trans_equm[it].tfp_Y = tfp_Y[it];
+		else if ( shock.type == ShockType::monetary )
+			trans_equm[it].mpshock = mpshock[it];
+		else if ( shock.type == ShockType::riskaver )
+			trans_equm[it].riskaver = riskaver[it];
 	}
 }
 

@@ -80,6 +80,7 @@ class Parameters {
 		bool make_profit_correction = true;
 		double capadjcost = 0.0;
 		double invadjcost = 0.01;
+		FirmDiscountRateType firm_discount_rate_type = FirmDiscountRateType::ra_iss;
 
 		// --- LABOR MARKET PARAMETERS ---
 		bool imposeMaxHours = true;

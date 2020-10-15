@@ -3,6 +3,7 @@
 
 #include <hank_types.h>
 #include <hank_eigen_dense.h>
+#include <memory>
 
 class Parameters;
 
@@ -10,37 +11,40 @@ class Model;
 
 class SteadyState;
 
+class TransEqPeriod {
+	public:
+		TransEqPeriod() {}
+
+		hank_float_type tfp_Y, mpshock, riskaver, rb, ra, pi, qcapital, rnom, pricelev, priceadjust;
+
+		hank_float_type pidot, logydot, elast, price_W, firmdiscount;
+
+		hank_float_type output;
+
+		std::vector<hank_float_type> labor_occ;
+};
+
 class TransEquilibrium {
+	private:
+		std::unique_ptr<TransEqPeriod[]> data = nullptr;
+
 	public:
 		TransEquilibrium() {}
 
-		void set_array_sizes(const Parameters& p, int T);
+		TransEquilibrium(int n) {
+			reset(n);
+		}
 
-		VectorXr tfp_Y, mpshock, riskaver, rb, pi, qcapital, rnom, pricelev, priceadjust;
-
-		VectorXr pidot, logydot, elast, price_W;
-
-		VectorXr output;
-
-		MatrixXr labor_occ;
+		void reset(int n) {
+			data.reset(new TransEqPeriod[n]);
+		}
 
 		double ss_riskaver;
+
+		TransEqPeriod& operator[](int i) {return data[i];}
+
+		TransEqPeriod operator[](int i) const {return data[i];}
 };
-
-// class TransEquilibrium {
-// 	public:
-// 		TransEquilibrium() {}
-
-// 		hank_float_type tfp_Y, mpshock, riskaver, rb, pi, qcapital, rnom, pricelev, priceadjust;
-
-// 		hank_float_type pidot, logydot, elast, price_W;
-
-// 		hank_float_type output;
-
-// 		std::vector<hank_float_type> labor_occ;
-
-// 		double ss_riskaver;
-// };
 
 class Equilibrium {
 	public:
@@ -48,7 +52,7 @@ class Equilibrium {
 
 		Equilibrium(const Parameters& p, const SteadyState& ss);
 
-		double rb, pi, output, qcapital, rnom;
+		double rb, ra, pi, output, qcapital, rnom;
 
 		std::vector<double> labor_occ;
 };
