@@ -12,7 +12,7 @@
 #include <utilities.h>
 #include <math.h>
 #include <ss_calibrator.h>
-// #include <impulse_responses.h>
+#include <impulse_responses.h>
 #include <memory>
 
 #include <cminpack.h>
@@ -202,12 +202,10 @@ int main () {
 		HankUtilities::check_cminpack_success(info);
 	}
 
-	// IRF irf(params, *global_current_model_ptr, *global_current_iss_ptr);
-	// irf.shock.type = ShockType::tfp_Y;
-	// irf.setup();
+	EquilibriumElement& iss = global_current_iss_ptr->get(0);
+	IRF irf(params, *global_current_model_ptr, iss);
+	irf.shock.type = ShockType::tfp_Y;
+	irf.setup();
 
-	// irf.compute();
-
-	// int iflag=0;
-	// find_initial_steady_state(n, x, fvec, iflag);
+	irf.compute();
 }

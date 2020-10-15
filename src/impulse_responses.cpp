@@ -1,7 +1,7 @@
 #include <impulse_responses.h>
 #include <parameters.h>
 #include <model.h>
-#include <steady_state.h>
+#include <equilibrium.h>
 #include <math.h>
 #include <iostream>
 #include <functional>
@@ -35,17 +35,7 @@ void TransShock::setup() {
 		pers = exp(-0.5);
 }
 
-SEquilibrium::SEquilibrium(const Parameters& p, const SteadyState& ss) {
-	rb = p.rb;
-	ra = ss.ra;
-	pi = p.pi;
-	rnom = rb - pi;
-	output = ss.output;
-	labor_occ = ss.labor_occ;
-	qcapital = 1.0;
-}
-
-IRF::IRF(const Parameters& p_, const Model& model_, const SteadyState& iss_) : p(p_), model(model_), iss(iss_) {}
+IRF::IRF(const Parameters& p_, const Model& model_, const EquilibriumElement& iss_) : p(p_), model(model_), initial_equm(iss_) {}
 
 void IRF::setup() {
 	npricetrans = (p.nocc + 2) * Ttrans - 1;
@@ -59,13 +49,16 @@ void IRF::setup() {
 	shock.setup();
 
 	trans_equm.reset(Ttrans);
-	for (int i=0; i<Ttrans; ++i)
-		trans_equm[i].labor_occ.resize(p.nocc);
 
+	VectorXr riskaver;
 	if ( permanentShock & (shock.type == ShockType::riskaver) )
-		trans_equm.ss_riskaver = p.riskaver + shock.size;
+		riskaver = VectorXr::Constant(Ttrans, p.riskaver + shock.size);
 	else
-		trans_equm.ss_riskaver = p.riskaver;
+		riskaver = VectorXr::Constant(Ttrans, p.riskaver);
+
+	for (int it=0; it<Ttrans; ++it) {
+		trans_equm[it].riskaver = riskaver[it];
+	}
 
 	construct_delta_trans_vectors();
 	set_shock_paths();
@@ -88,16 +81,14 @@ void IRF::construct_delta_trans_vectors() {
 }
 
 void IRF::compute() {
-	// Final steady state
-	SteadyState finalss = iss;
-	initial_equm = SEquilibrium(p, iss);
-	
+	// Final steady state	
 	if ( !permanentShock ) {
-		finalss.mode = SteadyState::SSType::final;
-		final_equm = SEquilibrium(p, iss);
+		final_equm = initial_equm;
+
 	}
 	else {
 		// Compute final steady state
+		// final_equm.create_final_steady_state();
 	}
 
 	// Guess log deviations from steady state
@@ -106,7 +97,7 @@ void IRF::compute() {
 		if ( shock.type == ShockType::tfp_Y ) {
 			// Guess output changes so capital constant
 			for (int it=0; it<Ttrans; ++it) {
-				xguess(it) = log(fmax(p.capadjcost, 1.0) * trans_equm[it].tfp_Y / iss.tfp_Y);
+				xguess(it) = log(fmax(p.capadjcost, 1.0) * trans_equm[it].tfp_Y / initial_equm.tfp_Y);
 			}
 		}
 	}
@@ -167,9 +158,7 @@ void IRF::make_transition_guesses(int n, const hank_float_type *x, hank_float_ty
 		}
 
 		// Guess for labor
-		for (int io=0; io<p.nocc; ++io) {
-			trans_equm[it].labor_occ[io] = initial_equm.labor_occ[io];
-		}
+		trans_equm[it].labor_occ = initial_equm.labor_occ;
 
 		// Guess for capital
 		for (int it=0; it<Ttrans; ++it) {
@@ -267,20 +256,25 @@ void IRF::make_transition_guesses(int n, const hank_float_type *x, hank_float_ty
 
 void IRF::set_shock_paths() {
 	VectorXr tfp_Y, mpshock, riskaver;
+	hank_float_type initial_mpshock = 0;
 	if ( shock.type == ShockType::tfp_Y )
-		tfp_Y = get_AR1_path_logs(Ttrans, iss.tfp_Y, shock.size, shock.pers, deltatransvec, nendtrans);
+		tfp_Y = get_AR1_path_logs(Ttrans, initial_equm.tfp_Y, shock.size, shock.pers, deltatransvec, nendtrans);
 	else if ( shock.type == ShockType::monetary ) {
-		mpshock = get_AR1_path_levels(Ttrans, iss.mpshock, shock.size, shock.pers, deltatransvec, nendtrans);
+		mpshock = get_AR1_path_levels(Ttrans, initial_mpshock, shock.size, shock.pers, deltatransvec, nendtrans);
 		mpshock(seq(1, Ttrans-1)) = VectorXr::Constant(Ttrans-1, 0.0);
 	}
 	else if ( shock.type == ShockType::riskaver ) {
 		if ( permanentShock )
-			riskaver = VectorXr::Constant(Ttrans, trans_equm.ss_riskaver);
+			riskaver = VectorXr::Constant(Ttrans, p.riskaver + shock.size);
 		else
-			riskaver = get_AR1_path_logs(Ttrans, p.riskaver, shock.size, shock.pers, deltatransvec, nendtrans);
+			riskaver = get_AR1_path_levels(Ttrans, p.riskaver, shock.size, shock.pers, deltatransvec, nendtrans);
 	}
 
 	for (int it=0; it<Ttrans; ++it) {
+		trans_equm[it].tfp_Y = 0;
+		trans_equm[it].mpshock = 0;
+		trans_equm[it].riskaver = 0;
+
 		if ( shock.type == ShockType::tfp_Y )
 			trans_equm[it].tfp_Y = tfp_Y[it];
 		else if ( shock.type == ShockType::monetary )

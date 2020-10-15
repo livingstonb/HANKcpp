@@ -17,7 +17,7 @@ void EquilibriumElement::create_initial_steady_state(const Parameters& p, const 
 		for (int io=0; io<nocc; ++io)
 			labor_occ.push_back(p.hourtarget * p.meanlabeff * model.occdist[io]);
 
-	if ( capital == CapitalNotSet )
+	if ( capital == HANK::ValueNotSet )
 		capital = p.target_KY_ratio;
 
 	compute_factors(model);
@@ -31,6 +31,9 @@ void EquilibriumElement::create_initial_steady_state(const Parameters& p, const 
 	compute_factor_prices();
 	compute_dividends(p);
 	compute_govt(p, model);
+
+	pi = p.pi;
+	rnom = rb - p.pi;
 }
 
 void EquilibriumElement::set_parameters(const Parameters& p)
@@ -41,6 +44,7 @@ void EquilibriumElement::set_parameters(const Parameters& p)
 	drs_Y = p.drs_Y;
 	drs_N = p.drs_N;
 	nocc = p.nocc;
+	riskaver = p.riskaver;
 }
 
 void EquilibriumElement::compute_factors(const Model& model)

@@ -49,8 +49,6 @@ class HJB {
 	public:
 		HJB(const Model& model_, const EquilibriumElement& ss);
 
-		HJB(const Model& model_, const EquilibriumElement& ss, double riskaver_);
-
 		void iterate(const EquilibriumElement& ss);
 
 		void print_variables() const;

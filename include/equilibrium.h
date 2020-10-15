@@ -40,6 +40,8 @@ class HankArray {
 
 class EquilibriumElement {
 	public:
+		EquilibriumElement() {}
+
 		void create_initial_steady_state(const Parameters& p, const Model& model);
 
 		void set_parameters(const Parameters& p);
@@ -54,9 +56,7 @@ class EquilibriumElement {
 
 		void compute_govt(const Parameters& p, const Model& modelmodel);
 
-		const hank_float_type CapitalNotSet = -999.9;
-
-		hank_float_type alpha_Y, alpha_N, price_W, drs_Y, drs_N;
+		hank_float_type alpha_Y, alpha_N, price_W, drs_Y, drs_N, riskaver;
 
 		hank_float_type capshareY, capshareN, capfracY, capfracN, capital_Y, capital_N;
 
@@ -68,7 +68,7 @@ class EquilibriumElement {
 
 		hank_float_type rcapital, wage_Y, wage_N, mc_Y, mc_N;
 
-		hank_float_type ra, rb, dividend_A, dividend_B, equity_A, equity_B;
+		hank_float_type ra, rb, rnom, pi, dividend_A, dividend_B, equity_A, equity_B;
 
 		hank_float_type Enetwage, taxrev;
 
@@ -76,7 +76,9 @@ class EquilibriumElement {
 
 		hank_float_type varieties = 1.0;
 
-		hank_float_type capital = CapitalNotSet;
+		hank_float_type qcapital = 1.0;
+
+		hank_float_type capital = HANK::ValueNotSet;
 
 		std::vector<hank_float_type> labshareY, labshareN, labfracY, labfracN, labor_occ, wage_occ;
 
@@ -96,6 +98,18 @@ class Equilibrium : public HankArray<EquilibriumElement> {
 		// HankArray<FactorQuantities> compute_factors(const Model& model, const std::vector<hank_float_type>& labor_occ);
 };
 
+class TransEquilibriumElement : public EquilibriumElement {
+	public:
+		hank_float_type mpshock, pi, pricelev, priceadjust;
 
+		hank_float_type pidot, logydot, elast, firmdiscount;
+};
+
+class TransEquilibrium : public HankArray<TransEquilibriumElement> {
+	public:
+		TransEquilibrium() : HankArray<TransEquilibriumElement>() {}
+
+		TransEquilibrium(int n) : HankArray<TransEquilibriumElement>(n) {}
+};
 
 #endif

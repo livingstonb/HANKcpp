@@ -47,12 +47,7 @@ namespace Bellman {
 }
 
 HJB::HJB(const Model& model_, const EquilibriumElement& ss) : model(model_), p(model_.p), V(p.na, p.nb, model.ny), optimal_decisions(model.dims) {
-	riskaver = p.riskaver;
-	V = make_value_guess(model, ss, riskaver);
-}
-
-HJB::HJB(const Model& model_, const EquilibriumElement& ss, double riskaver_) : model(model_), p(model_.p), V(p.na, p.nb, model.ny), optimal_decisions(model.dims) {
-	riskaver = riskaver_;
+	riskaver = ss.riskaver;
 	V = make_value_guess(model, ss, riskaver);
 }
 

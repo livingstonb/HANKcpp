@@ -19,6 +19,10 @@ enum class GovBCAdjType { spending, lumptax, debt, proptax, ftpl, none, fiscal }
 
 enum class FirmDiscountRateType { rho, rb_iss, ra_iss, rb_trans, ra_trans };
 
+namespace HANK {
+	const hank_float_type ValueNotSet = -91912395.1;
+}
+
 class WealthTarget {
 	public:
 		enum class Type { mean, median, none };

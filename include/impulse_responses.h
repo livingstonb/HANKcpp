@@ -4,58 +4,11 @@
 #include <hank_types.h>
 #include <hank_eigen_dense.h>
 #include <memory>
+#include <equilibrium.h>
 
 class Parameters;
 
 class Model;
-
-class SteadyState;
-
-class TransEqPeriod {
-	public:
-		TransEqPeriod() {}
-
-		hank_float_type tfp_Y, mpshock, riskaver, rb, ra, pi, qcapital, rnom, pricelev, priceadjust;
-
-		hank_float_type pidot, logydot, elast, price_W, firmdiscount;
-
-		hank_float_type output;
-
-		std::vector<hank_float_type> labor_occ;
-};
-
-class TransEquilibrium {
-	private:
-		std::unique_ptr<TransEqPeriod[]> data = nullptr;
-
-	public:
-		TransEquilibrium() {}
-
-		TransEquilibrium(int n) {
-			reset(n);
-		}
-
-		void reset(int n) {
-			data.reset(new TransEqPeriod[n]);
-		}
-
-		double ss_riskaver;
-
-		TransEqPeriod& operator[](int i) {return data[i];}
-
-		TransEqPeriod operator[](int i) const {return data[i];}
-};
-
-class SEquilibrium {
-	public:
-		SEquilibrium() {}
-
-		SEquilibrium(const Parameters& p, const SteadyState& ss);
-
-		double rb, ra, pi, output, qcapital, rnom;
-
-		std::vector<hank_float_type> labor_occ;
-};
 
 enum class ShockType { tfp_Y, monetary, riskaver, none };
 
@@ -75,7 +28,7 @@ class TransShock {
 
 class IRF {
 	public:
-		IRF(const Parameters& p_, const Model& model_, const SteadyState& iss_);
+		IRF(const Parameters& p_, const Model& model_, const EquilibriumElement& iss_);
 
 		enum class SolverType { hybrd1, broyden };
 
@@ -117,19 +70,17 @@ class IRF {
 
 		double max_price_W = 1.0 - 1.0e-6;
 
-		double trans_riskaver;
-
 		VectorXr deltatransvec, cumdeltatrans;
 
 		TransEquilibrium trans_equm;
 
-		SEquilibrium initial_equm, final_equm;
+		EquilibriumElement final_equm;
 
 		const Parameters& p;
 
 		const Model& model;
 
-		const SteadyState& iss;
+		const EquilibriumElement& initial_equm;
 };
 
 
