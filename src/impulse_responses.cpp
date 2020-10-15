@@ -46,6 +46,11 @@ void TransEquilibrium::set_array_sizes(const Parameters& p, int T) {
 	qcapital = VectorXr::Zero(T);
 	pricelev = VectorXr::Zero(T);
 	labor_occ = MatrixXr::Zero(T, p.nocc);
+	priceadjust = VectorXr::Zero(T);
+	pidot = VectorXr::Zero(T);
+	logydot = VectorXr::Zero(T);
+	elast = VectorXr::Zero(T);
+	price_W = VectorXr::Zero(T);
 }
 
 Equilibrium::Equilibrium(const Parameters& p, const SteadyState& ss) {
@@ -217,7 +222,29 @@ void IRF::transition_fcn(int n, const hank_float_type *x, hank_float_type *z) {
 			trans_equm.pricelev(it) = 1.0;
 		else
 			trans_equm.pricelev(it) = trans_equm.pricelev(it-1) / (1.0 - deltatransvec(it-1) * trans_equm.pi(it-1));
+
+		// Guess price adj cost
+		if ( solveFlexPriceTransitions )
+			trans_equm.priceadjust(it) = 0.0;
+		else
+			trans_equm.priceadjust(it) = (p.priceadjcost / 2.0) * pow(trans_equm.pi(it), 2) * trans_equm.output(it);
+
+		// Guess wholesale price
+		if ( solveFlexPriceTransitions )
+			trans_equm.price_W(it) = 1.0 - 1.0 / trans_equm.elast(it);
 	}
+
+	// Guess inflation and output growth
+	trans_equm.pidot(Ttrans-1) = 0;
+	trans_equm.logydot(Ttrans-1) = 0;
+
+	for (int it=Ttrans-2; it>0; --it) {
+		trans_equm.pidot(it) = (trans_equm.pi(it+1) - trans_equm.pi(it)) / deltatransvec(it);
+		trans_equm.logydot(it) = (log(trans_equm.output(it+1)) - log(trans_equm.output(it))) / deltatransvec(it);
+	}
+
+
+
 }
 
 void IRF::set_shock_paths() {

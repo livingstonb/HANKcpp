@@ -16,7 +16,9 @@ class TransEquilibrium {
 
 		void set_array_sizes(const Parameters& p, int T);
 
-		VectorXr tfp_Y, mpshock, riskaver, rb, pi, qcapital, rnom, pricelev;
+		VectorXr tfp_Y, mpshock, riskaver, rb, pi, qcapital, rnom, pricelev, priceadjust;
+
+		VectorXr pidot, logydot, elast, price_W;
 
 		VectorXr output;
 
@@ -24,6 +26,21 @@ class TransEquilibrium {
 
 		double ss_riskaver;
 };
+
+// class TransEquilibrium {
+// 	public:
+// 		TransEquilibrium() {}
+
+// 		hank_float_type tfp_Y, mpshock, riskaver, rb, pi, qcapital, rnom, pricelev, priceadjust;
+
+// 		hank_float_type pidot, logydot, elast, price_W;
+
+// 		hank_float_type output;
+
+// 		std::vector<hank_float_type> labor_occ;
+
+// 		double ss_riskaver;
+// };
 
 class Equilibrium {
 	public:
