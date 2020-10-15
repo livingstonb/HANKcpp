@@ -31,30 +31,69 @@ class HankArray {
 
 		Eltype operator[](int i) const {return data[i];}
 
+		Eltype& get(int i) {return data[i];}
+
+		Eltype get(int i) const {return data[i];}
+
 		int T;
 };
 
-class FactorQuantities {
+class EquilibriumElement {
 	public:
-		FactorQuantities() {}
+		void create_initial_steady_state(const Parameters& p, const Model& model);
 
-		std::vector<hank_float_type> labshareY, labshareN, labfracY, labfracN;
+		void set_parameters(const Parameters& p);
 
-		hank_float_type capshareY, capshareN, capfracY, capfracN, labor_Y, labor_N, labor;
-};
+		void compute_factors(const Model& model);
 
-class EquilibriumOnePeriod {
-	public:
+		void compute_profits();
+
+		void compute_factor_prices();
+
+		void compute_dividends(const Parameters& p);
+
+		void compute_govt(const Parameters& p, const Model& modelmodel);
+
+		const hank_float_type CapitalNotSet = -999.9;
+
 		hank_float_type alpha_Y, alpha_N, price_W, drs_Y, drs_N;
+
+		hank_float_type capshareY, capshareN, capfracY, capfracN, capital_Y, capital_N;
+
+		hank_float_type labor_Y, labor_N, labor;
+
+		hank_float_type tfp_Y, tfp_N, investment, illprice, illshares, illpricedot;
+
+		hank_float_type netprofit_W, grossprofit_R, netprofit_R, profit;
+
+		hank_float_type rcapital, wage_Y, wage_N, mc_Y, mc_N;
+
+		hank_float_type ra, rb, dividend_A, dividend_B, equity_A, equity_B;
+
+		hank_float_type Enetwage, taxrev;
+
+		hank_float_type output = 1.0;
+
+		hank_float_type varieties = 1.0;
+
+		hank_float_type capital = CapitalNotSet;
+
+		std::vector<hank_float_type> labshareY, labshareN, labfracY, labfracN, labor_occ, wage_occ;
+
+		std::vector<hank_float_type> netwagegrid, yprodgrid;
+
+		int nocc, nprod;
+
 };
 
-class Equilibrium : public HankArray<EquilibriumOnePeriod> {
+class Equilibrium : public HankArray<EquilibriumElement> {
 	public:
-		void create_initial_steady_state(const Parameters& p);
+		Equilibrium() : HankArray<EquilibriumElement>() {}
 
-		HankArray<FactorQuantities> compute_factors(const Model& model, const std::vector<hank_float_type>& labor_occ);
+		Equilibrium(int n) : HankArray<EquilibriumElement>(n) {}
+		// void create_initial_steady_state(const Parameters& p);
 
-		int nocc;
+		// HankArray<FactorQuantities> compute_factors(const Model& model, const std::vector<hank_float_type>& labor_occ);
 };
 
 

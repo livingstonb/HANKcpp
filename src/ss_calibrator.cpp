@@ -178,7 +178,7 @@ void SSCalibrator::update_params(Parameters *p, const hank_float_type *xvec) con
 	p->update();
 }
 
-void SSCalibrator::update_ss(const Parameters* p, SteadyState *iss, const hank_float_type *xvec) const {
+void SSCalibrator::update_ss(const Parameters* p, EquilibriumElement *iss, const hank_float_type *xvec) const {
 	for (unsigned int io=0; io<ix_labor_occ.size(); ++io) {
 		iss->labor_occ.push_back(xvec[ix_labor_occ[io]]);
 		std::cout << "  labor_" << io << " = " << xvec[ix_labor_occ[io]] << '\n';

@@ -4,7 +4,7 @@
 #include <parameters.h>
 #include <hank_types.h>
 #include <model.h>
-#include <steady_state.h>
+#include <equilibrium.h>
 #include <bellman.h>
 #include <stationary_dist.h>
 #include <distribution_statistics.h>
@@ -12,7 +12,7 @@
 #include <utilities.h>
 #include <math.h>
 #include <ss_calibrator.h>
-#include <impulse_responses.h>
+// #include <impulse_responses.h>
 #include <memory>
 
 #include <cminpack.h>
@@ -27,7 +27,7 @@ std::unique_ptr<SSCalibrator> global_calibrator_ptr(nullptr);
 
 std::unique_ptr<Model> global_current_model_ptr(nullptr);
 
-std::unique_ptr<SteadyState> global_current_iss_ptr(nullptr);
+std::unique_ptr<Equilibrium> global_current_iss_ptr(nullptr);
 
 std::unique_ptr<DistributionStatistics> global_current_stats_ptr(nullptr);
 
@@ -40,23 +40,25 @@ int fcn(void* /* _p */, int n, const real *x, real *fvec, int /* iflag */ ) {
 
 	global_current_model_ptr.reset(new Model(*global_params_ptr, income_dir));
 
-	global_current_iss_ptr.reset(new SteadyState(*global_params_ptr, *global_current_model_ptr, SteadyState::SSType::initial));
-	global_calibrator_ptr->update_ss(global_params_ptr.get(), global_current_iss_ptr.get(), x);
+	global_current_iss_ptr.reset(new Equilibrium(1));
+	EquilibriumElement& iss = global_current_iss_ptr->get(0);
+	iss.create_initial_steady_state(*global_params_ptr, *global_current_model_ptr);
+	global_calibrator_ptr->update_ss(global_params_ptr.get(), &iss, x);
 	std::cout << '\n';
 
-	global_current_iss_ptr->compute();
+	iss.create_initial_steady_state(*global_params_ptr, *global_current_model_ptr);
 
-	HJB hjb(*global_current_model_ptr, *global_current_iss_ptr);
-	hjb.iterate(*global_current_iss_ptr);
+	HJB hjb(*global_current_model_ptr, iss);
+	hjb.iterate(iss);
 
 	StationaryDist sdist;
 	sdist.gtol = 1.0e-9;
-	sdist.compute(*global_current_model_ptr, *global_current_iss_ptr, hjb);
+	sdist.compute(*global_current_model_ptr, iss, hjb);
 
 	global_current_stats_ptr.reset(new DistributionStatistics(*global_params_ptr, *global_current_model_ptr, hjb, sdist));
 	global_current_stats_ptr->print();
 
-	SSCalibrationArgs args(global_params_ptr.get(), global_current_model_ptr.get(), global_current_stats_ptr.get(), global_current_iss_ptr.get());
+	SSCalibrationArgs args(global_params_ptr.get(), global_current_model_ptr.get(), global_current_stats_ptr.get(), &iss);
 	global_calibrator_ptr->fill_fvec(args, fvec);
 	global_calibrator_ptr->print_fvec(fvec);
 
@@ -159,22 +161,18 @@ int main () {
 	global_current_model_ptr.reset(new Model(params, income_dir));
 	Model& model = *global_current_model_ptr;
 
-	global_current_iss_ptr.reset(new SteadyState(params, model, SteadyState::SSType::initial));
+	global_current_iss_ptr.reset(new Equilibrium(1));
 
 	if ( options.skip_calibration ) {
-		// params.na = 25;
-		// params.nb_pos = 25;
-		// params.nb_neg = 5;
-		// params.update();
-		global_current_iss_ptr->guess_labor_occ();
-		global_current_iss_ptr->compute();
+		EquilibriumElement& iss = global_current_iss_ptr->get(0);
+		iss.create_initial_steady_state(params, model);
 
-		HJB hjb(model, *global_current_iss_ptr);
-		hjb.iterate(*global_current_iss_ptr);
+		HJB hjb(model, iss);
+		hjb.iterate(iss);
 
 		StationaryDist sdist;
 		sdist.gtol = 1.0e-9;
-		sdist.compute(model, *global_current_iss_ptr, hjb);
+		sdist.compute(model, iss, hjb);
 
 		global_current_stats_ptr.reset(new DistributionStatistics(params, model, hjb, sdist));
 		global_current_stats_ptr->print();
@@ -204,11 +202,11 @@ int main () {
 		HankUtilities::check_cminpack_success(info);
 	}
 
-	IRF irf(params, *global_current_model_ptr, *global_current_iss_ptr);
-	irf.shock.type = ShockType::tfp_Y;
-	irf.setup();
+	// IRF irf(params, *global_current_model_ptr, *global_current_iss_ptr);
+	// irf.shock.type = ShockType::tfp_Y;
+	// irf.setup();
 
-	irf.compute();
+	// irf.compute();
 
 	// int iflag=0;
 	// find_initial_steady_state(n, x, fvec, iflag);

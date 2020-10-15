@@ -2,7 +2,7 @@
 #include <hank_eigen_dense.h>
 #include <hank_eigen_sparse.h>
 #include <model.h>
-#include <steady_state.h>
+#include <equilibrium.h>
 #include <bellman.h>
 #include <parameters.h>
 #include <transition_matrix.h>
@@ -20,7 +20,7 @@ namespace {
 	void check_dist(const MatrixXr& distcheck, const Model& model);
 }
 
-void StationaryDist::compute(const Model& model, const SteadyState& ss, const HJB& hjb) {
+void StationaryDist::compute(const Model& model, const EquilibriumElement& ss, const HJB& hjb) {
 	const Parameters& p = model.p;
 
 	Eigen::VectorXd inv_abdelta = model.abdelta.cast<double>().cwiseInverse();

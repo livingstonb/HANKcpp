@@ -9,13 +9,13 @@ class Model;
 
 class HJB;
 
-class SteadyState;
+class EquilibriumElement;
 
 class StationaryDist {
 	public:
 		StationaryDist() {}
 
-		void compute(const Model& model, const SteadyState& ss, const HJB& hjb);
+		void compute(const Model& model, const EquilibriumElement& ss, const HJB& hjb);
 
 		void transform();
 

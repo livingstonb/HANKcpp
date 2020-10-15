@@ -5,7 +5,7 @@
 #include <hank_types.h>
 #include <parameters.h>
 #include <model.h>
-#include <steady_state.h>
+#include <equilibrium.h>
 #include <distribution_statistics.h>
 #include <vector>
 #include <string>
@@ -14,7 +14,7 @@ struct SSCalibrationArgs {
 	SSCalibrationArgs() {}
 	
 	SSCalibrationArgs(const Parameters *p_, const Model *model_,
-		const DistributionStatistics *stats_, const SteadyState *iss_) {
+		const DistributionStatistics *stats_, const EquilibriumElement *iss_) {
 		p = p_;
 		model = model_;
 		stats = stats_;
@@ -24,7 +24,7 @@ struct SSCalibrationArgs {
 	const Parameters *p = NULL;
 	const Model *model = NULL;
 	const DistributionStatistics *stats = NULL;
-	const SteadyState *iss = NULL;
+	const EquilibriumElement *iss = NULL;
 };
 
 using deviation_fn_type = std::function<double(const SSCalibrationArgs&)>;
@@ -43,7 +43,7 @@ class SSCalibrator {
 
 		void update_params(Parameters *p, const hank_float_type *xvec) const;
 
-		void update_ss(const Parameters* p, SteadyState *iss, const hank_float_type *xvec) const;\
+		void update_ss(const Parameters* p, EquilibriumElement *iss, const hank_float_type *xvec) const;\
 
 		void print_fvec(hank_float_type fvec[]) const;
 
