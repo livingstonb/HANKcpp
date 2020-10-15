@@ -7,6 +7,17 @@
 
 class Options;
 
+class TaylorRule {
+	public:
+		hank_float_type coeff_pi = 1.25;
+
+		hank_float_type coeff_y = 0;
+
+		hank_float_type pers = 0.5; // Ignored if using feedback rule
+
+		bool use_feedback_rule = true;
+};
+
 class Parameters {
 	public:
 		Parameters() {}
@@ -120,6 +131,7 @@ class Parameters {
 		double labtax = 0.25;
 		double lumptransfer = 0.05;
 		GovBCAdjType adjGovBudgetConstraint = GovBCAdjType::fiscal;
+		TaylorRule taylor;
 
 		// --- OTHER SOLUTION PARAMETERS ---
 		double cmin = 1.0e-5;

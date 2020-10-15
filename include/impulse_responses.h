@@ -16,7 +16,7 @@ class TransEquilibrium {
 
 		void set_array_sizes(const Parameters& p, int T);
 
-		VectorXr tfp_Y, mpshock, riskaver, rb, pi;
+		VectorXr tfp_Y, mpshock, riskaver, rb, pi, qcapital, rnom, pricelev;
 
 		VectorXr output;
 
@@ -31,7 +31,7 @@ class Equilibrium {
 
 		Equilibrium(const Parameters& p, const SteadyState& ss);
 
-		double rb, pi, output;
+		double rb, pi, output, qcapital, rnom;
 
 		std::vector<double> labor_occ;
 };
