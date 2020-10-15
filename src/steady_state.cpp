@@ -49,31 +49,28 @@ void SteadyState::compute() {
 
 	assert( static_cast<int>(labor_occ.size()) == p.nocc );
 
-	elabshareY = (1.0 - p.alpha_Y) * price_W * p.drs_Y * model.occYsharegrid;
-	elabshareN = (1.0 - p.alpha_N) * (1.0 - price_W) * p.drs_N * model.occNsharegrid;
-	labshareY = to_vector(elabshareY);
-	labshareN = to_vector(elabshareN);
+	equilibrium.create_initial_steady_state(p);
+	HankArray<FactorQuantities> factors_array = equilibrium.compute_factors(model, labor_occ);
+	FactorQuantities& factors = factors_array[0];
 
-	capshareY = p.alpha_Y * price_W * p.drs_Y;
-	capshareN = p.alpha_N * (1.0 - price_W) * p.drs_N;
-	capfracY = capshareY / (capshareY + capshareN);
-	capfracN = capshareN / (capshareY + capshareN);
-	elabfracY = elabshareY / (elabshareY + elabshareN);
-	elabfracN = elabshareN / (elabshareY + elabshareN);
+	for (int io=0; io<p.nocc; ++io) {
+		labshareY = factors.labshareY;
+		labshareN = factors.labshareN;
+		labfracY = factors.labfracY;
+		labfracN = factors.labfracN;
+	}
 
-	labfracY = to_vector(elabfracY);
-	labfracN = to_vector(elabfracN);
-	
-	// Output and varieties
+	labor_Y = factors.labor_Y;
+	labor_N = factors.labor_N;
+	labor = factors.labor;
+
+	capshareY = factors.capshareY;
+	capshareN = factors.capshareN;
+	capfracY = factors.capfracY;
+	capfracN = factors.capfracN;
 
 	capital_Y = capfracY * capital;
-	ArrayXr labor_Yocc = elabfracY * as_eigen<ArrayXr>(labor_occ);
-	labor_Y = labor_Yocc.pow(model.occYsharegrid.array()).prod();
-
 	capital_N = capfracN * capital;
-	ArrayXr labor_Nocc = elabfracN * as_eigen<ArrayXr>(labor_occ);
-	labor_N = labor_Nocc.pow(model.occNsharegrid.array()).prod();
-	labor = as_eigen<VectorXr>(labor_occ).dot(model.occdist);
 
 	double yterm = pow(capital_Y, p.alpha_Y) * pow(labor_Y, 1.0-p.alpha_Y);
 	double nterm = pow(capital_N, p.alpha_N) * pow(labor_N, 1.0-p.alpha_N);

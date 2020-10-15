@@ -3,6 +3,7 @@
 
 #include <hank_config.h>
 #include <vector>
+#include <equilibrium.h>
 
 // Forward declarations
 class Model;
@@ -24,9 +25,9 @@ class SteadyStateBase {
 
 		double investment, labor_Y, labor_N, labor;
 
-		std::vector<double> labor_occ, labshareY, labshareN, labfracY, labfracN;
+		std::vector<hank_float_type> labor_occ, labshareY, labshareN, labfracY, labfracN;
 
-		double capshareY, capshareN, capfracY, capfracN;
+		hank_float_type capshareY, capshareN, capfracY, capfracN;
 
 		double netprofit_W, grossprofit_R, netprofit_R, profit;
 
@@ -76,6 +77,8 @@ class SteadyState : public SteadyStateBase {
 		const Model& model;
 
 		const Parameters& p;
+
+		Equilibrium equilibrium;
 };
 
 #endif

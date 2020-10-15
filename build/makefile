@@ -13,7 +13,7 @@ SSFLAGS=
 SSINCLUDES=-I/media/hdd/lib/SuiteSparse/include 
 CFLAGS=-O3 -pg -c -W -Wall -g3 -I$(INCLUDEDIR)
 SOURCES=parameters model steady_state adjustment_costs utilities hank_numerics upwinding bellman \
-	transition_matrix stationary_dist distribution_statistics ss_calibrator impulse_responses
+	transition_matrix stationary_dist distribution_statistics ss_calibrator impulse_responses equilibrium
 SOURCES:=$(addsuffix .cpp, $(SOURCES))
 MAIN=main.cpp
 MAIN:=$(MAIN:.cpp=.o)

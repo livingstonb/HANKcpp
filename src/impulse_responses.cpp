@@ -35,7 +35,7 @@ void TransShock::setup() {
 		pers = exp(-0.5);
 }
 
-Equilibrium::Equilibrium(const Parameters& p, const SteadyState& ss) {
+SEquilibrium::SEquilibrium(const Parameters& p, const SteadyState& ss) {
 	rb = p.rb;
 	ra = ss.ra;
 	pi = p.pi;
@@ -90,11 +90,11 @@ void IRF::construct_delta_trans_vectors() {
 void IRF::compute() {
 	// Final steady state
 	SteadyState finalss = iss;
-	initial_equm = Equilibrium(p, iss);
+	initial_equm = SEquilibrium(p, iss);
 	
 	if ( !permanentShock ) {
 		finalss.mode = SteadyState::SSType::final;
-		final_equm = Equilibrium(p, iss);
+		final_equm = SEquilibrium(p, iss);
 	}
 	else {
 		// Compute final steady state

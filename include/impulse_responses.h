@@ -46,15 +46,15 @@ class TransEquilibrium {
 		TransEqPeriod operator[](int i) const {return data[i];}
 };
 
-class Equilibrium {
+class SEquilibrium {
 	public:
-		Equilibrium() {}
+		SEquilibrium() {}
 
-		Equilibrium(const Parameters& p, const SteadyState& ss);
+		SEquilibrium(const Parameters& p, const SteadyState& ss);
 
 		double rb, ra, pi, output, qcapital, rnom;
 
-		std::vector<double> labor_occ;
+		std::vector<hank_float_type> labor_occ;
 };
 
 enum class ShockType { tfp_Y, monetary, riskaver, none };
@@ -123,7 +123,7 @@ class IRF {
 
 		TransEquilibrium trans_equm;
 
-		Equilibrium initial_equm, final_equm;
+		SEquilibrium initial_equm, final_equm;
 
 		const Parameters& p;
 
