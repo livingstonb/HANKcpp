@@ -87,6 +87,8 @@ class IRF {
 
 		void transition_fcn(int n, const hank_float_type *x, hank_float_type *z);
 
+		void make_transition_guesses(int n, const hank_float_type *x, hank_float_type *z);
+
 		void set_shock_paths();
 
 		SolverType solver = SolverType::broyden;

@@ -136,6 +136,10 @@ void IRF::compute() {
 }
 
 void IRF::transition_fcn(int n, const hank_float_type *x, hank_float_type *z) {
+	make_transition_guesses(n, x, z);
+}
+
+void IRF::make_transition_guesses(int n, const hank_float_type *x, hank_float_type *z) {
 	// Guesses
 	bool set_rb = (shock.type != ShockType::monetary) | solveFlexPriceTransitions;
 	bool set_pi = (shock.type == ShockType::monetary) & (!solveFlexPriceTransitions);
