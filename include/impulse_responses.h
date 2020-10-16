@@ -23,6 +23,8 @@ class TransShock {
 		void setup();
 };
 
+int final_steady_state_obj_fn(void* solver_args_voidptr, int n, const hank_float_type *x, hank_float_type *fvec, int /* iflag */ );
+
 class IRF {
 	public:
 		IRF(const Parameters& p_, const Model& model_, const EquilibriumElement& iss_);
@@ -40,6 +42,8 @@ class IRF {
 		void make_transition_guesses(int n, const hank_float_type *x, hank_float_type *z);
 
 		void set_shock_paths();
+
+		void find_final_steady_state();
 
 		SolverType solver = SolverType::broyden;
 
@@ -71,7 +75,7 @@ class IRF {
 
 		TransEquilibrium trans_equm;
 
-		EquilibriumElement final_equm;
+		std::unique_ptr<EquilibriumElement> final_equm_ptr = nullptr;
 
 		const Parameters& p;
 
@@ -79,6 +83,5 @@ class IRF {
 
 		const EquilibriumElement& initial_equm;
 };
-
 
 #endif

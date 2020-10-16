@@ -205,6 +205,7 @@ int main () {
 	EquilibriumElement& iss = global_current_iss_ptr->get(0);
 	IRF irf(params, *global_current_model_ptr, iss);
 	irf.shock.type = ShockType::tfp_Y;
+	irf.permanentShock = true;
 	irf.setup();
 
 	irf.compute();

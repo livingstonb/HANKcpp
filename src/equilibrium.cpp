@@ -11,6 +11,7 @@ namespace
 void EquilibriumElement::create_initial_steady_state(const Parameters& p, const Model& model)
 {
 	set_parameters(p);
+	riskaver = p.riskaver;
 	nprod = model.nprod;
 
 	if ( labor_occ.size() == 0 )
@@ -34,6 +35,43 @@ void EquilibriumElement::create_initial_steady_state(const Parameters& p, const 
 
 	pi = p.pi;
 	rnom = rb - p.pi;
+	illprice = 1;
+	illpricedot = 0;
+	illshares = capital + equity_A;
+}
+
+void EquilibriumElement::create_final_steady_state(const Parameters& p, const Model& model,
+	const EquilibriumElement& initial_equm, const hank_float_type* x)
+{
+	set_parameters(p);
+	nprod = model.nprod;
+
+	capital = x[0];
+
+	for (int io=0; io<nocc; ++io)
+		labor_occ.push_back(x[io + 1]);
+
+	rb = exp(x[nocc + 1]);
+
+	compute_factors(model);
+
+	tfp_Y = initial_equm.tfp_Y;
+	tfp_N = initial_equm.tfp_N;
+	output = tfp_Y * pow(cobb_douglas(capital_Y, labor_Y, alpha_Y), drs_Y);
+	varieties = tfp_N * pow(cobb_douglas(capital_N, labor_N, alpha_N), drs_N);
+
+	investment = p.depreciation * capital;
+
+	compute_profits();
+	compute_factor_prices();
+	compute_dividends(p);
+	compute_govt(p, model);
+
+	pi = p.pi;
+	rnom = rb - p.pi;
+	illprice = capital + equity_A;
+	illpricedot = 0;
+	illshares = initial_equm.illshares;
 }
 
 void EquilibriumElement::set_parameters(const Parameters& p)
@@ -44,7 +82,6 @@ void EquilibriumElement::set_parameters(const Parameters& p)
 	drs_Y = p.drs_Y;
 	drs_N = p.drs_N;
 	nocc = p.nocc;
-	riskaver = p.riskaver;
 	rho = rho;
 }
 

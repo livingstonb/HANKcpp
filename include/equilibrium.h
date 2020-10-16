@@ -44,6 +44,9 @@ class EquilibriumElement {
 
 		void create_initial_steady_state(const Parameters& p, const Model& model);
 
+		void create_final_steady_state(const Parameters& p, const Model& model,
+			const EquilibriumElement& initial_equm, const hank_float_type* x);
+
 		void set_parameters(const Parameters& p);
 
 		void compute_factors(const Model& model);

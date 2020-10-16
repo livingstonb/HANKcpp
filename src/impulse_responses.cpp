@@ -7,6 +7,12 @@
 #include <functional>
 #include <utilities.h>
 #include <hank_numerics.h>
+#include <bellman.h>
+#include <stationary_dist.h>
+#include<distribution_statistics.h>
+
+#include <cminpack.h>
+#include <cminpackP.h>
 
 using namespace std::placeholders;
 
@@ -16,6 +22,23 @@ namespace {
 	VectorXr get_AR1_path_levels(int T, double x0, double eps, double rho, const VectorXr& deltas, int nback);
 
 	hank_float_type get_firmdiscount(FirmDiscountRateType discount_type, const EquilibriumElement& initial_equm, const TransEquilibriumElement& trans_equm);
+
+	struct SolverPtrContainer {
+		SolverPtrContainer(const Parameters* pptr, const Model* modelptr, const EquilibriumElement* issptr, const IRF* irfptr, int n)
+			: p(pptr), model(modelptr), iss(issptr), irf(irfptr) {
+				xcurr.reset(new hank_float_type[n]);
+			}
+
+		const Parameters* p = NULL;
+
+		const Model* model = NULL;
+
+		const EquilibriumElement* iss = NULL;
+
+		const IRF* irf = NULL;
+
+		std::unique_ptr<hank_float_type[]> xcurr = nullptr;
+	};
 }
 
 void TransShock::setup() {
@@ -81,12 +104,11 @@ void IRF::construct_delta_trans_vectors() {
 void IRF::compute() {
 	// Final steady state	
 	if ( !permanentShock ) {
-		final_equm = initial_equm;
-
+		final_equm_ptr.reset(new EquilibriumElement(initial_equm));
 	}
 	else {
 		// Compute final steady state
-		// final_equm.create_final_steady_state();
+		find_final_steady_state();
 	}
 
 	// Guess log deviations from steady state
@@ -140,32 +162,25 @@ void IRF::make_transition_guesses(int n, const hank_float_type *x, hank_float_ty
 		trans_equm[it].output = initial_equm.output * exp(x[it]);
 
 		// Guess for rb
-		if ( set_rb & (it == Ttrans - 1) ) {
-			trans_equm[Ttrans-1].rb = final_equm.rb;
-		}
-		else if ( set_rb ) {
+		if ( set_rb & (it == Ttrans - 1) )
+			trans_equm[it].rb = final_equm_ptr->rb;
+		else if ( set_rb )
 			trans_equm[it].rb = initial_equm.rb + x[Ttrans + it];
-		}
 
 		// Guess for pi
-		if ( set_pi & (it == Ttrans - 1) ) {
-			trans_equm[Ttrans-1].rb = final_equm.pi;
-		}
-		else if ( set_pi ) {
+		if ( set_pi & (it == Ttrans - 1) )
+			trans_equm[it].pi = final_equm_ptr->pi;
+		else if ( set_pi )
 			trans_equm[it].pi = initial_equm.pi + x[Ttrans + it];
-		}
 
 		// Guess for labor
 		trans_equm[it].labor_occ = initial_equm.labor_occ;
 
 		// Guess for capital
-		for (int it=0; it<Ttrans; ++it) {
-			if ( (p.capadjcost > 0) | (p.invadjcost > 0) ) {
-				trans_equm[it].qcapital = initial_equm.qcapital + exp(x[Ttrans * (p.nocc + 2) + it - 1]);
-			}
-			else
-				trans_equm[it].qcapital = 1.0;
-		}
+		if ( (p.capadjcost > 0) | (p.invadjcost > 0) )
+			trans_equm[it].qcapital = initial_equm.qcapital + exp(x[Ttrans * (p.nocc + 2) + it - 1]);
+		else
+			trans_equm[it].qcapital = 1.0;
 
 		// Guess for tax increase
 		hank_float_type initlumpincr = 0;
@@ -264,6 +279,78 @@ void IRF::set_shock_paths() {
 		else if ( shock.type == ShockType::riskaver )
 			trans_equm[it].riskaver = riskaver[it];
 	}
+}
+
+void IRF::find_final_steady_state()
+{
+	int n = p.nocc + 2;
+	std::vector<hank_float_type> xguess(n);
+
+	xguess[0] = initial_equm.capital;
+
+	for (int io=0; io<p.nocc; ++io)
+		xguess[io + 1] = initial_equm.labor_occ[io];
+
+	xguess[p.nocc + 1] = log(initial_equm.rb);
+
+	hank_float_type fvec[n];
+	double tol = 1.0e-9;
+
+	int lwa = n * (3 * n + 13);
+	hank_float_type wa[lwa];
+
+	SolverPtrContainer solver_args(&p, &model, &initial_equm, this, n);
+
+	int info = cminpack_hybrd1_fnname(final_steady_state_obj_fn, &solver_args, n, xguess.data(), fvec, tol, wa, lwa);
+	HankUtilities::check_cminpack_success(info);
+
+	final_equm_ptr.reset(new EquilibriumElement);
+	if ( permanentShock & (shock.type == ShockType::riskaver) )
+		final_equm_ptr->riskaver = p.riskaver + shock.size;
+	else
+		final_equm_ptr->riskaver = p.riskaver;
+
+	final_equm_ptr->create_final_steady_state(p, model, initial_equm, solver_args.xcurr.get());
+}
+
+int final_steady_state_obj_fn(void* solver_args_voidptr, int n, const real *x, real *fvec, int /* iflag */ )
+{
+	SolverPtrContainer* solver_args_ptr = (SolverPtrContainer *) solver_args_voidptr;
+	const Parameters& p = *(solver_args_ptr->p);
+	const Model& model = *(solver_args_ptr->model);
+	const EquilibriumElement& iss = *(solver_args_ptr->iss);
+	const IRF& irf = *(solver_args_ptr->irf);
+
+	solver_args_ptr->xcurr.reset(new hank_float_type[n]);
+	for (int ix=0; ix<n; ++ix)
+		solver_args_ptr->xcurr[ix] = x[ix];
+	
+	EquilibriumElement final_ss;
+
+	if ( irf.permanentShock & (irf.shock.type == ShockType::riskaver) )
+		final_ss.riskaver = p.riskaver + irf.shock.size;
+	else
+		final_ss.riskaver = p.riskaver;
+
+	final_ss.create_final_steady_state(p, model, iss, x);
+
+	HJB hjb(model, final_ss);
+	hjb.iterate(final_ss);
+
+	StationaryDist sdist;
+	sdist.gtol = 1.0e-9;
+	sdist.compute(model, final_ss, hjb);
+
+	DistributionStatistics stats(p, model, hjb, sdist);
+
+	fvec[0] = stats.Ea / (final_ss.capital + final_ss.equity_A) - 1.0;
+
+	for (int io=0; io<p.nocc; ++io)
+		fvec[io+1] = stats.Elabor_occ[io] * model.occdist[io] / final_ss.labor_occ[io] - 1.0;
+
+	fvec[p.nocc+1] = stats.Eb / final_ss.equity_B - 1.0;
+
+	return 0;
 }
 
 namespace {

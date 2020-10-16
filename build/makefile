@@ -40,10 +40,12 @@ $(EXECUTABLE): $(MAIN) $(OBJECTS)
 
 $(SPARSEOBJS): MKLFLAGS=$(MKLINCLUDES) $(SSINCLUDES)
 
-$(MAIN): XINCLUDES=$(CMINPACKDIR)
+$(MAIN): XINCLUDES:=$(CMINPACKDIR)
+
+impulse_responses.o: XINCLUDES:=-I$(CMINPACKDIR)
 
 %.o:
-	$(CC) $(CFLAGS) $(MKLFLAGS) $(SOURCEDIR)/$*.cpp -o $@ #-fopenmp
+	$(CC) $(CFLAGS) $(XINCLUDES) $(MKLFLAGS) $(SOURCEDIR)/$*.cpp -o $@ #-fopenmp
 
 $(MAIN): %.o: $(SOURCEDIR)/%.cpp
 	$(CC) $(CFLAGS) -I$(XINCLUDES) $< -o $@ #-fopenmp
