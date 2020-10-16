@@ -45,6 +45,7 @@ void EquilibriumElement::set_parameters(const Parameters& p)
 	drs_N = p.drs_N;
 	nocc = p.nocc;
 	riskaver = p.riskaver;
+	rho = rho;
 }
 
 void EquilibriumElement::compute_factors(const Model& model)

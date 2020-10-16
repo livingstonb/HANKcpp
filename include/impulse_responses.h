@@ -13,15 +13,12 @@ class Model;
 enum class ShockType { tfp_Y, monetary, riskaver, none };
 
 class TransShock {
-	private:
-		const double value_not_set = -999.9;
-
 	public:
 		ShockType type = ShockType::none;
 
-		double size = value_not_set;
+		hank_float_type size = HANK::ValueNotSet;
 
-		double pers = value_not_set;
+		hank_float_type pers = HANK::ValueNotSet;
 
 		void setup();
 };

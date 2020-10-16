@@ -14,6 +14,8 @@ namespace {
 	VectorXr get_AR1_path_logs(int T, double x0, double eps, double rho, const VectorXr& deltas, int nback);
 
 	VectorXr get_AR1_path_levels(int T, double x0, double eps, double rho, const VectorXr& deltas, int nback);
+
+	hank_float_type get_firmdiscount(FirmDiscountRateType discount_type, const EquilibriumElement& initial_equm, const TransEquilibriumElement& trans_equm);
 }
 
 void TransShock::setup() {
@@ -22,7 +24,7 @@ void TransShock::setup() {
 		throw 0;
 	}
 
-	if ( size == value_not_set ) {
+	if ( size == HANK::ValueNotSet ) {
 		if ( type == ShockType::tfp_Y )
 			size = -0.02;
 		else if ( type == ShockType::monetary )
@@ -31,7 +33,7 @@ void TransShock::setup() {
 			size = 0.001;
 	}
 
-	if ( pers == value_not_set )
+	if ( pers == HANK::ValueNotSet )
 		pers = exp(-0.5);
 }
 
@@ -49,15 +51,11 @@ void IRF::setup() {
 	shock.setup();
 
 	trans_equm.reset(Ttrans);
-
-	VectorXr riskaver;
-	if ( permanentShock & (shock.type == ShockType::riskaver) )
-		riskaver = VectorXr::Constant(Ttrans, p.riskaver + shock.size);
-	else
-		riskaver = VectorXr::Constant(Ttrans, p.riskaver);
-
 	for (int it=0; it<Ttrans; ++it) {
-		trans_equm[it].riskaver = riskaver[it];
+		trans_equm[it].riskaver = p.riskaver;
+
+		if ( permanentShock & (shock.type == ShockType::riskaver) )
+			trans_equm[it].riskaver += shock.size;
 	}
 
 	construct_delta_trans_vectors();
@@ -225,24 +223,8 @@ void IRF::make_transition_guesses(int n, const hank_float_type *x, hank_float_ty
 			trans_equm[it].firmdiscount = -1e6;
 		}
 		else {
-			// Phillips curve for marginal costs
-			switch ( p.firm_discount_rate_type ) {
-				case FirmDiscountRateType::rho:
-					trans_equm[it].firmdiscount = p.rho;
-					break;
-				case FirmDiscountRateType::rb_iss:
-					trans_equm[it].firmdiscount = initial_equm.rb;
-					break;
-				case FirmDiscountRateType::ra_iss:
-					trans_equm[it].firmdiscount = initial_equm.ra;
-					break;
-				case FirmDiscountRateType::rb_trans:
-					trans_equm[it].firmdiscount = trans_equm[it].rb;
-					break;
-				case FirmDiscountRateType::ra_trans:
-					trans_equm[it].firmdiscount = trans_equm[it].ra;
-					break;
-			}
+			// Phillips curve for marginal costs: set initial_equm[it].firmdiscount
+			trans_equm[it].firmdiscount = get_firmdiscount(p.firm_discount_rate_type, initial_equm, trans_equm[it]);
 
 			// Guess wholesale price
 			hank_float_type mkup = (trans_equm[it].elast - 1.0) / trans_equm[it].elast;
@@ -315,5 +297,24 @@ namespace {
 			y(it) = x0;
 
 		return y;
+	}
+
+	hank_float_type get_firmdiscount(FirmDiscountRateType discount_type, const EquilibriumElement& initial_equm, const TransEquilibriumElement& trans_equm_el)
+	{
+		switch ( discount_type ) {
+			case FirmDiscountRateType::rho:
+				return initial_equm.rho;
+			case FirmDiscountRateType::rb_iss:
+				return initial_equm.rb;
+			case FirmDiscountRateType::ra_iss:
+				return initial_equm.ra;
+			case FirmDiscountRateType::rb_trans:
+				return trans_equm_el.rb;
+			case FirmDiscountRateType::ra_trans:
+				return trans_equm_el.ra;
+		}
+
+		std::cerr << "Logic error\n";
+		throw 0;
 	}
 }

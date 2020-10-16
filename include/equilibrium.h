@@ -56,7 +56,7 @@ class EquilibriumElement {
 
 		void compute_govt(const Parameters& p, const Model& modelmodel);
 
-		hank_float_type alpha_Y, alpha_N, price_W, drs_Y, drs_N, riskaver;
+		hank_float_type alpha_Y, alpha_N, price_W, drs_Y, drs_N, riskaver, rho;
 
 		hank_float_type capshareY, capshareN, capfracY, capfracN, capital_Y, capital_N;
 
