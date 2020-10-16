@@ -11,8 +11,7 @@
 #include <stationary_dist.h>
 #include<distribution_statistics.h>
 
-#include <cminpack.h>
-#include <cminpackP.h>
+#include <cminpack_wrapper.h>
 
 using namespace std::placeholders;
 
@@ -293,15 +292,8 @@ void IRF::find_final_steady_state()
 
 	xguess[p.nocc + 1] = log(initial_equm.rb);
 
-	hank_float_type fvec[n];
-	double tol = 1.0e-9;
-
-	int lwa = n * (3 * n + 13);
-	hank_float_type wa[lwa];
-
 	SolverPtrContainer solver_args(&p, &model, &initial_equm, this, n);
-
-	int info = cminpack_hybrd1_fnname(final_steady_state_obj_fn, &solver_args, n, xguess.data(), fvec, tol, wa, lwa);
+	int info = cminpack_hybrd1_wrapper(final_steady_state_obj_fn, &solver_args, n, xguess.data());
 	HankUtilities::check_cminpack_success(info);
 
 	final_equm_ptr.reset(new EquilibriumElement);
