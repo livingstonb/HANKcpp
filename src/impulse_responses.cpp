@@ -21,23 +21,6 @@ namespace {
 	VectorXr get_AR1_path_levels(int T, double x0, double eps, double rho, const VectorXr& deltas, int nback);
 
 	hank_float_type get_firmdiscount(FirmDiscountRateType discount_type, const EquilibriumElement& initial_equm, const TransEquilibriumElement& trans_equm);
-
-	struct SolverPtrContainer {
-		SolverPtrContainer(const Parameters* pptr, const Model* modelptr, const EquilibriumElement* issptr, const IRF* irfptr, int n)
-			: p(pptr), model(modelptr), iss(issptr), irf(irfptr) {
-				xcurr.reset(new hank_float_type[n]);
-			}
-
-		const Parameters* p = NULL;
-
-		const Model* model = NULL;
-
-		const EquilibriumElement* iss = NULL;
-
-		const IRF* irf = NULL;
-
-		std::unique_ptr<hank_float_type[]> xcurr = nullptr;
-	};
 }
 
 void TransShock::setup() {
@@ -287,17 +270,17 @@ void IRF::set_shock_paths() {
 void IRF::find_final_steady_state()
 {
 	int n = p.nocc + 2;
-	std::vector<hank_float_type> xguess(n);
+	std::vector<hank_float_type> x(n);
 
-	xguess[0] = initial_equm.capital;
+	x[0] = initial_equm.capital;
 
 	for (int io=0; io<p.nocc; ++io)
-		xguess[io + 1] = initial_equm.labor_occ[io];
+		x[io + 1] = initial_equm.labor_occ[io];
 
-	xguess[p.nocc + 1] = log(initial_equm.rb);
+	x[p.nocc + 1] = log(initial_equm.rb);
 
-	SolverPtrContainer solver_args(&p, &model, &initial_equm, this, n);
-	int info = cminpack_hybrd1_wrapper(final_steady_state_obj_fn, &solver_args, n, xguess.data());
+	SolverArgs args(&p, &model, &initial_equm, this, n);
+	int info = cminpack_hybrd1_wrapper(final_steady_state_obj_fn, &args, n, x.data());
 	HankUtilities::check_cminpack_success(info);
 
 	final_equm_ptr.reset(new EquilibriumElement);
@@ -311,15 +294,15 @@ void IRF::find_final_steady_state()
 
 int final_steady_state_obj_fn(void* solver_args_voidptr, int n, const real *x, real *fvec, int /* iflag */ )
 {
-	SolverPtrContainer* solver_args_ptr = (SolverPtrContainer *) solver_args_voidptr;
-	const Parameters& p = *(solver_args_ptr->p);
-	const Model& model = *(solver_args_ptr->model);
-	const EquilibriumElement& iss = *(solver_args_ptr->iss);
-	const IRF& irf = *(solver_args_ptr->irf);
+	&p, &model, &initial_equm, this, x.data()
+	SolverArgs* solver_args_ptr = (SolverArgs *) solver_args_voidptr;
+	const Parameters& p = *(solver_args_ptr->arg1);
+	const Model& model = *(solver_args_ptr->arg2);
+	const EquilibriumElement& iss = *(solver_args_ptr->arg3);
+	const IRF& irf = *(solver_args_ptr->arg4);
 
-	solver_args_ptr->xcurr.reset(new hank_float_type[n]);
 	for (int ix=0; ix<n; ++ix)
-		solver_args_ptr->xcurr[ix] = x[ix];
+		solver_args_ptr->x[ix] = x[ix];
 	
 	EquilibriumElement final_ss;
 
