@@ -9,7 +9,7 @@
 #include <hank_numerics.h>
 #include <bellman.h>
 #include <stationary_dist.h>
-#include<distribution_statistics.h>
+#include <distribution_statistics.h>
 
 #include <cminpack_wrapper.h>
 
@@ -131,9 +131,9 @@ void IRF::compute() {
 void IRF::transition_fcn(int n, const hank_float_type *x, hank_float_type *z) {
 	make_transition_guesses(n, x, z);
 
-	for (int it=0; it<Ttrans; ++it) {
-		trans_equm[it].
-	}
+	// for (int it=0; it<Ttrans; ++it) {
+	// 	trans_equm[it].
+	// }
 }
 
 void IRF::make_transition_guesses(int n, const hank_float_type *x, hank_float_type *z) {
@@ -279,7 +279,7 @@ void IRF::find_final_steady_state()
 
 	x[p.nocc + 1] = log(initial_equm.rb);
 
-	SolverArgs args(&p, &model, &initial_equm, this, n);
+	SolverArgsIRF args(&p, &model, &initial_equm, this, n);
 	int info = cminpack_hybrd1_wrapper(final_steady_state_obj_fn, &args, n, x.data());
 	HankUtilities::check_cminpack_success(info);
 
@@ -289,13 +289,12 @@ void IRF::find_final_steady_state()
 	else
 		final_equm_ptr->riskaver = p.riskaver;
 
-	final_equm_ptr->create_final_steady_state(p, model, initial_equm, solver_args.xcurr.get());
+	final_equm_ptr->create_final_steady_state(p, model, initial_equm, args.x.get());
 }
 
 int final_steady_state_obj_fn(void* solver_args_voidptr, int n, const real *x, real *fvec, int /* iflag */ )
 {
-	&p, &model, &initial_equm, this, x.data()
-	SolverArgs* solver_args_ptr = (SolverArgs *) solver_args_voidptr;
+	SolverArgsIRF* solver_args_ptr = (SolverArgsIRF *) solver_args_voidptr;
 	const Parameters& p = *(solver_args_ptr->arg1);
 	const Model& model = *(solver_args_ptr->arg2);
 	const EquilibriumElement& iss = *(solver_args_ptr->arg3);

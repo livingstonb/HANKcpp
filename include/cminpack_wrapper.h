@@ -14,7 +14,7 @@ class DistributionStatistics;
 class IRF;
 
 template<typename T>
-int cmsinpack_hybrd1_wrapper(cminpack_func_nn fcn, T* args, int n, real *x) {
+int cminpack_hybrd1_wrapper(cminpack_func_nn fcn, T* args, int n, real *x) {
 	real fvec[n];
 	double tol = 1.0e-9;
 
@@ -30,16 +30,16 @@ class SolverArgs {
 		SolverArgs(const T1* arg1_, int n)
 			: arg1(arg1_) {x.reset(new hank_float_type[n]);}
 
-		SolverArgs(const T1* arg1_, const T2* arg2_)
+		SolverArgs(const T1* arg1_, const T2* arg2_, int n)
 			: arg1(arg1_), arg2(arg2_) {x.reset(new hank_float_type[n]);}
 
-		SolverArgs(const T1* arg1_, const T2* arg2_, const T3* arg3_)
+		SolverArgs(const T1* arg1_, const T2* arg2_, const T3* arg3_, int n)
 			: arg1(arg1_), arg2(arg2_), arg3(arg3_) {x.reset(new hank_float_type[n]);}
 
-		SolverArgs(const T1* arg1_, const T2* arg2_, const T3* arg3_, const T4* arg4_)
+		SolverArgs(const T1* arg1_, const T2* arg2_, const T3* arg3_, const T4* arg4_, int n)
 			: arg1(arg1_), arg2(arg2_), arg3(arg3_), arg4(arg4_) {x.reset(new hank_float_type[n]);}
 
-		SolverArgs(const T1* arg1_, const T2* arg2_, const T3* arg3_, const T4* arg4_, const T5* arg5_)
+		SolverArgs(const T1* arg1_, const T2* arg2_, const T3* arg3_, const T4* arg4_, const T5* arg5_, int n)
 			: arg1(arg1_), arg2(arg2_), arg3(arg3_), arg4(arg4_), arg5(arg5_) {x.reset(new hank_float_type[n]);}
 
 		const T1* arg1 = nullptr;
