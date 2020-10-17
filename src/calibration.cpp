@@ -14,28 +14,28 @@
 using namespace std::placeholders;
 
 namespace {
-	double deviation_median_illiq_wealth(const HANKCalibration::SSCalibrationArgs& args) {
-		return args.stats->a_pctiles[5] / args.p->illiqWealthTarget.value - 1.0;
+	double deviation_median_illiq_wealth(const HANKCalibration::CalibrationArgs& args) {
+		return args.stats.a_pctiles[5] / args.p.illiqWealthTarget.value - 1.0;
 	}
 
-	double deviation_mean_liq_wealth(const HANKCalibration::SSCalibrationArgs& args) {
-		return args.stats->Eb / args.p->liqWealthTarget.value - 1.0;
+	double deviation_mean_liq_wealth(const HANKCalibration::CalibrationArgs& args) {
+		return args.stats.Eb / args.p.liqWealthTarget.value - 1.0;
 	}
 
-	double deviation_median_liq_wealth(const HANKCalibration::SSCalibrationArgs& args) {
-		return args.stats->b_pctiles[5] / args.p->liqWealthTarget.value - 1.0;
+	double deviation_median_liq_wealth(const HANKCalibration::CalibrationArgs& args) {
+		return args.stats.b_pctiles[5] / args.p.liqWealthTarget.value - 1.0;
 	}
 
-	double illiq_market_clearing(const HANKCalibration::SSCalibrationArgs& args) {
-		return args.stats->Ea / (args.iss->capital + args.iss->equity_A) - 1.0;
+	double illiq_market_clearing(const HANKCalibration::CalibrationArgs& args) {
+		return args.stats.Ea / (args.iss.capital + args.iss.equity_A) - 1.0;
 	}
 
-	double labor_market_clearing(const HANKCalibration::SSCalibrationArgs& args, int io) {
-		return args.stats->Elabor_occ[io] * args.model->occdist[io] / args.iss->labor_occ[io] - 1.0;
+	double labor_market_clearing(const HANKCalibration::CalibrationArgs& args, int io) {
+		return args.stats.Elabor_occ[io] * args.model.occdist[io] / args.iss.labor_occ[io] - 1.0;
 	}
 
-	double hours_target(const HANKCalibration::SSCalibrationArgs& args) {
-		return (args.stats->Ehours / args.p->hourtarget - 1.0) / 100.0;
+	double hours_target(const HANKCalibration::CalibrationArgs& args) {
+		return (args.stats.Ehours / args.p.hourtarget - 1.0) / 100.0;
 	}
 }
 
@@ -76,7 +76,7 @@ void SSCalibrator::setup(const Parameters &p) {
 	nmoments = obj_functions.size();
 }
 
-void SSCalibrator::fill_fvec(const SSCalibrationArgs& args, hank_float_type fvec[]) const {
+void SSCalibrator::fill_fvec(const CalibrationArgs& args, hank_float_type fvec[]) const {
 	for (int i=0; i<nmoments; ++i) {
 		fvec[i] = obj_functions[i](args);
 	}
@@ -245,7 +245,7 @@ int initial_state_state_obj_fn(void* args_void_ptr, int n, const hank_float_type
 	args.ptr4.reset(&stats);
 	stats.print();
 
-	SSCalibrationArgs cal_args(&p, &model, &stats, &iss);
+	CalibrationArgs cal_args(args);
 	cal.fill_fvec(cal_args, fvec);
 	cal.print_fvec(fvec);
 

@@ -12,27 +12,29 @@
 
 namespace HANKCalibration {
 
-struct SSCalibrationArgs {
-	SSCalibrationArgs() {}
+// struct SSCalibrationArgs {
+// 	SSCalibrationArgs() {}
 	
-	SSCalibrationArgs(const Parameters *p_, const Model *model_,
-		const DistributionStatistics *stats_, const EquilibriumElement *iss_) {
-		p = p_;
-		model = model_;
-		stats = stats_;
-		iss = iss_;
-	}
+// 	SSCalibrationArgs(const Parameters *p_, const Model *model_,
+// 		const DistributionStatistics *stats_, const EquilibriumElement *iss_) {
+// 		p = p_;
+// 		model = model_;
+// 		stats = stats_;
+// 		iss = iss_;
+// 	}
 
-	const Parameters *p = NULL;
+// 	const Parameters *p = NULL;
 
-	const Model *model = NULL;
+// 	const Model *model = NULL;
 
-	const DistributionStatistics *stats = NULL;
+// 	const DistributionStatistics *stats = NULL;
 
-	const EquilibriumElement *iss = NULL;
-};
+// 	const EquilibriumElement *iss = NULL;
+// };
 
-using deviation_fn_type = std::function<double(const SSCalibrationArgs&)>;
+class CalibrationArgs;
+
+using deviation_fn_type = std::function<double(const CalibrationArgs&)>;
 
 class SSCalibrator {
 	public:
@@ -42,7 +44,7 @@ class SSCalibrator {
 
 		std::vector<deviation_fn_type> obj_functions;
 
-		void fill_fvec(const SSCalibrationArgs& args, hank_float_type fvec[]) const;
+		void fill_fvec(const CalibrationArgs& args, hank_float_type fvec[]) const;
 
 		void fill_xguess(const Parameters &p, const Model& model, hank_float_type xvec[]);
 
@@ -78,6 +80,20 @@ class SSCalibrator {
 };
 
 using ObjectPointers = UniquePtrContainer<Parameters, Model, EquilibriumElement, DistributionStatistics, SSCalibrator>;
+
+class CalibrationArgs {
+	public:
+		CalibrationArgs(const ObjectPointers& ptrs)
+			: p(*ptrs.ptr1), model(*ptrs.ptr2), iss(*ptrs.ptr3), stats(*ptrs.ptr4) {}
+
+		const Parameters& p;
+
+		const Model& model;
+
+		const EquilibriumElement& iss;
+
+		const DistributionStatistics& stats;
+};
 
 int initial_state_state_obj_fn(void* args_void_ptr, int n, const hank_float_type *x, hank_float_type *fvec, int /* iflag */ );
 
