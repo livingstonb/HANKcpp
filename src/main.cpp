@@ -85,7 +85,7 @@ void set_to_fortran_params(HANKCalibration::SSCalibrator& cal) {
 IRF compute_irfs(const HANKCalibration::ObjectPointers& object_ptrs) {
 	Parameters& p = *object_ptrs.ptr1;
 	Model& model = *object_ptrs.ptr2;
-	EquilibriumElement& iss = *object_ptrs.ptr3;
+	EquilibriumInitial& iss = *object_ptrs.ptr3;
 
 	IRF irf(p, model, iss);
 	irf.shock.type = ShockType::tfp_Y;
@@ -134,9 +134,9 @@ int main () {
 	if ( options.skip_calibration ) {
 		object_ptrs.ptr2.reset(&model);
 
-		EquilibriumElement iss;
+		EquilibriumInitial iss;
 		object_ptrs.ptr3.reset(&iss);
-		iss.create_initial_steady_state(params, model);
+		iss.solve(params, model);
 
 		HJB hjb(model, iss);
 		hjb.iterate(iss);

@@ -24,7 +24,7 @@ namespace {
 
 	void check_progress(double vdiff, int freq, int ii, double vtol);
 
-	vector3dr make_value_guess(const Model& model, const EquilibriumElement& ss, double riskaver);
+	vector3dr make_value_guess(const Model& model, const Equilibrium& ss, double riskaver);
 
 	Upwinding::DepositUpwind optimal_deposits(const Model& model, double Va, double Vb, double a);
 }
@@ -46,12 +46,12 @@ namespace Bellman {
 	}
 }
 
-HJB::HJB(const Model& model_, const EquilibriumElement& ss) : model(model_), p(model_.p), V(p.na, p.nb, model.ny), optimal_decisions(model.dims) {
+HJB::HJB(const Model& model_, const Equilibrium& ss) : model(model_), p(model_.p), V(p.na, p.nb, model.ny), optimal_decisions(model.dims) {
 	riskaver = ss.riskaver;
 	V = make_value_guess(model, ss, riskaver);
 }
 
-void HJB::iterate(const EquilibriumElement& ss) {
+void HJB::iterate(const Equilibrium& ss) {
 	int ii = 0;
 	double lVdiff = 1.0;
 
@@ -79,7 +79,7 @@ void HJB::iterate(const EquilibriumElement& ss) {
 		print_variables();
 }
 
-Upwinding::Policies HJB::update_policies(const EquilibriumElement& ss) {
+Upwinding::Policies HJB::update_policies(const Equilibrium& ss) {
 	ValueFnDerivatives derivs;
 	double chi = p.chi;
 
@@ -294,7 +294,7 @@ Upwinding::ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift
 	return upwind;
 }
 
-void HJB::update_value_fn(const EquilibriumElement& ss, const Upwinding::Policies& policies) {
+void HJB::update_value_fn(const Equilibrium& ss, const Upwinding::Policies& policies) {
 	VectorXr bvec(p.nb * p.na);
 	VectorXr ycol, vcol(model.ny);
 	int iab;
@@ -401,7 +401,7 @@ namespace {
 			std::cout << "Converged after " << ii << " iterations." << '\n';
 	}
 
-	vector3dr make_value_guess(const Model& model, const EquilibriumElement& ss, double riskaver) {
+	vector3dr make_value_guess(const Model& model, const Equilibrium& ss, double riskaver) {
 		const Parameters& p = model.p;
 
 		vector3dr V(p.na, p.nb, model.ny);

@@ -13,16 +13,13 @@ class Equilibrium {
 	public:
 		Equilibrium() {}
 
-		void create_initial_steady_state(const Parameters& p, const Model& model);
-
-		void create_final_steady_state(const Parameters& p, const Model& model,
-			const Equilibrium& initial_equm, const hank_float_type* x);
-
 		void create_transition();
 
-		virtual void set_from_parameters(const Parameters& p);
+		void set_from_parameters(const Parameters& p, const Model& model);
 
 		virtual bool is_initial_steady_state() {return false;}
+
+		virtual bool is_final_steady_state() {return false;}
 
 		virtual bool is_trans_equilibrium() {return false;}
 
@@ -69,11 +66,18 @@ class Equilibrium {
 };
 
 class EquilibriumInitial : public Equilibrium {
-	bool is_initial_steady_state() {return true;}
+	public:
+		void solve(const Parameters& p, const Model& model);
+
+		bool is_initial_steady_state() {return true;}
 };
 
 class EquilibriumFinal : public Equilibrium {
-	bool is_initial_steady_state() {return true;}
+	public:
+		void solve(const Parameters& p, const Model& model,
+			const Equilibrium& initial_equm, const hank_float_type* x);
+
+		bool is_final_steady_state() {return true;}
 };
 
 class EquilibriumTrans : public Equilibrium {
@@ -87,6 +91,6 @@ class EquilibriumTrans : public Equilibrium {
 
 void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
 	const Parameters& p, const Model& model,
-	const EquilibriumElement& final_equm, const hank_float_type* deltatransvec);
+	const Equilibrium& final_equm, const hank_float_type* deltatransvec);
 
 #endif

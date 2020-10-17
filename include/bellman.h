@@ -9,7 +9,7 @@
 // Forward declarations
 class Model;
 
-class EquilibriumElement;
+class Equilibrium;
 
 class Parameters;
 
@@ -34,9 +34,9 @@ namespace Bellman {
 // Class for solving the HJB
 class HJB {
 	private:
-		Upwinding::Policies update_policies(const EquilibriumElement& ss);
+		Upwinding::Policies update_policies(const Equilibrium& ss);
 
-		void update_value_fn(const EquilibriumElement& ss, const Upwinding::Policies& policies);
+		void update_value_fn(const Equilibrium& ss, const Upwinding::Policies& policies);
 
 		ValueFnDerivatives compute_derivatives(int ia, int ib, int iy) const;
 
@@ -47,9 +47,9 @@ class HJB {
 		Upwinding::ConUpwind optimal_consumption_sep_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
 
 	public:
-		HJB(const Model& model_, const EquilibriumElement& ss);
+		HJB(const Model& model_, const Equilibrium& ss);
 
-		void iterate(const EquilibriumElement& ss);
+		void iterate(const Equilibrium& ss);
 
 		void print_variables() const;
 

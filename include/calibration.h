@@ -30,7 +30,7 @@ class SSCalibrator {
 
 		void update_params(Parameters *p, const hank_float_type *xvec) const;
 
-		void update_ss(const Parameters* p, EquilibriumElement *iss, const hank_float_type *xvec) const;\
+		void update_ss(const Parameters* p, EquilibriumInitial *iss, const hank_float_type *xvec) const;\
 
 		void print_fvec(hank_float_type fvec[]) const;
 
@@ -59,7 +59,7 @@ class SSCalibrator {
 		int ix_capital = -1;
 };
 
-using ObjectPointers = UniquePtrContainer<Parameters, Model, EquilibriumElement, DistributionStatistics, SSCalibrator>;
+using ObjectPointers = UniquePtrContainer<Parameters, Model, EquilibriumInitial, DistributionStatistics, SSCalibrator>;
 
 class CalibrationArgs {
 	public:
@@ -70,7 +70,7 @@ class CalibrationArgs {
 
 		const Model& model;
 
-		const EquilibriumElement& iss;
+		const EquilibriumInitial& iss;
 
 		const DistributionStatistics& stats;
 };

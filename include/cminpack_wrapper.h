@@ -7,7 +7,7 @@ class Parameters;
 
 class Model;
 
-class EquilibriumElement;
+class Equilibrium;
 
 class DistributionStatistics;
 

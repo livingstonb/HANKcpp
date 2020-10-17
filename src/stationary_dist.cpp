@@ -20,7 +20,7 @@ namespace {
 	void check_dist(const MatrixXr& distcheck, const Model& model);
 }
 
-void StationaryDist::compute(const Model& model, const EquilibriumElement& ss, const HJB& hjb) {
+void StationaryDist::compute(const Model& model, const Equilibrium& ss, const HJB& hjb) {
 	const Parameters& p = model.p;
 
 	Eigen::VectorXd inv_abdelta = model.abdelta.cast<double>().cwiseInverse();

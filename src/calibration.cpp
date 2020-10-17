@@ -186,7 +186,7 @@ void SSCalibrator::update_params(Parameters *p, const hank_float_type *xvec) con
 	p->update();
 }
 
-void SSCalibrator::update_ss(const Parameters* p, EquilibriumElement *iss, const hank_float_type *xvec) const {
+void SSCalibrator::update_ss(const Parameters* p, EquilibriumInitial *iss, const hank_float_type *xvec) const {
 	for (unsigned int io=0; io<ix_labor_occ.size(); ++io) {
 		iss->labor_occ.push_back(xvec[ix_labor_occ[io]]);
 		std::cout << "  labor_" << io << " = " << xvec[ix_labor_occ[io]] << '\n';
@@ -227,12 +227,12 @@ int initial_state_state_obj_fn(void* args_void_ptr, int n, const hank_float_type
 	Model model(p);
 	args.ptr2.reset(&model);
 
-	EquilibriumElement iss;
+	EquilibriumInitial iss;
 	args.ptr3.reset(&iss);
 	cal.update_ss(&p, &iss, x);
 	std::cout << '\n';
 
-	iss.create_initial_steady_state(p, model);
+	iss.solve(p, model);
 
 	HJB hjb(*args.ptr2, iss);
 	hjb.iterate(iss);

@@ -47,13 +47,13 @@ void Equilibrium::compute_factors(const Model& model)
 		labor += labor_occ[io] * model.occdist[io];
 	}
 
-	if ( is_initial_steady_state() ! is_final_steady_state() ) {
+	if ( is_initial_steady_state() | is_final_steady_state() ) {
 		capital_Y = capfracY * capital;
 		capital_N = capfracN * capital;
 	}
 	else if ( is_trans_equilibrium() ) {
 		capital_Y = pow(output / tfp_Y, 1.0 / drs_Y) / pow(labor_Y, 1.0 - alpha_Y);
-		capital_Y = pow(data[it].capital_Y, 1.0 / alpha_Y);
+		capital_Y = pow(capital_Y, 1.0 / alpha_Y);
 		capital = capital_Y / capfracY;
 		capital_N = capfracN * capital;
 	}
@@ -94,7 +94,7 @@ void Equilibrium::compute_factor_prices()
 		mc_N = wage_N / tfp_N;
 }
 
-void EquilibriumElement::compute_dividends(const Parameters& p)
+void Equilibrium::compute_dividends(const Parameters& p)
 {
 	ra = rcapital - p.depreciation;
 	rb = p.rb;
@@ -104,7 +104,7 @@ void EquilibriumElement::compute_dividends(const Parameters& p)
 	equity_B = dividend_B / rb;
 }
 
-void EquilibriumElement::compute_govt(const Parameters& p, const Model& model)
+void Equilibrium::compute_govt(const Parameters& p, const Model& model)
 {
 	std::vector<hank_float_type> wage_occ_rep;
 	Enetwage = 0;
@@ -155,11 +155,11 @@ void EquilibriumInitial::solve(const Parameters& p, const Model& model)
 }
 
 void EquilibriumFinal::solve(const Parameters& p, const Model& model,
-	const EquilibriumElement& initial_equm, const hank_float_type* x)
+	const Equilibrium& initial_equm, const hank_float_type* x)
 {
 	set_from_parameters(p, model);
 
-	capital = x[0]
+	capital = x[0];
 
 	if ( labor_occ.size() == 0 )
 		for (int io=0; io<nocc; ++io)
@@ -190,9 +190,9 @@ void EquilibriumFinal::solve(const Parameters& p, const Model& model,
 
 void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
 	const Parameters& p, const Model& model,
-	const EquilibriumElement& final_equm, const hank_float_type* deltatransvec)
+	const Equilibrium& final_equm, const hank_float_type* deltatransvec)
 {
-	int T = model.Ttransition;
+	int T = p.Ttransition;
 
 	for (int it=0; it<T; ++it) {
 		double deltatrans = deltatransvec[it];
