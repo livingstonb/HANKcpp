@@ -4,6 +4,7 @@
 #include <hank_config.h>
 #include <array>
 #include <hank_types.h>
+#include <string>
 
 class Options;
 
@@ -50,6 +51,8 @@ class Parameters {
 		// Other grid parameters
 		int nocc = 4;
 		int nab;
+
+		std::string income_dir = "";
 
 		// --- PREFERENCES ---
 		double elast = 5;

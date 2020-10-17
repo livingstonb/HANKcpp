@@ -10,6 +10,8 @@
 #include <vector>
 #include <string>
 
+namespace HANKCalibration {
+
 struct SSCalibrationArgs {
 	SSCalibrationArgs() {}
 	
@@ -22,8 +24,11 @@ struct SSCalibrationArgs {
 	}
 
 	const Parameters *p = NULL;
+
 	const Model *model = NULL;
+
 	const DistributionStatistics *stats = NULL;
+
 	const EquilibriumElement *iss = NULL;
 };
 
@@ -71,5 +76,11 @@ class SSCalibrator {
 
 		int ix_capital = -1;
 };
+
+using ObjectPointers = UniquePtrContainer<Parameters, Model, EquilibriumElement, DistributionStatistics, SSCalibrator>;
+
+int initial_state_state_obj_fn(void* args_void_ptr, int n, const hank_float_type *x, hank_float_type *fvec, int /* iflag */ );
+
+}
 
 #endif

@@ -1,37 +1,45 @@
-#include <ss_calibrator.h>
+#include <calibration.h>
 #include <functional>
 #include <iostream>
 #include <string>
 #include <math.h>
 #include <hank_config.h>
 
+#include <parameters.h>
+#include <model.h>
+#include <bellman.h>
+#include <distribution_statistics.h>
+#include <stationary_dist.h>
+
 using namespace std::placeholders;
 
 namespace {
-	double deviation_median_illiq_wealth(const SSCalibrationArgs& args) {
+	double deviation_median_illiq_wealth(const HANKCalibration::SSCalibrationArgs& args) {
 		return args.stats->a_pctiles[5] / args.p->illiqWealthTarget.value - 1.0;
 	}
 
-	double deviation_mean_liq_wealth(const SSCalibrationArgs& args) {
+	double deviation_mean_liq_wealth(const HANKCalibration::SSCalibrationArgs& args) {
 		return args.stats->Eb / args.p->liqWealthTarget.value - 1.0;
 	}
 
-	double deviation_median_liq_wealth(const SSCalibrationArgs& args) {
+	double deviation_median_liq_wealth(const HANKCalibration::SSCalibrationArgs& args) {
 		return args.stats->b_pctiles[5] / args.p->liqWealthTarget.value - 1.0;
 	}
 
-	double illiq_market_clearing(const SSCalibrationArgs& args) {
+	double illiq_market_clearing(const HANKCalibration::SSCalibrationArgs& args) {
 		return args.stats->Ea / (args.iss->capital + args.iss->equity_A) - 1.0;
 	}
 
-	double labor_market_clearing(const SSCalibrationArgs& args, int io) {
+	double labor_market_clearing(const HANKCalibration::SSCalibrationArgs& args, int io) {
 		return args.stats->Elabor_occ[io] * args.model->occdist[io] / args.iss->labor_occ[io] - 1.0;
 	}
 
-	double hours_target(const SSCalibrationArgs& args) {
+	double hours_target(const HANKCalibration::SSCalibrationArgs& args) {
 		return (args.stats->Ehours / args.p->hourtarget - 1.0) / 100.0;
 	}
 }
+
+namespace HANKCalibration {
 
 void SSCalibrator::setup(const Parameters &p) {
 	// Market clearing conditions
@@ -203,4 +211,45 @@ void SSCalibrator::print_fvec(hank_float_type fvec[]) const {
 
 	std::cout << "\n fnorm = " << norm << "\n";
 	std::cout << "--------------------------\n\n";
+}
+
+int initial_state_state_obj_fn(void* args_void_ptr, int n, const hank_float_type *x, hank_float_type *fvec, int /* iflag */ ) {
+	std::cout << "\nCalibration parameters updated:\n";
+
+	ObjectPointers& args = *(ObjectPointers *) args_void_ptr;
+	Parameters& p = *args.ptr1;
+	SSCalibrator& cal = *args.ptr5;
+
+	assert(cal.nmoments == n);
+
+	cal.update_params(&p, x);
+
+	Model model(p);
+	args.ptr2.reset(&model);
+
+	EquilibriumElement iss;
+	args.ptr3.reset(&iss);
+	cal.update_ss(&p, &iss, x);
+	std::cout << '\n';
+
+	iss.create_initial_steady_state(p, model);
+
+	HJB hjb(*args.ptr2, iss);
+	hjb.iterate(iss);
+
+	StationaryDist sdist;
+	sdist.gtol = 1.0e-9;
+	sdist.compute(model, iss, hjb);
+
+	DistributionStatistics stats(p, model, hjb, sdist);
+	args.ptr4.reset(&stats);
+	stats.print();
+
+	SSCalibrationArgs cal_args(&p, &model, &stats, &iss);
+	cal.fill_fvec(cal_args, fvec);
+	cal.print_fvec(fvec);
+
+	return 0;
+}
+
 }

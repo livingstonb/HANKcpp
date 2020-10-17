@@ -11,7 +11,7 @@
 #include <adjustment_costs.h>
 #include <utilities.h>
 #include <math.h>
-#include <ss_calibrator.h>
+#include <calibration.h>
 #include <impulse_responses.h>
 #include <memory>
 
@@ -20,48 +20,6 @@
 const Options *global_hank_options = NULL;
 
 std::string income_dir = "2point_3_5";
-
-std::unique_ptr<SSCalibrator> global_calibrator_ptr(nullptr);
-
-using HANKObjectPointers = UniquePtrContainer<Parameters, Model, EquilibriumElement, DistributionStatistics, hank_float_type[]>;
-
-int fcn(void* args_void_ptr, int n, const real *x, real *fvec, int /* iflag */ ) {
-	assert(global_calibrator_ptr->nmoments == n);
-
-	std::cout << "\nCalibration parameters updated:\n";
-
-	HANKObjectPointers& args = *(HANKObjectPointers *) args_void_ptr;
-	Parameters& p = *args.ptr1;
-
-	global_calibrator_ptr->update_params(&p, x);
-
-	args.ptr2 = std::make_shared<Model>(p, income_dir);
-	Model& model = *args.ptr2;
-
-	args.ptr3 = std::make_shared<EquilibriumElement>();
-	EquilibriumElement& iss = *args.ptr3;
-	global_calibrator_ptr->update_ss(&p, &iss, x);
-	std::cout << '\n';
-
-	iss.create_initial_steady_state(p, model);
-
-	HJB hjb(*args.ptr2, iss);
-	hjb.iterate(iss);
-
-	StationaryDist sdist;
-	sdist.gtol = 1.0e-9;
-	sdist.compute(model, iss, hjb);
-
-	args.ptr4 = std::make_shared<DistributionStatistics>(p, model, hjb, sdist);
-	DistributionStatistics& stats = *args.ptr4;
-	stats.print();
-
-	SSCalibrationArgs cal_args(&p, &model, &stats, &iss);
-	global_calibrator_ptr->fill_fvec(cal_args, fvec);
-	global_calibrator_ptr->print_fvec(fvec);
-
-	return 0;
-}
 
 void set_to_fortran_params(Parameters& p) {
 	p.na = 40;
@@ -118,15 +76,27 @@ void set_to_fortran_params(Parameters& p) {
 	p.alpha_Y = 0.3333333333333;
 }
 
-void set_to_fortran_params(SSCalibrator& cal) {
+void set_to_fortran_params(HANKCalibration::SSCalibrator& cal) {
 	cal.calibrateLaborDisutility = true;
 	cal.calibrateDiscountRate = true;
 	cal.calibrateRb = true;
 }
 
-int main () {
-	std::string income_dir = "2point_3_5";
+IRF compute_irfs(const HANKCalibration::ObjectPointers& object_ptrs) {
+	Parameters& p = *object_ptrs.ptr1;
+	Model& model = *object_ptrs.ptr2;
+	EquilibriumElement& iss = *object_ptrs.ptr3;
 
+	IRF irf(p, model, iss);
+	irf.shock.type = ShockType::tfp_Y;
+	irf.permanentShock = true;
+	irf.setup();
+	irf.compute();
+
+	return irf;
+}
+
+int main () {
 	Options options; 
 	options.fast = false;
 	options.print_diagnostics = false;
@@ -134,12 +104,13 @@ int main () {
 
 	global_hank_options = &options;
 
-	HANKObjectPointers object_ptrs;
+	HANKCalibration::ObjectPointers object_ptrs;
 
 	// Parameters
-	object_ptrs.ptr1 = std::make_shared<Parameters>();
-	Parameters& params = *object_ptrs.ptr1;
+	Parameters params;
+	object_ptrs.ptr1.reset(&params);
 
+	params.income_dir = "2point_3_5";
 	params.rho = 0.022;
 	params.drs_N = 0;
 	params.drs_Y = 0.9;
@@ -158,16 +129,13 @@ int main () {
 	set_to_fortran_params(params);
 	params.setup(options);
 
-	object_ptrs.ptr2 = std::make_shared<Model>(params, income_dir);
-	Model& model = *object_ptrs.ptr2;
-	// global_current_model_ptr.reset(new Model(params, income_dir));
-	// Model& model = *global_current_model_ptr;
-
-	// global_current_iss_ptr.reset(new Equilibrium(1));
+	Model model(params);
 
 	if ( options.skip_calibration ) {
-		object_ptrs.ptr3 = std::make_shared<EquilibriumElement>();
-		EquilibriumElement& iss = *object_ptrs.ptr3;
+		object_ptrs.ptr2.reset(&model);
+
+		EquilibriumElement iss;
+		object_ptrs.ptr3.reset(&iss);
 		iss.create_initial_steady_state(params, model);
 
 		HJB hjb(model, iss);
@@ -177,32 +145,25 @@ int main () {
 		sdist.gtol = 1.0e-9;
 		sdist.compute(model, iss, hjb);
 
-		object_ptrs.ptr4 = std::make_shared<DistributionStatistics>(params, model, hjb, sdist);
-		object_ptrs.ptr4->print();
+		DistributionStatistics stats(params, model, hjb, sdist);
+		object_ptrs.ptr4.reset(&stats);
+		stats.print();
 	}
 	else {
 		// Calibrate
-		global_calibrator_ptr.reset(new SSCalibrator);
-		global_calibrator_ptr->calibrateLaborDisutility = false;
-		global_calibrator_ptr->calibrateRb = true;
-		global_calibrator_ptr->calibrateDiscountRate = true;
-		set_to_fortran_params(*global_calibrator_ptr);
-		global_calibrator_ptr->setup(params);
+		HANKCalibration::SSCalibrator cal;
+		object_ptrs.ptr5.reset(&cal);
+		set_to_fortran_params(cal);
+		cal.setup(params);
 
 		// Guess rho, chi,labor_occ, capital, and rb
-		int n = global_calibrator_ptr->nmoments;
+		int n = cal.nmoments;
 		hank_float_type x[n];
-		global_calibrator_ptr->fill_xguess(params, model, x);
+		cal.fill_xguess(params, model, x);
 
-		int info = cminpack_hybrd1_wrapper(fcn, (void *) &object_ptrs, n, x);
+		int info = cminpack_hybrd1_wrapper(HANKCalibration::initial_state_state_obj_fn, (void *) &object_ptrs, n, x);
 		HankUtilities::check_cminpack_success(info);
 	}
 
-	EquilibriumElement& iss = *object_ptrs.ptr3;
-	IRF irf(params, *object_ptrs.ptr2, iss);
-	irf.shock.type = ShockType::tfp_Y;
-	irf.permanentShock = true;
-	irf.setup();
-
-	irf.compute();
+	IRF irf = compute_irfs(object_ptrs);
 }

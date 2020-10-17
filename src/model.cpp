@@ -24,10 +24,10 @@ namespace {
 	void check_adjcosts(const Parameters& p, const AdjustmentCosts& adjcosts);
 }
 
-ModelBase::ModelBase(const Parameters& p, const std::string& income_dir) {
+ModelBase::ModelBase(const Parameters& p) {
 	make_asset_grids(p);
 	make_occupation_grids(p);
-	create_income_process(income_dir, p);
+	create_income_process(p);
 	create_combined_variables(p);
 
 	check_nbl(p);
@@ -112,16 +112,15 @@ void ModelBase::make_occupation_grids(const Parameters& p) {
 	nocc_ = p.nocc;
 }
 
-void ModelBase::create_income_process(
-	const std::string& income_dir, const Parameters& p) {
+void ModelBase::create_income_process(const Parameters& p) {
 
-	std::string grid_loc = "../input/" + income_dir + "/ygrid_combined.txt";
+	std::string grid_loc = "../input/" + p.income_dir + "/ygrid_combined.txt";
 	logprodgrid_ = vector2eigenv(HankUtilities::read_matrix(grid_loc));
 
-	std::string dist_loc = "../input/" + income_dir + "/ydist_combined.txt";
+	std::string dist_loc = "../input/" + p.income_dir + "/ydist_combined.txt";
 	proddist_ = vector2eigenv(HankUtilities::read_matrix(dist_loc));
 
-	std::string markov_loc = "../input/" + income_dir + "/ymarkov_combined.txt";
+	std::string markov_loc = "../input/" + p.income_dir + "/ymarkov_combined.txt";
 
 	if ( p.adjustProdGridFrisch )
 		logprodgrid_ = logprodgrid_ / (1.0 + p.adjFrischGridFrac * p.frisch);
@@ -179,8 +178,8 @@ void ModelBase::check_nbl(const Parameters& p) const {
 	}
 }
 
-Model::Model(const Parameters& p_, const std::string& income_dir)
-	: ModelBase(p_, income_dir), p(p_) {
+Model::Model(const Parameters& p_)
+	: ModelBase(p_), p(p_) {
 	assertions();
 
 	if ( global_hank_options->print_diagnostics )

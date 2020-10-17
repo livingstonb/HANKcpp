@@ -11,7 +11,7 @@
 // Constructs the grids and provides a container with public attribute access
 class ModelBase {
 	public:
-		ModelBase(const Parameters& p, const std::string& income_dir);
+		ModelBase(const Parameters& p);
 
 		VectorXr bgrid_, dbgrid_, bdelta_;
 		VectorXr agrid_, dagrid_, adelta_;
@@ -32,7 +32,7 @@ class ModelBase {
 
 		void make_occupation_grids(const Parameters& p);
 
-		void create_income_process(const std::string& income_dir, const Parameters& p);
+		void create_income_process(const Parameters& p);
 
 		void create_combined_variables(const Parameters& p);
 
@@ -42,7 +42,7 @@ class ModelBase {
 // Binds the attributes constructed in ModelBase to const references
 class Model : private ModelBase {
 	public:
-		Model(const Parameters& p_, const std::string& income_dir);
+		Model(const Parameters& p_);
 
 		const Parameters p;
 		const AdjustmentCosts& adjcosts = adjcosts_;
