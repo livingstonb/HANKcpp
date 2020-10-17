@@ -279,29 +279,25 @@ void IRF::find_final_steady_state()
 
 	x[p.nocc + 1] = log(initial_equm.rb);
 
-	SolverArgsIRF args(&p, &model, &initial_equm, this, n);
+	SolverArgsIRF args;
+	args.ptr1.reset(&p);
+	args.ptr2.reset(&model);
+	args.ptr3.reset(&initial_equm);
+	args.ptr5.reset(this);
+
 	int info = cminpack_hybrd1_wrapper(final_steady_state_obj_fn, &args, n, x.data());
 	HankUtilities::check_cminpack_success(info);
 
-	final_equm_ptr.reset(new EquilibriumElement);
-	if ( permanentShock & (shock.type == ShockType::riskaver) )
-		final_equm_ptr->riskaver = p.riskaver + shock.size;
-	else
-		final_equm_ptr->riskaver = p.riskaver;
-
-	final_equm_ptr->create_final_steady_state(p, model, initial_equm, args.x.get());
+	final_equm_ptr = std::move(args.ptr4);
 }
 
 int final_steady_state_obj_fn(void* solver_args_voidptr, int n, const real *x, real *fvec, int /* iflag */ )
 {
-	SolverArgsIRF* solver_args_ptr = (SolverArgsIRF *) solver_args_voidptr;
-	const Parameters& p = *(solver_args_ptr->arg1);
-	const Model& model = *(solver_args_ptr->arg2);
-	const EquilibriumElement& iss = *(solver_args_ptr->arg3);
-	const IRF& irf = *(solver_args_ptr->arg4);
-
-	for (int ix=0; ix<n; ++ix)
-		solver_args_ptr->x[ix] = x[ix];
+	SolverArgsIRF& solver_args = *(SolverArgsIRF *) solver_args_voidptr;
+	const Parameters& p = *(solver_args.ptr1);
+	const Model& model = *(solver_args.ptr2);
+	const EquilibriumElement& iss = *(solver_args.ptr3);
+	const IRF& irf = *(solver_args.ptr5);
 	
 	EquilibriumElement final_ss;
 
@@ -311,6 +307,7 @@ int final_steady_state_obj_fn(void* solver_args_voidptr, int n, const real *x, r
 		final_ss.riskaver = p.riskaver;
 
 	final_ss.create_final_steady_state(p, model, iss, x);
+	solver_args.ptr4.reset(&final_ss);
 
 	HJB hjb(model, final_ss);
 	hjb.iterate(final_ss);

@@ -35,10 +35,10 @@ int fcn(void* args_void_ptr, int n, const real *x, real *fvec, int /* iflag */ )
 
 	global_calibrator_ptr->update_params(&p, x);
 
-	args.ptr2 = std::make_unique<Model>(p, income_dir);
+	args.ptr2 = std::make_shared<Model>(p, income_dir);
 	Model& model = *args.ptr2;
 
-	args.ptr3 = std::make_unique<EquilibriumElement>();
+	args.ptr3 = std::make_shared<EquilibriumElement>();
 	EquilibriumElement& iss = *args.ptr3;
 	global_calibrator_ptr->update_ss(&p, &iss, x);
 	std::cout << '\n';
@@ -52,7 +52,7 @@ int fcn(void* args_void_ptr, int n, const real *x, real *fvec, int /* iflag */ )
 	sdist.gtol = 1.0e-9;
 	sdist.compute(model, iss, hjb);
 
-	args.ptr4 = std::make_unique<DistributionStatistics>(p, model, hjb, sdist);
+	args.ptr4 = std::make_shared<DistributionStatistics>(p, model, hjb, sdist);
 	DistributionStatistics& stats = *args.ptr4;
 	stats.print();
 
@@ -130,14 +130,14 @@ int main () {
 	Options options; 
 	options.fast = false;
 	options.print_diagnostics = false;
-	options.skip_calibration = true;
+	options.skip_calibration = false;
 
 	global_hank_options = &options;
 
 	HANKObjectPointers object_ptrs;
 
 	// Parameters
-	object_ptrs.ptr1 = std::make_unique<Parameters>();
+	object_ptrs.ptr1 = std::make_shared<Parameters>();
 	Parameters& params = *object_ptrs.ptr1;
 
 	params.rho = 0.022;
@@ -158,7 +158,7 @@ int main () {
 	set_to_fortran_params(params);
 	params.setup(options);
 
-	object_ptrs.ptr2 = std::make_unique<Model>(params, income_dir);
+	object_ptrs.ptr2 = std::make_shared<Model>(params, income_dir);
 	Model& model = *object_ptrs.ptr2;
 	// global_current_model_ptr.reset(new Model(params, income_dir));
 	// Model& model = *global_current_model_ptr;
@@ -166,7 +166,7 @@ int main () {
 	// global_current_iss_ptr.reset(new Equilibrium(1));
 
 	if ( options.skip_calibration ) {
-		object_ptrs.ptr3 = std::make_unique<EquilibriumElement>();
+		object_ptrs.ptr3 = std::make_shared<EquilibriumElement>();
 		EquilibriumElement& iss = *object_ptrs.ptr3;
 		iss.create_initial_steady_state(params, model);
 
@@ -177,7 +177,7 @@ int main () {
 		sdist.gtol = 1.0e-9;
 		sdist.compute(model, iss, hjb);
 
-		object_ptrs.ptr4 = std::make_unique<DistributionStatistics>(params, model, hjb, sdist);
+		object_ptrs.ptr4 = std::make_shared<DistributionStatistics>(params, model, hjb, sdist);
 		object_ptrs.ptr4->print();
 	}
 	else {

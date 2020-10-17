@@ -4,6 +4,7 @@
 #include <hank_config.h>
 #include <vector>
 #include <iostream>
+#include <memory>
 
 #if STACK_LIQ_FIRST == 0
 	#define TO_INDEX_1D(a, b, y, na, nb) ((a) + (na) * (b) + (na) * (nb) * (y))
@@ -81,6 +82,22 @@ class StdVector3d {
 };
 
 using vector3dr = StdVector3d<hank_float_type>;
+
+template<typename T1, typename T2=void, typename T3=void, typename T4=void, typename T5=void>
+class UniquePtrContainer {
+	public:
+		UniquePtrContainer() {}
+
+		std::shared_ptr<T1> ptr1 = nullptr;
+
+		std::shared_ptr<T2> ptr2 = nullptr;
+
+		std::shared_ptr<T3> ptr3 = nullptr;
+
+		std::shared_ptr<T4> ptr4 = nullptr;
+
+		std::shared_ptr<T5> ptr5 = nullptr;
+};
 
 #undef TO_INDEX_1D
 
