@@ -27,7 +27,7 @@ int final_steady_state_obj_fn(void* solver_args_voidptr, int n, const hank_float
 
 class IRF {
 	public:
-		IRF(const Parameters& p_, const Model& model_, const EquilibriumElement& iss_);
+		IRF(const Parameters& p_, const Model& model_, const EquilibriumInitial& iss_);
 
 		enum class SolverType { hybrd1, broyden };
 
@@ -73,17 +73,17 @@ class IRF {
 
 		VectorXr deltatransvec, cumdeltatrans;
 
-		TransEquilibrium trans_equm;
+		std::vector<EquilibriumTrans> trans_equm;
 
-		std::shared_ptr<EquilibriumElement> final_equm_ptr = nullptr;
+		std::shared_ptr<EquilibriumFinal> final_equm_ptr = nullptr;
 
 		const Parameters& p;
 
 		const Model& model;
 
-		const EquilibriumElement& initial_equm;
+		const EquilibriumInitial& initial_equm;
 };
 
-using SolverArgsIRF = UniquePtrContainer<const Parameters, const Model, const EquilibriumElement, EquilibriumElement, const IRF>;
+using SolverArgsIRF = UniquePtrContainer<const Parameters, const Model, const EquilibriumInitial, EquilibriumFinal, const IRF>;
 
 #endif

@@ -9,47 +9,22 @@ class Parameters;
 
 class Model;
 
-template<typename Eltype>
-class HankArray {
+class Equilibrium {
 	public:
-		std::unique_ptr<Eltype[]> data = nullptr;
-
-		HankArray() {
-			reset(1);
-		}
-
-		HankArray(int n) {
-			reset(n);
-		}
-
-		void reset(int n) {
-			data.reset(new Eltype[n]);
-			T = n;
-		}
-
-		Eltype& operator[](int i) {return data[i];}
-
-		Eltype operator[](int i) const {return data[i];}
-
-		Eltype& get(int i) {return data[i];}
-
-		Eltype get(int i) const {return data[i];}
-
-		int T;
-};
-
-class EquilibriumElement {
-	public:
-		EquilibriumElement() {}
+		Equilibrium() {}
 
 		void create_initial_steady_state(const Parameters& p, const Model& model);
 
 		void create_final_steady_state(const Parameters& p, const Model& model,
-			const EquilibriumElement& initial_equm, const hank_float_type* x);
+			const Equilibrium& initial_equm, const hank_float_type* x);
 
 		void create_transition();
 
-		void set_parameters(const Parameters& p);
+		virtual void set_from_parameters(const Parameters& p);
+
+		virtual bool is_initial_steady_state() {return false;}
+
+		virtual bool is_trans_equilibrium() {return false;}
 
 		void compute_factors(const Model& model);
 
@@ -93,32 +68,25 @@ class EquilibriumElement {
 
 };
 
-class Equilibrium : public HankArray<EquilibriumElement> {
-	public:
-		Equilibrium() : HankArray<EquilibriumElement>() {}
-
-		Equilibrium(int n) : HankArray<EquilibriumElement>(n) {}
-
-		// void create_initial_steady_state(const Parameters& p);
-
-		// HankArray<FactorQuantities> compute_factors(const Model& model, const std::vector<hank_float_type>& labor_occ);
+class EquilibriumInitial : public Equilibrium {
+	bool is_initial_steady_state() {return true;}
 };
 
-class TransEquilibriumElement : public EquilibriumElement {
+class EquilibriumFinal : public Equilibrium {
+	bool is_initial_steady_state() {return true;}
+};
+
+class EquilibriumTrans : public Equilibrium {
 	public:
 		hank_float_type mpshock, pi, pricelev, priceadjust, capadjust, qdot, valcapital;
 
 		hank_float_type pidot, logydot, elast, firmdiscount, qinvestment, invadjust;
+
+		bool is_trans_equilibrium() {return true;}
 };
 
-class TransEquilibrium : public HankArray<TransEquilibriumElement> {
-	public:
-		TransEquilibrium() : HankArray<TransEquilibriumElement>() {}
-
-		TransEquilibrium(int n) : HankArray<TransEquilibriumElement>(n) {}
-
-		void compute_transition_state(const Parameters& p, const Model& model,
-			const EquilibriumElement& final_equm, const hank_float_type* deltatransvec);
-};
+void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
+	const Parameters& p, const Model& model,
+	const EquilibriumElement& final_equm, const hank_float_type* deltatransvec);
 
 #endif
