@@ -131,9 +131,7 @@ void IRF::compute() {
 void IRF::transition_fcn(int n, const hank_float_type *x, hank_float_type *z) {
 	make_transition_guesses(n, x, z);
 
-	// for (int it=0; it<Ttrans; ++it) {
-	// 	trans_equm[it].
-	// }
+	trans_equm.compute_transition_state(p, model, *final_equm_ptr, deltatransvec.data());
 }
 
 void IRF::make_transition_guesses(int n, const hank_float_type *x, hank_float_type *z) {

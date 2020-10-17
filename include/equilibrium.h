@@ -98,6 +98,7 @@ class Equilibrium : public HankArray<EquilibriumElement> {
 		Equilibrium() : HankArray<EquilibriumElement>() {}
 
 		Equilibrium(int n) : HankArray<EquilibriumElement>(n) {}
+
 		// void create_initial_steady_state(const Parameters& p);
 
 		// HankArray<FactorQuantities> compute_factors(const Model& model, const std::vector<hank_float_type>& labor_occ);
@@ -105,9 +106,9 @@ class Equilibrium : public HankArray<EquilibriumElement> {
 
 class TransEquilibriumElement : public EquilibriumElement {
 	public:
-		hank_float_type mpshock, pi, pricelev, priceadjust;
+		hank_float_type mpshock, pi, pricelev, priceadjust, capadjust, qdot, valcapital;
 
-		hank_float_type pidot, logydot, elast, firmdiscount;
+		hank_float_type pidot, logydot, elast, firmdiscount, qinvestment, invadjust;
 };
 
 class TransEquilibrium : public HankArray<TransEquilibriumElement> {
@@ -115,6 +116,9 @@ class TransEquilibrium : public HankArray<TransEquilibriumElement> {
 		TransEquilibrium() : HankArray<TransEquilibriumElement>() {}
 
 		TransEquilibrium(int n) : HankArray<TransEquilibriumElement>(n) {}
+
+		void compute_transition_state(const Parameters& p, const Model& model,
+			const EquilibriumElement& final_equm, const hank_float_type* deltatransvec);
 };
 
 #endif

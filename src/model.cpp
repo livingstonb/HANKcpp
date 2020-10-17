@@ -198,28 +198,41 @@ VectorXr Model::get_rb_effective() const {
 	return rb_effective;
 }
 
-double Model::util(double c, double riskaver) const {
+hank_float_type Model::util(hank_float_type c, hank_float_type riskaver) const {
 	return HankFunctions::utility(c, p.prefshock, riskaver);
 }
 
-double Model::util1(double c, double riskaver) const {
+hank_float_type Model::util1(hank_float_type c, hank_float_type riskaver) const {
 	return HankFunctions::utility1(c, p.prefshock, riskaver);
 }
 
-double Model::util1inv(double u, double riskaver) const {
+hank_float_type Model::util1inv(hank_float_type u, hank_float_type riskaver) const {
 	return HankFunctions::utility1inv(u, p.prefshock, riskaver);
 }
 
-double Model::labdisutil(double h, double chi) const {
+hank_float_type Model::labdisutil(hank_float_type h, hank_float_type chi) const {
 	return HankFunctions::labor_disutility(h, p.frisch, chi);
 }
 
-double Model::labdisutil1(double h, double chi) const {
+hank_float_type Model::labdisutil1(hank_float_type h, hank_float_type chi) const {
 	return HankFunctions::labor_disutility1(h, p.frisch, chi);
 }
 
-double Model::labdisutil1inv(double du, double chi) const {
+hank_float_type Model::labdisutil1inv(hank_float_type du, hank_float_type chi) const {
 	return HankFunctions::labor_disutility1inv(du, p.frisch, chi);
+}
+
+hank_float_type Model::capadjcost(hank_float_type x) const {
+	return HankFunctions::capadjcost(x, p.capadjcost, p.depreciation);
+}
+
+hank_float_type Model::capadjcost1(hank_float_type x) const {
+	return HankFunctions::capadjcost1(x, p.capadjcost, p.depreciation);
+}
+
+
+hank_float_type Model::capadjcost1inv(hank_float_type x) const {
+	return HankFunctions::capadjcost1inv(x, p.capadjcost, p.depreciation);
 }
 
 double Model::util1BC(double h, double riskaver, double chi, double bdrift, double netwage, double wagescale) const {

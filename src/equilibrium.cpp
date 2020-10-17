@@ -22,6 +22,8 @@ void EquilibriumElement::create_initial_steady_state(const Parameters& p, const 
 		capital = p.target_KY_ratio;
 
 	compute_factors(model);
+	capital_Y = capfracY * capital;
+	capital_N = capfracN * capital;
 
 	tfp_Y = output / pow(cobb_douglas(capital_Y, labor_Y, alpha_Y), drs_Y);
 	tfp_N = varieties / pow(cobb_douglas(capital_N, labor_N, alpha_N), drs_N);
@@ -54,6 +56,8 @@ void EquilibriumElement::create_final_steady_state(const Parameters& p, const Mo
 	rb = exp(x[nocc + 1]);
 
 	compute_factors(model);
+	capital_Y = capfracY * capital;
+	capital_N = capfracN * capital;
 
 	tfp_Y = initial_equm.tfp_Y;
 	tfp_N = initial_equm.tfp_N;
@@ -92,8 +96,6 @@ void EquilibriumElement::compute_factors(const Model& model)
 	capshareN = alpha_N * (1.0 - price_W) * drs_N;
 	capfracY = capshareY / (capshareY + capshareN);
 	capfracN = capshareN / (capshareY + capshareN);
-	capital_Y = capfracY * capital;
-	capital_N = capfracN * capital;
 
 	// Labor
 	labor_Y = 1.0;
@@ -152,7 +154,7 @@ void EquilibriumElement::compute_dividends(const Parameters& p)
 	dividend_A = p.profdistfracA * profit * (1.0 - p.corptax);
 	dividend_B = p.profdistfracB * profit * (1.0 - p.corptax);
 	equity_A = dividend_A / ra;
-	equity_B = dividend_B / p.rb;
+	equity_B = dividend_B / rb;
 }
 
 void EquilibriumElement::compute_govt(const Parameters& p, const Model& model)
@@ -173,6 +175,74 @@ void EquilibriumElement::compute_govt(const Parameters& p, const Model& model)
 
 	if ( p.taxHHProfitIncome )
 		taxrev += p.labtax * p.profdistfracW * profit * (1.0 - p.corptax);
+}
+
+void TransEquilibrium::compute_transition_state(const Parameters& p, const Model& model,
+	const EquilibriumElement& final_equm, const hank_float_type* deltatransvec)
+{
+	for (int it=0; it<T; ++it) {
+		double deltatrans = deltatransvec[it];
+
+		data[it].compute_factors(model);
+
+		data[it].capital_Y = pow(data[it].output / data[it].tfp_Y, 1.0 / data[it].drs_Y)
+			/ pow(data[it].labor_Y, 1.0 - data[it].alpha_Y);
+		data[it].capital_Y = pow(data[it].capital_Y, 1.0 / data[it].alpha_Y);
+		data[it].capital = data[it].capital_Y / data[it].capfracY;
+		data[it].capital_N = data[it].capfracN * data[it].capital;
+
+		data[it].varieties = data[it].tfp_N * pow(
+			cobb_douglas(data[it].capital_N, data[it].labor_N, data[it].alpha_N), data[it].drs_N);
+
+		data[it].compute_factor_prices();
+
+		data[it].investment = p.depreciation * data[it].capital;
+
+		if (it < T - 1)
+			data[it].investment += (data[it+1].capital - data[it].capital) / deltatrans;
+
+		// Value of capital and ra
+		double linv = 0;
+		if ( (p.capadjcost == 0) & (p.invadjcost == 0) ) {
+			data[it].capadjust = 0;
+			data[it].qdot = 0;
+			data[it].ra = data[it].rcapital - p.depreciation;
+			data[it].qinvestment = 0;
+		}
+		else if ( p.capadjcost > 0 ) {
+			data[it].qinvestment = 0;
+			data[it].invadjust = 0;
+
+			double invkc = model.capadjcost1inv(data[it].qcapital - 1.0);
+
+			if (it < T - 1)
+				data[it].qdot = (data[it+1].qcapital - data[it].qcapital) / deltatrans;
+			else
+				data[it].qdot = 0;
+
+			data[it].capadjust = model.capadjcost(invkc);
+			data[it].ra = (data[it].rcapital + invkc * model.capadjcost1(invkc) - data[it].capadjust + data[it].qdot)
+				/ data[it].qcapital - p.depreciation;
+		}
+		else if ( p.invadjcost > 0 ) {
+			std::cerr << "Not coded\n";
+			throw 0;
+		}
+
+		data[it].valcapital = data[it].qcapital * data[it].capital + data[it].qinvestment * linv;
+
+		data[it].compute_profits();
+		data[it].dividend_A = p.profdistfracA * data[it].profit * (1.0 - p.corptax);
+		data[it].dividend_B = p.profdistfracB * data[it].profit * (1.0 - p.corptax);
+
+	}
+
+	data[T-1].equity_A = final_equm.equity_A;
+	data[T-1].equity_B = final_equm.equity_B;
+	for (int it=T-2; it>0; --it) {
+		data[it].equity_A = (data[it+1].equity_A + data[it].dividend_A * deltatransvec[it]) / (1.0 + deltatransvec[it] * data[it].ra);
+		data[it].equity_B = (data[it+1].equity_B + data[it].dividend_B * deltatransvec[it]) / (1.0 + deltatransvec[it] * data[it].rb);
+	}
 }
 
 namespace

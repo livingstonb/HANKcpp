@@ -81,19 +81,25 @@ class Model : private ModelBase {
 
 		VectorXr get_rb_effective() const;
 
-		double util(double c, double riskaver) const;
+		hank_float_type util(hank_float_type c, hank_float_type riskaver) const;
 
-		double util1(double c, double riskaver) const;
+		hank_float_type util1(hank_float_type c, hank_float_type riskaver) const;
 
-		double util1inv(double u, double riskaver) const;
+		hank_float_type util1inv(hank_float_type u, hank_float_type riskaver) const;
 
-		double labdisutil(double h, double chi) const;
+		hank_float_type labdisutil(hank_float_type h, hank_float_type chi) const;
 
-		double labdisutil1(double h, double chi) const;
+		hank_float_type labdisutil1(hank_float_type h, hank_float_type chi) const;
 
-		double labdisutil1inv(double du, double chi) const;
+		hank_float_type labdisutil1inv(hank_float_type du, hank_float_type chi) const;
 
 		double util1BC(double h, double riskaver, double chi, double bdrift, double netwage, double wagescale) const;
+
+		hank_float_type capadjcost1inv(hank_float_type x) const;
+
+		hank_float_type capadjcost1(hank_float_type x) const;
+
+		hank_float_type capadjcost(hank_float_type x) const;
 
 		void print_values() const;
 

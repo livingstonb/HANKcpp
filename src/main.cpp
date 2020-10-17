@@ -89,7 +89,7 @@ IRF compute_irfs(const HANKCalibration::ObjectPointers& object_ptrs) {
 
 	IRF irf(p, model, iss);
 	irf.shock.type = ShockType::tfp_Y;
-	irf.permanentShock = true;
+	irf.permanentShock = false;
 	irf.setup();
 	irf.compute();
 
@@ -100,7 +100,7 @@ int main () {
 	Options options; 
 	options.fast = false;
 	options.print_diagnostics = false;
-	options.skip_calibration = false;
+	options.skip_calibration = true;
 
 	global_hank_options = &options;
 
