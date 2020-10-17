@@ -19,46 +19,45 @@
 
 const Options *global_hank_options = NULL;
 
-std::unique_ptr<Parameters> global_params_ptr(nullptr);
 std::string income_dir = "2point_3_5";
 
 std::unique_ptr<SSCalibrator> global_calibrator_ptr(nullptr);
 
-std::unique_ptr<Model> global_current_model_ptr(nullptr);
+using HANKObjectPointers = UniquePtrContainer<Parameters, Model, EquilibriumElement, DistributionStatistics, hank_float_type[]>;
 
-std::unique_ptr<Equilibrium> global_current_iss_ptr(nullptr);
-
-std::unique_ptr<DistributionStatistics> global_current_stats_ptr(nullptr);
-
-int fcn(void* /* _p */, int n, const real *x, real *fvec, int /* iflag */ ) {
+int fcn(void* args_void_ptr, int n, const real *x, real *fvec, int /* iflag */ ) {
 	assert(global_calibrator_ptr->nmoments == n);
 
 	std::cout << "\nCalibration parameters updated:\n";
 
-	global_calibrator_ptr->update_params(global_params_ptr.get(), x);
+	HANKObjectPointers& args = *(HANKObjectPointers *) args_void_ptr;
+	Parameters& p = *args.ptr1;
 
-	global_current_model_ptr.reset(new Model(*global_params_ptr, income_dir));
+	global_calibrator_ptr->update_params(&p, x);
 
-	global_current_iss_ptr.reset(new Equilibrium(1));
-	EquilibriumElement& iss = global_current_iss_ptr->get(0);
-	iss.create_initial_steady_state(*global_params_ptr, *global_current_model_ptr);
-	global_calibrator_ptr->update_ss(global_params_ptr.get(), &iss, x);
+	args.ptr2 = std::make_unique<Model>(p, income_dir);
+	Model& model = *args.ptr2;
+
+	args.ptr3 = std::make_unique<EquilibriumElement>();
+	EquilibriumElement& iss = *args.ptr3;
+	global_calibrator_ptr->update_ss(&p, &iss, x);
 	std::cout << '\n';
 
-	iss.create_initial_steady_state(*global_params_ptr, *global_current_model_ptr);
+	iss.create_initial_steady_state(p, model);
 
-	HJB hjb(*global_current_model_ptr, iss);
+	HJB hjb(*args.ptr2, iss);
 	hjb.iterate(iss);
 
 	StationaryDist sdist;
 	sdist.gtol = 1.0e-9;
-	sdist.compute(*global_current_model_ptr, iss, hjb);
+	sdist.compute(model, iss, hjb);
 
-	global_current_stats_ptr.reset(new DistributionStatistics(*global_params_ptr, *global_current_model_ptr, hjb, sdist));
-	global_current_stats_ptr->print();
+	args.ptr4 = std::make_unique<DistributionStatistics>(p, model, hjb, sdist);
+	DistributionStatistics& stats = *args.ptr4;
+	stats.print();
 
-	SSCalibrationArgs args(global_params_ptr.get(), global_current_model_ptr.get(), global_current_stats_ptr.get(), &iss);
-	global_calibrator_ptr->fill_fvec(args, fvec);
+	SSCalibrationArgs cal_args(&p, &model, &stats, &iss);
+	global_calibrator_ptr->fill_fvec(cal_args, fvec);
 	global_calibrator_ptr->print_fvec(fvec);
 
 	return 0;
@@ -135,9 +134,12 @@ int main () {
 
 	global_hank_options = &options;
 
+	HANKObjectPointers object_ptrs;
+
 	// Parameters
-	global_params_ptr.reset(new Parameters);
-	Parameters& params = *global_params_ptr;
+	object_ptrs.ptr1 = std::make_unique<Parameters>();
+	Parameters& params = *object_ptrs.ptr1;
+
 	params.rho = 0.022;
 	params.drs_N = 0;
 	params.drs_Y = 0.9;
@@ -154,16 +156,18 @@ int main () {
 	params.rb = 0.03 / 4.0;
 
 	set_to_fortran_params(params);
-
 	params.setup(options);
 
-	global_current_model_ptr.reset(new Model(params, income_dir));
-	Model& model = *global_current_model_ptr;
+	object_ptrs.ptr2 = std::make_unique<Model>(params, income_dir);
+	Model& model = *object_ptrs.ptr2;
+	// global_current_model_ptr.reset(new Model(params, income_dir));
+	// Model& model = *global_current_model_ptr;
 
-	global_current_iss_ptr.reset(new Equilibrium(1));
+	// global_current_iss_ptr.reset(new Equilibrium(1));
 
 	if ( options.skip_calibration ) {
-		EquilibriumElement& iss = global_current_iss_ptr->get(0);
+		object_ptrs.ptr3 = std::make_unique<EquilibriumElement>();
+		EquilibriumElement& iss = *object_ptrs.ptr3;
 		iss.create_initial_steady_state(params, model);
 
 		HJB hjb(model, iss);
@@ -173,8 +177,8 @@ int main () {
 		sdist.gtol = 1.0e-9;
 		sdist.compute(model, iss, hjb);
 
-		global_current_stats_ptr.reset(new DistributionStatistics(params, model, hjb, sdist));
-		global_current_stats_ptr->print();
+		object_ptrs.ptr4 = std::make_unique<DistributionStatistics>(params, model, hjb, sdist);
+		object_ptrs.ptr4->print();
 	}
 	else {
 		// Calibrate
@@ -190,13 +194,12 @@ int main () {
 		hank_float_type x[n];
 		global_calibrator_ptr->fill_xguess(params, model, x);
 
-		void *z = NULL;
-		int info = cminpack_hybrd1_wrapper(fcn, z, n, x);
+		int info = cminpack_hybrd1_wrapper(fcn, (void *) &object_ptrs, n, x);
 		HankUtilities::check_cminpack_success(info);
 	}
 
-	EquilibriumElement& iss = global_current_iss_ptr->get(0);
-	IRF irf(params, *global_current_model_ptr, iss);
+	EquilibriumElement& iss = *object_ptrs.ptr3;
+	IRF irf(params, *object_ptrs.ptr2, iss);
 	irf.shock.type = ShockType::tfp_Y;
 	irf.permanentShock = true;
 	irf.setup();

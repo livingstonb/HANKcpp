@@ -54,3 +54,19 @@ class SolverArgs {
 
 		std::unique_ptr<hank_float_type[]> x = nullptr;
 };
+
+template<typename T1, typename T2=void, typename T3=void, typename T4=void, typename T5=void>
+class UniquePtrContainer {
+	public:
+		UniquePtrContainer() {}
+
+		std::unique_ptr<T1> ptr1 = nullptr;
+
+		std::unique_ptr<T2> ptr2 = nullptr;
+
+		std::unique_ptr<T3> ptr3 = nullptr;
+
+		std::unique_ptr<T4> ptr4 = nullptr;
+
+		std::unique_ptr<T5> ptr5 = nullptr;
+};
