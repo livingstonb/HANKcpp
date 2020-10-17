@@ -12,26 +12,6 @@
 
 namespace HANKCalibration {
 
-// struct SSCalibrationArgs {
-// 	SSCalibrationArgs() {}
-	
-// 	SSCalibrationArgs(const Parameters *p_, const Model *model_,
-// 		const DistributionStatistics *stats_, const EquilibriumElement *iss_) {
-// 		p = p_;
-// 		model = model_;
-// 		stats = stats_;
-// 		iss = iss_;
-// 	}
-
-// 	const Parameters *p = NULL;
-
-// 	const Model *model = NULL;
-
-// 	const DistributionStatistics *stats = NULL;
-
-// 	const EquilibriumElement *iss = NULL;
-// };
-
 class CalibrationArgs;
 
 using deviation_fn_type = std::function<double(const CalibrationArgs&)>;
