@@ -26,20 +26,20 @@ namespace {
 
 	vector3dr make_value_guess(const Model& model, const Equilibrium& ss, double riskaver);
 
-	Upwinding::DepositUpwind optimal_deposits(const Model& model, double Va, double Vb, double a);
+	Upwinding::DepositUpwind optimal_deposits(const Model& model, double Va, double Vb, double a, double illprice);
 }
 
 namespace Bellman {
-	Drifts::Drifts(double s, double d, double areturn, double acost, bool kfe) {
+	Drifts::Drifts(double s, double d, double areturn, double acost, bool kfe, double illprice) {
 		if ( kfe ) {
-			aB = fmin(d + areturn, 0.0);
-			aF = fmax(d + areturn, 0.0);
+			aB = fmin(d / illprice + areturn, 0.0);
+			aF = fmax(d / illprice + areturn, 0.0);
 			bB = fmin(s - d - acost, 0.0);
 			bF = fmax(s - d - acost, 0.0);
 		}
 		else {
-			aB = fmin(d, 0.0) + fmin(areturn, 0.0);
-			aF = fmax(d, 0.0) + fmax(areturn, 0.0);
+			aB = fmin(d / illprice, 0.0) + fmin(areturn, 0.0);
+			aF = fmax(d / illprice, 0.0) + fmax(areturn, 0.0);
 			bB = fmin(-d - acost, 0) + fmin(s, 0.0);
 			bF = fmax(-d - acost, 0) + fmax(s, 0.0);
 		}
@@ -145,11 +145,11 @@ Upwinding::Policies HJB::update_policies(const Equilibrium& ss) {
 				policies.update_c(ia, ib, iy, upwindF, upwindB, upwind0);
 
 				// DEPOSIT UPWINDING
-				illiq = model.agrid(ia);
+				illiq = model.agrid(ia) * ss.illprice;
 
 				// Deposit decision: a forward, b backward
 				if ( (ia < p.na - 1) & (ib > 0) ) {
-					depositFB = optimal_deposits(model, derivs.VaF, derivs.VbB, illiq);
+					depositFB = optimal_deposits(model, derivs.VaF, derivs.VbB, illiq, ss.illprice);
 					depositFB.valid = ( (depositFB.d > 0) & (depositFB.Hd > 0) );
 				}
 				else
@@ -157,7 +157,7 @@ Upwinding::Policies HJB::update_policies(const Equilibrium& ss) {
 
 				// Deposit decision: a backward, b forward
 				if ( (ia > 0) & (ib < p.nb - 1) ) {
-					depositBF = optimal_deposits(model, derivs.VaB, derivs.VbF, illiq);
+					depositBF = optimal_deposits(model, derivs.VaB, derivs.VbF, illiq, ss.illprice);
 					worth_adjusting = ( depositBF.d <= -model.adjcosts.cost(depositBF.d, illiq) );
 					depositBF.valid = ( worth_adjusting & (depositBF.Hd > 0) );
 				}
@@ -169,7 +169,7 @@ Upwinding::Policies HJB::update_policies(const Equilibrium& ss) {
 					if ( ib == 0 )
 						derivs.VbB = model.util1(upwindB.c, riskaver);
 
-					depositBB = optimal_deposits(model, derivs.VaB, derivs.VbB, illiq);
+					depositBB = optimal_deposits(model, derivs.VaB, derivs.VbB, illiq, ss.illprice);
 					worth_adjusting = ( depositBB.d > -model.adjcosts.cost(depositBB.d, illiq) );
 					depositBB.valid = ( worth_adjusting & (depositBB.d <= 0) & (depositBB.Hd > 0));
 				}
@@ -298,7 +298,6 @@ void HJB::update_value_fn(const Equilibrium& ss, const Upwinding::Policies& poli
 	VectorXr bvec(p.nb * p.na);
 	VectorXr ycol, vcol(model.ny);
 	int iab;
-	Bellman::Drifts drifts;
 	bool kfe = false;
 
 	SparseXd ldiagmat, sparseI = speye(p.na * p.nb);
@@ -319,7 +318,7 @@ void HJB::update_value_fn(const Equilibrium& ss, const Upwinding::Policies& poli
 			}
 		}
 
-		SparseMatContainer Acont = construct_transition_matrix(p, model, ss.ra, policies, iy, kfe);
+		SparseMatContainer Acont = construct_transition_matrix(p, model, ss.ra, ss.illprice, policies, iy, kfe);
 		SparseXd& A = Acont.get();
 
 		// Construct B matrix = I + delta * (rho * I - A)
@@ -422,11 +421,11 @@ namespace {
 		return V;
 	}
 
-	Upwinding::DepositUpwind optimal_deposits(const Model& model, double Va, double Vb, double a) {
+	Upwinding::DepositUpwind optimal_deposits(const Model& model, double Va, double Vb, double a, double illprice) {
 		Upwinding::DepositUpwind dupwind;
-		dupwind.d = model.adjcosts.cost1inv(Va / Vb - 1.0, a);
+		dupwind.d = model.adjcosts.cost1inv(Va / (Vb * illprice) - 1.0, a);
 
-		dupwind.Hd = Va * dupwind.d - Vb * (dupwind.d + model.adjcosts.cost(dupwind.d, a));
+		dupwind.Hd = Va * dupwind.d / illprice - Vb * (dupwind.d + model.adjcosts.cost(dupwind.d, a));
 		return dupwind;
 	}
 }

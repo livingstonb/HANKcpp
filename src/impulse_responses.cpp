@@ -127,6 +127,7 @@ void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type 
 	solve_trans_equilibrium(trans_equm, p, model, initial_equm, *final_equm_ptr, deltatransvec.data());
 
 	// Solve distribution
+	std::vector<DistributionStatistics> trans_stats;
 	for (int it=0; it<Ttrans; ++it) {
 		HJB hjb(model, trans_equm[it]);
 		hjb.iterate(trans_equm[it]);

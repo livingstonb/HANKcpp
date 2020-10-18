@@ -301,8 +301,10 @@ namespace
 			trans_equms[it].equity_Bdot = (trans_equms[it+1].equity_B - trans_equms[it].equity_B) / deltatransvec[it];
 		}
 
-		for (int it=0; it<T; ++it)
+		for (int it=0; it<T; ++it) {
 			trans_equms[it].illprice = (trans_equms[it].valcapital + trans_equms[it].equity_A) / trans_equms[it].illshares;
+			trans_equms[it].bond = trans_equms[it].equity_B;
+		}
 
 		trans_equms[T-1].illpricedot = 0;
 		for (int it=T-2; it>=0; --it)

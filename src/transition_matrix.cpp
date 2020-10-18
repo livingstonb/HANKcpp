@@ -3,12 +3,13 @@
 #include <model.h>
 #include <bellman.h>
 #include <upwinding.h>
+#include <equilibrium.h>
 #include <hank_eigen_dense.h>
 #include <hank_eigen_sparse.h>
 #include <hank_macros.h>
 
 SparseMatContainer construct_transition_matrix(const Parameters& p, const Model& model, double ra,
-	const Upwinding::Policies& policies, int iy, bool kfe) {
+	double illprice, const Upwinding::Policies& policies, int iy, bool kfe) {
 
 	double d, s, acost, areturn, val, val1, val2;
 	int iab;
@@ -28,7 +29,7 @@ SparseMatContainer construct_transition_matrix(const Parameters& p, const Model&
 			areturn = adriftvec(ia);
 
 			// Compute drifts
-			drifts = Bellman::Drifts(s, d, areturn, acost, kfe);
+			drifts = Bellman::Drifts(s, d, areturn, acost, kfe, illprice);
 
 			// Matrix entries, ia-1
 			if ( (ia > 0) & (drifts.aB != 0.0) ) {
@@ -80,7 +81,7 @@ SparseMatContainer construct_transition_matrix(const Parameters& p, const Model&
 }
 
 SparseMatContainer get_kfe_transition_matrix(const Parameters& p, const Model& model, double ra,
-	const Upwinding::Policies& policies, int iy) {
+	double illprice, const Upwinding::Policies& policies, int iy) {
 	bool kfe = true;
-	return construct_transition_matrix(p, model, ra, policies, iy, kfe);
+	return construct_transition_matrix(p, model, ra, illprice, policies, iy, kfe);
 }

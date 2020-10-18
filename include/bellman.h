@@ -25,7 +25,7 @@ namespace Bellman {
 		public:
 			Drifts() {}
 
-			Drifts(double s, double d, double areturn, double acost, bool kfe);
+			Drifts(double s, double d, double areturn, double acost, bool kfe, double illprice);
 
 			double aB, aF, bB, bF;
 	};

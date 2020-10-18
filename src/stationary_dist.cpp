@@ -33,7 +33,7 @@ void StationaryDist::compute(const Model& model, const Equilibrium& ss, const HJ
 	std::vector<SparseXd> B(model.ny);
 	std::vector<sparse_solver> spsolvers(model.ny);
 	for (int iy=0; iy<model.ny; ++iy) {
-		SparseMatContainer Acont = get_kfe_transition_matrix(p, model, ss.ra,
+		SparseMatContainer Acont = get_kfe_transition_matrix(p, model, ss.ra, ss.illprice,
 			hjb.optimal_decisions, iy);
 		SparseXd& A = Acont.get();
 

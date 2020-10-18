@@ -10,9 +10,9 @@ namespace Upwinding { class Policies; }
 class SparseMatContainer;
 
 SparseMatContainer construct_transition_matrix(const Parameters& p, const Model& model, double ra,
-	const Upwinding::Policies& policies, int iy, bool kfe);
+	double illprice, const Upwinding::Policies& policies, int iy, bool kfe);
 
 SparseMatContainer get_kfe_transition_matrix(const Parameters& p, const Model& model, double ra,
-	const Upwinding::Policies& policies, int iy);
+	double illprice, const Upwinding::Policies& policies, int iy);
 
 #endif

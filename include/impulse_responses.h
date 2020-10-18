@@ -5,7 +5,6 @@
 #include <hank_eigen_dense.h>
 #include <memory>
 #include <equilibrium.h>
-#include <distribution_statistics.h>
 
 class Parameters;
 
@@ -75,8 +74,6 @@ class IRF {
 		VectorXr deltatransvec, cumdeltatrans;
 
 		std::vector<EquilibriumTrans> trans_equm;
-
-		std::vector<DistributionStatistics> trans_stats;
 
 		std::shared_ptr<EquilibriumFinal> final_equm_ptr = nullptr;
 
