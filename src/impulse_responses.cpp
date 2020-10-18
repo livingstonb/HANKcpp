@@ -349,9 +349,8 @@ int final_steady_state_obj_fn(void* solver_args_voidptr, int /* n */, const real
 
 	DistributionStatistics stats(p, model, hjb, sdist);
 
-	final_ss.bond = stats.Eb;
-	final_ss.govbond = iss.equity_B - iss.bond;
-	final_ss.govexp = iss.taxrev + iss.rb * iss.govbond;
+	final_ss.govbond = (final_ss.govexp - final_ss.taxrev) / final_ss.rb;
+	final_ss.bond = final_ss.equity_B - final_ss.govbond;
 
 	fvec[0] = stats.Ea / (final_ss.capital + final_ss.equity_A) - 1.0;
 
