@@ -6,6 +6,10 @@
 #include <hank_types.h>
 #include <algorithm>
 
+#ifdef HANK_INCLUDE_EIGEN_LU
+#include <Eigen/LU>
+#endif
+
 using Eigen::seq;
 
 using MatrixXr = Eigen::Matrix<hank_float_type, Eigen::Dynamic, Eigen::Dynamic>;
