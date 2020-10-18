@@ -16,9 +16,9 @@
 using namespace std::placeholders;
 
 namespace {
-	VectorXr get_AR1_path_logs(int T, double x0, double eps, double rho, const VectorXr& deltas, int nback);
+	VectorXr get_AR1_path_logs(int T, double x0, double eps, double rho, const std::vector<hank_float_type>& deltas, int nback);
 
-	VectorXr get_AR1_path_levels(int T, double x0, double eps, double rho, const VectorXr& deltas, int nback);
+	VectorXr get_AR1_path_levels(int T, double x0, double eps, double rho, const std::vector<hank_float_type>& deltas, int nback);
 
 	hank_float_type get_firmdiscount(FirmDiscountRateType discount_type, const EquilibriumInitial& initial_equm, const EquilibriumTrans& trans_equm);
 }
@@ -64,15 +64,14 @@ void IRF::construct_delta_trans_vectors() {
 	double la = (Ttrans + 1) * deltatransmin - deltatransmin * lb;
 
 	double lit;
-	deltatransvec = VectorXr(Ttrans);
-	cumdeltatrans = VectorXr(Ttrans);
 	for (int it=0; it<Ttrans; ++it) {
 		lit = static_cast<double>(it) / (Ttrans + 1);
-		cumdeltatrans(it) = la * lit / (1.0 - lb * lit);
+		cumdeltatrans.push_back(la * lit / (1.0 - lb * lit));
 	}
 
-	deltatransvec(seq(1, Ttrans-1)) = cumdeltatrans(seq(1, Ttrans-1)) - cumdeltatrans(seq(0, Ttrans-2));
-	deltatransvec(0) = cumdeltatrans(0);
+	deltatransvec[0] = cumdeltatrans[0];
+	for (int it=1; it<Ttrans; ++it)
+		deltatransvec[it] = cumdeltatrans[it] - cumdeltatrans[it-1];
 }
 
 void IRF::compute() {
@@ -215,9 +214,9 @@ void IRF::make_transition_guesses(const hank_float_type *x) {
 			if ( it == 0 )
 				trans_equm[it].rnom = initial_equm.rnom + trans_equm[it].mpshock;
 			else {
-				trans_equm[it].rnom = (trans_equm[it-1].rnom + deltatransvec(it-1) * p.taylor.pers
+				trans_equm[it].rnom = (trans_equm[it-1].rnom + deltatransvec[it-1] * p.taylor.pers
 					* (initial_equm.rnom + p.taylor.coeff_pi * trans_equm[it].pi + p.taylor.coeff_y * ygap + trans_equm[it].mpshock))
-					/ (1.0 + deltatransvec(it-1) * p.taylor.pers); 
+					/ (1.0 + deltatransvec[it-1] * p.taylor.pers); 
 			}
 		}
 
@@ -230,7 +229,7 @@ void IRF::make_transition_guesses(const hank_float_type *x) {
 		if ( it == 0 )
 			trans_equm[it].pricelev = 1.0;
 		else
-			trans_equm[it].pricelev = trans_equm[it-1].pricelev / (1.0 - deltatransvec(it-1) * trans_equm[it-1].pi);
+			trans_equm[it].pricelev = trans_equm[it-1].pricelev / (1.0 - deltatransvec[it-1] * trans_equm[it-1].pi);
 
 		// Guess price adj cost
 		if ( solveFlexPriceTransitions )
@@ -244,8 +243,8 @@ void IRF::make_transition_guesses(const hank_float_type *x) {
 	trans_equm[Ttrans-1].logydot = 0;
 
 	for (int it=Ttrans-2; it>0; --it) {
-		trans_equm[it].pidot = (trans_equm[it+1].pi - trans_equm[it].pi) / deltatransvec(it);
-		trans_equm[it].logydot = (log(trans_equm[it+1].output) - log(trans_equm[it].output)) / deltatransvec(it);
+		trans_equm[it].pidot = (trans_equm[it+1].pi - trans_equm[it].pi) / deltatransvec[it];
+		trans_equm[it].logydot = (log(trans_equm[it+1].output) - log(trans_equm[it].output)) / deltatransvec[it];
 	}
 
 	for (int it=0; it<Ttrans; ++it) {
@@ -363,13 +362,13 @@ int final_steady_state_obj_fn(void* solver_args_voidptr, int /* n */, const real
 }
 
 namespace {
-	VectorXr get_AR1_path_logs(int T, double x0, double eps, double rho, const VectorXr& deltas, int nback) {
+	VectorXr get_AR1_path_logs(int T, double x0, double eps, double rho, const std::vector<hank_float_type>& deltas, int nback) {
 		VectorXr y(T);
 		double rho_it;
 
 		y(0) = x0 * exp(eps);
 		for (int it=1; it<T-nback; ++it) {
-			rho_it = pow(rho, deltas(it-1));
+			rho_it = pow(rho, deltas[it-1]);
 			y(it) = pow(x0, 1.0 - rho_it) * pow(y(it-1), rho_it);
 		}
 
@@ -379,13 +378,13 @@ namespace {
 		return y;
 	}
 
-	VectorXr get_AR1_path_levels(int T, double x0, double eps, double rho, const VectorXr& deltas, int nback) {
+	VectorXr get_AR1_path_levels(int T, double x0, double eps, double rho, const std::vector<hank_float_type>& deltas, int nback) {
 		VectorXr y(T);
 		double rho_it;
 
 		y(0) = x0 + eps;
 		for (int it=1; it<T-nback; ++it) {
-			rho_it = pow(rho, deltas(it-1));
+			rho_it = pow(rho, deltas[it-1]);
 			y(it) = x0 * (1.0 - rho_it) + y(it-1) * rho_it;
 		}
 		

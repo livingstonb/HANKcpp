@@ -1,8 +1,8 @@
 #ifndef _IMPULSE_RESPONSES_H
 #define _IMPULSE_RESPONSES_H
 
+#include <hank_config.h>
 #include <hank_types.h>
-#include <hank_eigen_dense.h>
 #include <memory>
 #include <equilibrium.h>
 
@@ -71,7 +71,7 @@ class IRF {
 
 		double max_price_W = 1.0 - 1.0e-6;
 
-		VectorXr deltatransvec, cumdeltatrans;
+		std::vector<hank_float_type> deltatransvec, cumdeltatrans;
 
 		std::vector<EquilibriumTrans> trans_equm;
 
