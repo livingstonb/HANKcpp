@@ -86,11 +86,13 @@ class EquilibriumTrans : public Equilibrium {
 
 		hank_float_type pidot, logydot, elast, firmdiscount, qinvestment, invadjust;
 
+		hank_float_type equity_Adot, equity_Bdot, lIK, bond;
+
 		bool is_trans_equilibrium() {return true;}
 };
 
 void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
-	const Parameters& p, const Model& model,
-	const Equilibrium& final_equm, const hank_float_type* deltatransvec);
+	const Parameters& p, const Model& model, const EquilibriumInitial& initial_equm,
+	const EquilibriumFinal& final_equm, const hank_float_type* deltatransvec);
 
 #endif

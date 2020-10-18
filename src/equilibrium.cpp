@@ -6,6 +6,9 @@
 namespace
 {
 	double cobb_douglas(hank_float_type capital, hank_float_type labor, hank_float_type alpha);
+
+	void update_equity_variables(const Parameters& p, const std::vector<hank_float_type>& linv, const hank_float_type* deltatransvec,
+		const EquilibriumFinal& final_equm, std::vector<EquilibriumTrans>& trans_equms, int T);
 }
 
 void Equilibrium::set_from_parameters(const Parameters& p, const Model& model)
@@ -189,10 +192,11 @@ void EquilibriumFinal::solve(const Parameters& p, const Model& model,
 }
 
 void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
-	const Parameters& p, const Model& model,
-	const Equilibrium& final_equm, const hank_float_type* deltatransvec)
+	const Parameters& p, const Model& model, const EquilibriumInitial& initial_equm,
+	const EquilibriumFinal& final_equm, const hank_float_type* deltatransvec)
 {
 	int T = p.Ttransition;
+	std::vector<hank_float_type> linv(T);
 
 	for (int it=0; it<T; ++it) {
 		double deltatrans = deltatransvec[it];
@@ -208,50 +212,61 @@ void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
 		if (it < T - 1)
 			trans_equms[it].investment += (trans_equms[it+1].capital - trans_equms[it].capital) / deltatrans;
 
+
 		// Value of capital and ra
-		double linv = 0;
+		
 		if ( (p.capadjcost == 0) & (p.invadjcost == 0) ) {
 			trans_equms[it].capadjust = 0;
 			trans_equms[it].qdot = 0;
 			trans_equms[it].ra = trans_equms[it].rcapital - p.depreciation;
 			trans_equms[it].qinvestment = 0;
+			linv[it] = 0;
+			trans_equms[it].lIK = 0;
 		}
 		else if ( p.capadjcost > 0 ) {
 			trans_equms[it].qinvestment = 0;
 			trans_equms[it].invadjust = 0;
 
-			double invkc = model.capadjcost1inv(trans_equms[it].qcapital - 1.0);
+			trans_equms[it].lIK = model.capadjcost1inv(trans_equms[it].qcapital - 1.0);
 
 			if (it < T - 1)
 				trans_equms[it].qdot = (trans_equms[it+1].qcapital - trans_equms[it].qcapital) / deltatrans;
 			else
 				trans_equms[it].qdot = 0;
 
-			trans_equms[it].capadjust = model.capadjcost(invkc);
-			trans_equms[it].ra = (trans_equms[it].rcapital + invkc * model.capadjcost1(invkc) - trans_equms[it].capadjust + trans_equms[it].qdot)
+			trans_equms[it].capadjust = model.capadjcost(trans_equms[it].lIK);
+			trans_equms[it].ra = (trans_equms[it].rcapital + trans_equms[it].lIK * model.capadjcost1(trans_equms[it].lIK) - trans_equms[it].capadjust + trans_equms[it].qdot)
 				/ trans_equms[it].qcapital - p.depreciation;
+
+			linv[it] = 0;
 		}
-		else if ( p.invadjcost > 0 ) {
-			std::cerr << "Not coded\n";
-			throw 0;
-		}
-
-		trans_equms[it].valcapital = trans_equms[it].qcapital * trans_equms[it].capital + trans_equms[it].qinvestment * linv;
-
-		trans_equms[it].compute_profits();
-		trans_equms[it].dividend_A = p.profdistfracA * trans_equms[it].profit * (1.0 - p.corptax);
-		trans_equms[it].dividend_B = p.profdistfracB * trans_equms[it].profit * (1.0 - p.corptax);
-
 	}
 
-	trans_equms[T-1].equity_A = final_equm.equity_A;
-	trans_equms[T-1].equity_B = final_equm.equity_B;
-	for (int it=T-2; it>0; --it) {
-		trans_equms[it].equity_A = (trans_equms[it+1].equity_A + trans_equms[it].dividend_A * deltatransvec[it])
-		/ (1.0 + deltatransvec[it] * trans_equms[it].ra);
-		trans_equms[it].equity_B = (trans_equms[it+1].equity_B + trans_equms[it].dividend_B * deltatransvec[it])
-		/ (1.0 + deltatransvec[it] * trans_equms[it].rb);
+	
+	if ( p.invadjcost > 0 ) {
+		trans_equms[T-1].qdot = 0;
+		trans_equms[T-1].qinvestment = 0;
+		trans_equms[T-1].ra = (trans_equms[T-1].rcapital + trans_equms[T-1].qdot) / trans_equms[T-1].qcapital - p.depreciation;
+
+		for (int it=T-2; it>=0; --it) {
+			trans_equms[it].qdot = (trans_equms[it+1].qcapital - trans_equms[it].qcapital) / deltatransvec[it];
+			trans_equms[it].ra = (trans_equms[it].rcapital + trans_equms[it].qdot) / trans_equms[it].qcapital - p.depreciation;
+
+			double qinv1 = trans_equms[it].qcapital - 1.0 - pow(trans_equms[it+1].qinvestment, 2) / (2.0 * p.invadjcost);
+			double qinv2 = 1.0 + (trans_equms[it].ra - trans_equms[it+1].qinvestment / p.invadjcost) * deltatransvec[it];
+			trans_equms[it].qinvestment = (qinv1 * deltatransvec[it] + trans_equms[it+1].qinvestment) / qinv2;
+		}
+
+		linv[0] = initial_equm.investment;
+		for (int it=1; it<T; ++it)
+			linv[it] = linv[it-1] / (1.0 - deltatransvec[it] * trans_equms[it-1].qinvestment / p.invadjcost);
+
+		trans_equms[T-1].lIK = model.capadjcost1inv(trans_equms[T-1].qcapital - 1.0);
+		for (int it=0; it<T; ++it)
+			trans_equms[it].lIK = linv[it] / trans_equms[it].capital;
 	}
+
+	update_equity_variables(p, linv, deltatransvec, final_equm, trans_equms, T);
 }
 
 namespace
@@ -259,5 +274,38 @@ namespace
 	double cobb_douglas(hank_float_type capital, hank_float_type labor, hank_float_type alpha)
 	{
 		return pow(capital, alpha) * pow(labor, 1.0 - alpha);
+	}
+
+	void update_equity_variables(const Parameters& p, const std::vector<hank_float_type>& linv, const hank_float_type* deltatransvec,
+		const EquilibriumFinal& final_equm, std::vector<EquilibriumTrans>& trans_equms, int T)
+	{
+		for (int it=0; it<T; ++it) {
+			trans_equms[it].valcapital = trans_equms[it].qcapital * trans_equms[it].capital + trans_equms[it].qinvestment * linv[it];
+
+			trans_equms[it].compute_profits();
+			trans_equms[it].dividend_A = p.profdistfracA * trans_equms[it].profit * (1.0 - p.corptax);
+			trans_equms[it].dividend_B = p.profdistfracB * trans_equms[it].profit * (1.0 - p.corptax);
+		}
+
+		trans_equms[T-1].equity_A = final_equm.equity_A;
+		trans_equms[T-1].equity_B = final_equm.equity_B;
+		trans_equms[T-1].equity_Adot = 0;
+		trans_equms[T-1].equity_Bdot = 0;
+
+		for (int it=T-2; it>=0; --it) {
+			trans_equms[it].equity_A = (trans_equms[it+1].equity_A + trans_equms[it].dividend_A * deltatransvec[it])
+				/ (1.0 + deltatransvec[it] * trans_equms[it].ra);
+			trans_equms[it].equity_B = (trans_equms[it+1].equity_B + trans_equms[it].dividend_B * deltatransvec[it])
+				/ (1.0 + deltatransvec[it] * trans_equms[it].rb);
+			trans_equms[it].equity_Adot = (trans_equms[it+1].equity_A - trans_equms[it].equity_A) / deltatransvec[it];
+			trans_equms[it].equity_Bdot = (trans_equms[it+1].equity_B - trans_equms[it].equity_B) / deltatransvec[it];
+		}
+
+		for (int it=0; it<T; ++it)
+			trans_equms[it].illprice = (trans_equms[it].valcapital + trans_equms[it].equity_A) / trans_equms[it].illshares;
+
+		trans_equms[T-1].illpricedot = 0;
+		for (int it=T-2; it>=0; --it)
+			trans_equms[it].illpricedot = (trans_equms[it+1].illprice - trans_equms[it].illprice) / deltatransvec[it];
 	}
 }

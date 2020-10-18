@@ -5,6 +5,7 @@
 #include <hank_eigen_dense.h>
 #include <memory>
 #include <equilibrium.h>
+#include <distribution_statistics.h>
 
 class Parameters;
 
@@ -39,7 +40,7 @@ class IRF {
 
 		void transition_fcn(int n, const hank_float_type *x, hank_float_type *z);
 
-		void make_transition_guesses(int n, const hank_float_type *x, hank_float_type *z);
+		void make_transition_guesses(const hank_float_type *x);
 
 		void set_shock_paths();
 
@@ -74,6 +75,8 @@ class IRF {
 		VectorXr deltatransvec, cumdeltatrans;
 
 		std::vector<EquilibriumTrans> trans_equm;
+
+		std::vector<DistributionStatistics> trans_stats;
 
 		std::shared_ptr<EquilibriumFinal> final_equm_ptr = nullptr;
 
