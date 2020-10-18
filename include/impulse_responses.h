@@ -61,9 +61,9 @@ class IRF {
 
 		double deltatranstot = 400;
 
-		bool solveFlexPriceTransitions = false;
+		bool flextransition = false;
 
-		bool solveStickyPriceTransitions = true;
+		bool stickytransition = true;
 
 		bool permanentShock = false;
 

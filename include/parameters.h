@@ -142,6 +142,8 @@ class Parameters {
 		double cmin = 1.0e-5;
 		double dmax = 100;
 		double facc = 1.0e-10;
+		bool solveFlexPriceTransition = true;
+		bool solveStickyPriceTransition = true;
 
 		// --- CALIBRATION TARGETS ---
 		WealthTarget illiqWealthTarget = WealthTarget(WealthTarget::Type::mean, 512183);

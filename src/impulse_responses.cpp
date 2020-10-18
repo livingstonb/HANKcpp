@@ -51,9 +51,16 @@ void IRF::setup() {
 		npricetrans += Ttrans;
 
 	if ( p.adjGovBudgetConstraint == GovBCAdjType::debt )
-		++npricetrans;
+		npricetrans += 1;
 
 	shock.setup();
+
+	flextransition = p.solveFlexPriceTransition;
+	stickytransition = p.solveStickyPriceTransition;
+
+	trans_equm.resize(Ttrans);
+	for (int it=0; it<Ttrans; ++it)
+		trans_equm[it].set_from_parameters(p, model);
 
 	construct_delta_trans_vectors();
 	set_shock_paths();
@@ -63,23 +70,20 @@ void IRF::construct_delta_trans_vectors() {
 	double lb = (Ttrans + 1) * (deltatranstot - Ttrans * deltatransmin) / (Ttrans * (deltatranstot - deltatransmin));
 	double la = (Ttrans + 1) * deltatransmin - deltatransmin * lb;
 
-	double lit;
 	for (int it=0; it<Ttrans; ++it) {
-		lit = static_cast<double>(it) / (Ttrans + 1);
+		double lit = static_cast<double>(it) / (Ttrans + 1);
 		cumdeltatrans.push_back(la * lit / (1.0 - lb * lit));
 	}
 
-	deltatransvec[0] = cumdeltatrans[0];
+	deltatransvec.push_back(cumdeltatrans[0]);
 	for (int it=1; it<Ttrans; ++it)
-		deltatransvec[it] = cumdeltatrans[it] - cumdeltatrans[it-1];
+		deltatransvec.push_back(cumdeltatrans[it] - cumdeltatrans[it-1]);
 }
 
 void IRF::compute() {
 	// Final steady state	
-	if ( !permanentShock ) {
-		EquilibriumFinal eqfinal(initial_equm);
-		final_equm_ptr.reset(&eqfinal);
-	}
+	if ( !permanentShock )
+		final_equm_ptr.reset(new EquilibriumFinal(initial_equm));
 	else {
 		// Compute final steady state
 		find_final_steady_state();
@@ -157,8 +161,8 @@ void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type 
 
 void IRF::make_transition_guesses(const hank_float_type *x) {
 	// Guesses
-	bool set_rb = (shock.type != ShockType::monetary) | solveFlexPriceTransitions;
-	bool set_pi = (shock.type == ShockType::monetary) & (!solveFlexPriceTransitions);
+	bool set_rb = (shock.type != ShockType::monetary) | flextransition;
+	bool set_pi = (shock.type == ShockType::monetary) & (!flextransition);
 
 	assert( !(set_pi & set_rb) );
 	assert( set_rb | set_pi );
@@ -232,7 +236,7 @@ void IRF::make_transition_guesses(const hank_float_type *x) {
 			trans_equm[it].pricelev = trans_equm[it-1].pricelev / (1.0 - deltatransvec[it-1] * trans_equm[it-1].pi);
 
 		// Guess price adj cost
-		if ( solveFlexPriceTransitions )
+		if ( flextransition )
 			trans_equm[it].priceadjust = 0.0;
 		else
 			trans_equm[it].priceadjust = (p.priceadjcost / 2.0) * pow(trans_equm[it].pi, 2) * trans_equm[it].output;
@@ -249,7 +253,7 @@ void IRF::make_transition_guesses(const hank_float_type *x) {
 
 	for (int it=0; it<Ttrans; ++it) {
 		// Guess wholesale price
-		if ( solveFlexPriceTransitions ) {
+		if ( flextransition ) {
 			trans_equm[it].price_W = 1.0 - 1.0 / trans_equm[it].elast;
 			trans_equm[it].firmdiscount = -1e6;
 		}
@@ -347,9 +351,6 @@ int final_steady_state_obj_fn(void* solver_args_voidptr, int /* n */, const real
 	sdist.compute(model, final_ss, hjb);
 
 	DistributionStatistics stats(p, model, hjb, sdist);
-
-	final_ss.govbond = (final_ss.govexp - final_ss.taxrev) / final_ss.rb;
-	final_ss.bond = final_ss.equity_B - final_ss.govbond;
 
 	fvec[0] = stats.Ea / (final_ss.capital + final_ss.equity_A) - 1.0;
 

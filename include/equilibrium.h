@@ -37,7 +37,7 @@ class Equilibrium {
 
 		hank_float_type capshareY, capshareN, capfracY, capfracN, capital_Y, capital_N;
 
-		hank_float_type labor_Y, labor_N, labor;
+		hank_float_type valcapital, labor_Y, labor_N, labor;
 
 		hank_float_type tfp_Y, tfp_N, investment, illprice, illshares, illpricedot;
 
@@ -71,7 +71,7 @@ class EquilibriumInitial : public Equilibrium {
 	public:
 		void solve(const Parameters& p, const Model& model);
 
-		bool is_initial_steady_state() {return true;}
+		virtual bool is_initial_steady_state() {return true;}
 };
 
 class EquilibriumFinal : public Equilibrium {
@@ -79,24 +79,24 @@ class EquilibriumFinal : public Equilibrium {
 		EquilibriumFinal() {}
 
 		EquilibriumFinal(const Equilibrium& other_equm) {
-			*this = (EquilibriumFinal) other_equm;
+			*this = *(EquilibriumFinal *) &other_equm;
 		}
 
 		void solve(const Parameters& p, const Model& model,
 			const Equilibrium& initial_equm, const hank_float_type* x);
 
-		bool is_final_steady_state() {return true;}
+		virtual bool is_final_steady_state() {return true;}
 };
 
 class EquilibriumTrans : public Equilibrium {
 	public:
-		hank_float_type mpshock, pi, pricelev, priceadjust, capadjust, qdot, valcapital;
+		hank_float_type mpshock, pi, pricelev, priceadjust, capadjust, qdot;
 
 		hank_float_type pidot, logydot, elast, firmdiscount, qinvestment, invadjust;
 
 		hank_float_type equity_Adot, equity_Bdot, lIK, bond;
 
-		bool is_trans_equilibrium() {return true;}
+		virtual bool is_trans_equilibrium() {return true;}
 };
 
 void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,

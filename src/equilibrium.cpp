@@ -144,6 +144,7 @@ void EquilibriumInitial::solve(const Parameters& p, const Model& model)
 	tfp_Y = output / pow(cobb_douglas(capital_Y, labor_Y, alpha_Y), drs_Y);
 	tfp_N = varieties / pow(cobb_douglas(capital_N, labor_N, alpha_N), drs_N);
 
+	valcapital = capital;
 	investment = p.depreciation * capital;
 
 	compute_profits();
@@ -178,6 +179,7 @@ void EquilibriumFinal::solve(const Parameters& p, const Model& model,
 	output = tfp_Y * pow(cobb_douglas(capital_Y, labor_Y, alpha_Y), drs_Y);
 	varieties = tfp_N * pow(cobb_douglas(capital_N, labor_N, alpha_N), drs_N);
 
+	valcapital = capital;
 	investment = p.depreciation * capital;
 
 	compute_profits();
@@ -190,6 +192,9 @@ void EquilibriumFinal::solve(const Parameters& p, const Model& model,
 	illprice = capital + equity_A;
 	illpricedot = 0;
 	illshares = initial_equm.illshares;
+
+	govbond = (govexp - taxrev) / rb;
+	bond = equity_B - govbond;
 }
 
 void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
