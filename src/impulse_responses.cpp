@@ -78,8 +78,7 @@ void IRF::construct_delta_trans_vectors() {
 void IRF::compute() {
 	// Final steady state	
 	if ( !permanentShock ) {
-		Equilibrium eqfinaleq = *(Equilibrium *) &initial_equm;
-		EquilibriumFinal eqfinal = *(EquilibriumFinal *) &eqfinaleq;
+		EquilibriumFinal eqfinal(initial_equm);
 		final_equm_ptr.reset(&eqfinal);
 	}
 	else {
@@ -89,12 +88,10 @@ void IRF::compute() {
 
 	// Guess log deviations from steady state
 	VectorXr xguess = VectorXr::Zero(npricetrans);
-	if ( !permanentShock ) {
-		if ( shock.type == ShockType::tfp_Y ) {
-			// Guess output changes so capital constant
-			for (int it=0; it<Ttrans; ++it) {
-				xguess(it) = log(fmax(p.capadjcost, 1.0) * trans_equm[it].tfp_Y / initial_equm.tfp_Y);
-			}
+	if ( (shock.type == ShockType::tfp_Y)  & !permanentShock ) {
+		// Guess output changes so capital constant
+		for (int it=0; it<Ttrans; ++it) {
+			xguess(it) = log(fmax(p.capadjcost, 1.0) * trans_equm[it].tfp_Y / initial_equm.tfp_Y);
 		}
 	}
 
@@ -102,19 +99,14 @@ void IRF::compute() {
 		std::function<void(int, const hank_float_type*, hank_float_type*)>
 			obj_fn = std::bind(&IRF::transition_fcn, this, _1, _2, _3);
 
-		hank_float_type* z = new hank_float_type[npricetrans];
+		hank_float_type z[npricetrans];
 		HankUtilities::fillarr(z, 0.0, npricetrans);
 
 		obj_fn(npricetrans, xguess.data(), z);
 
 		double jacstepprice = 1.0e-6;
-		hank_float_type* fjac = new hank_float_type[npricetrans * npricetrans];
+		hank_float_type fjac[npricetrans * npricetrans];
 		HankNumerics::jacobian_square(obj_fn, npricetrans, xguess.data(), z, fjac, jacstepprice);
-
-		// HankUtilities::printvec(fjac, npricetrans * npricetrans);
-
-		delete[] z;
-		delete[] fjac;
 	}
 	else {
 		std::cerr << "Must select Broyden solver\n";
@@ -140,24 +132,28 @@ void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type 
 	}
 
 	// Set residuals
-	fvec[0] = trans_equm[0].capital / initial_equm.capital - 1.0;
+	int ix = 0;
+	fvec[ix] = trans_equm[0].capital / initial_equm.capital - 1.0;
 
 	for (int it=1; it<Ttrans; ++it) {
-		fvec[it] = trans_stats[it].Ea / (trans_equm[it].valcapital + trans_equm[it].equity_A) - 1.0;
-		fvec[Ttrans+it-1] = trans_stats[it].Eb / trans_equm[it].bond - 1.0;
+		fvec[ix] = trans_stats[it].Ea / (trans_equm[it].valcapital + trans_equm[it].equity_A) - 1.0;
+		++ix;
+
+		fvec[ix] = trans_stats[it].Eb / trans_equm[it].bond - 1.0;
+		++ix;
 	}
 
-	for (int it=0; it<Ttrans; ++it)
-		for (int io=0; io<p.nocc; ++io)
-			fvec[(2+io)*Ttrans+it] = trans_stats[it].Elabor_occ[io] * model.occdist[io] / trans_equm[it].labor_occ[io] - 1.0;
+	for (int it=0; it<Ttrans; ++it) {
+		for (int io=0; io<p.nocc; ++io) {
+			fvec[ix] = trans_stats[it].Elabor_occ[io] * model.occdist[io] / trans_equm[it].labor_occ[io] - 1.0;
+			++ix;
+		}
 
-	if ( (p.capadjcost > 0) | (p.invadjcost > 0) ) {
-		for (int it=0; it<Ttrans; ++it)
-			fvec[(2+p.nocc)*Ttrans+it-1] = trans_equm[it].lIK / (trans_equm[it].investment / trans_equm[it].capital) - 1.0;
+		if ( (p.capadjcost > 0) | (p.invadjcost > 0) ) {
+			fvec[ix] = trans_equm[it].lIK / (trans_equm[it].investment / trans_equm[it].capital) - 1.0;
+			++ix;
+		}
 	}
-
-
-
 }
 
 void IRF::make_transition_guesses(const hank_float_type *x) {
@@ -352,6 +348,10 @@ int final_steady_state_obj_fn(void* solver_args_voidptr, int /* n */, const real
 	sdist.compute(model, final_ss, hjb);
 
 	DistributionStatistics stats(p, model, hjb, sdist);
+
+	final_ss.bond = stats.Eb;
+	final_ss.govbond = iss.equity_B - iss.bond;
+	final_ss.govexp = iss.taxrev + iss.rb * iss.govbond;
 
 	fvec[0] = stats.Ea / (final_ss.capital + final_ss.equity_A) - 1.0;
 

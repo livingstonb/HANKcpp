@@ -19,6 +19,7 @@ void Equilibrium::set_from_parameters(const Parameters& p, const Model& model)
 	drs_N = p.drs_N;
 	nocc = p.nocc;
 	rho = p.rho;
+	labtax = p.labtax;
 
 	if ( is_initial_steady_state() ) {
 		price_W = 1.0 - 1.0 / p.elast;
@@ -267,6 +268,48 @@ void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
 	}
 
 	update_equity_variables(p, linv, deltatransvec, final_equm, trans_equms, T);
+
+	// Government
+	std::vector<hank_float_type> grosslabtaxinc(T);
+	for (int it=0; it<T; ++it) {
+		grosslabtaxinc[it] = 0;
+		for (int io=0; io<p.nocc; ++io)
+			grosslabtaxinc[it] += trans_equms[it].wage_occ[io] * trans_equms[it].labor_occ[io];
+	}
+
+	if (p.adjGovBudgetConstraint == GovBCAdjType::fiscal) {
+		trans_equms[0].govbond = initial_equm.govbond;
+
+		for (int it=0; it<T; ++it) {
+			trans_equms[it].labtax = initial_equm.labtax;
+			trans_equms[it].govexp = initial_equm.govexp;
+			double transfershock = initial_equm.lumptransfer * trans_equms[it].transfershock - initial_equm.lumptransfer;
+			double grosstaxrev = trans_equms[it].labtax * grosslabtaxinc[it] + p.corptax * trans_equms[it].profit - transfershock;
+
+			if ( p.taxHHProfitIncome )
+				grosstaxrev += trans_equms[it].labtax * p.profdistfracW * trans_equms[it].profit * (1.0 - p.corptax);
+		
+
+			// Solve gov budget constraint forwards
+			if ( it < T - 1 ) {
+				trans_equms[it+1].govbond = (trans_equms[it].govbond + deltatransvec[it]
+					* ((trans_equms[it].rb + p.govdebtadjwedge) * initial_equm.govbond + grosstaxrev - trans_equms[it].govexp - initial_equm.lumptransfer))
+					/ (1.0 + deltatransvec[it] * p.govdebtadjwedge);
+			}
+
+			trans_equms[it].lumptransfer = initial_equm.lumptransfer
+				+ (trans_equms[it].rb + p.govdebtadjwedge)  * (trans_equms[it].govbond - initial_equm.govbond) + transfershock;
+			trans_equms[it].taxrev = grosstaxrev + transfershock - trans_equms[it].lumptransfer;
+
+			if ( trans_equms[it].taxrev < 0 )
+				std::cout << "Warning: negative transfers\n";
+		}
+	}
+
+	for (int it=0; it<T; ++it) {
+		trans_equms[it].bond = trans_equms[it].equity_B - trans_equms[it].govbond;
+		trans_equms[it].rborr = trans_equms[it].rb + p.borrwedge;
+	}
 }
 
 namespace
@@ -303,7 +346,6 @@ namespace
 
 		for (int it=0; it<T; ++it) {
 			trans_equms[it].illprice = (trans_equms[it].valcapital + trans_equms[it].equity_A) / trans_equms[it].illshares;
-			trans_equms[it].bond = trans_equms[it].equity_B;
 		}
 
 		trans_equms[T-1].illpricedot = 0;

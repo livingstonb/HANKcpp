@@ -14,7 +14,7 @@ class DistributionStatistics;
 
 class IRF;
 
-void check_cminpack_success(int info) {
+inline void check_cminpack_success(int info) {
 	std::cout << '\n';
 	HankUtilities::horzline();
 	HankUtilities::horzline();
@@ -57,3 +57,27 @@ void cminpack_hybrd1_wrapper(cminpack_func_nn fcn, T* args, int n, real *x) {
 	check_cminpack_success(info);
 }
 
+// template<typename F>
+// class CminpackObjectiveFcn {
+// 	public:
+// 		CminpackObjectiveFcn(F& obj_fn_) : obj_fn(obj_fn_) {}
+
+// 		F obj_fn;
+// };
+
+// template<typename T>
+// void cminpack_hybrd1_wrapper_alt(T& objective, int n, real *x) {
+// 	real fvec[n];
+// 	double tol = 1.0e-9;
+
+// 	int lwa = n * (3 * n + 13);
+// 	real wa[lwa];
+
+// 	int info = cminpack_hybrd1_fnname(hybrd1_obj_fn, (void *) objective, n, x, fvec, tol, wa, lwa);
+// 	check_cminpack_success(info);
+// }
+
+// inline int hybrd1_obj_fn(void* fn_ptr, int /* n */, const real *x, real *fvec, int /* iflag */ ) {
+// 	Hybrd1ObjectiveFn& obj_fn = *(Hybrd1ObjectiveFn *) fn_ptr;
+// 	obj_fn(x, fvec);
+// }

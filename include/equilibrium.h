@@ -47,7 +47,9 @@ class Equilibrium {
 
 		hank_float_type ra, rb, rnom, pi, dividend_A, dividend_B, equity_A, equity_B;
 
-		hank_float_type Enetwage, taxrev;
+		hank_float_type Enetwage, taxrev, transfershock, lumptransfer, rborr;
+
+		hank_float_type bond, govbond, labtax, govexp;
 
 		hank_float_type output = 1.0;
 
@@ -74,6 +76,12 @@ class EquilibriumInitial : public Equilibrium {
 
 class EquilibriumFinal : public Equilibrium {
 	public:
+		EquilibriumFinal() {}
+
+		EquilibriumFinal(const Equilibrium& other_equm) {
+			*this = (EquilibriumFinal) other_equm;
+		}
+
 		void solve(const Parameters& p, const Model& model,
 			const Equilibrium& initial_equm, const hank_float_type* x);
 

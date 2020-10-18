@@ -213,7 +213,7 @@ void SSCalibrator::print_fvec(hank_float_type fvec[]) const {
 	std::cout << "--------------------------\n\n";
 }
 
-int initial_state_state_obj_fn(void* args_void_ptr, int n, const hank_float_type *x, hank_float_type *fvec, int /* iflag */ ) {
+int initial_steady_state_obj_fn(void* args_void_ptr, int n, const hank_float_type *x, hank_float_type *fvec, int /* iflag */ ) {
 	std::cout << "\nCalibration parameters updated:\n";
 
 	ObjectPointers& args = *(ObjectPointers *) args_void_ptr;
@@ -244,6 +244,10 @@ int initial_state_state_obj_fn(void* args_void_ptr, int n, const hank_float_type
 	DistributionStatistics stats(p, model, hjb, sdist);
 	args.ptr4.reset(&stats);
 	stats.print();
+
+	iss.bond = stats.Eb;
+	iss.govbond = iss.equity_B - iss.bond;
+	iss.govexp = iss.taxrev + iss.rb * iss.govbond;
 
 	CalibrationArgs cal_args(args);
 	cal.fill_fvec(cal_args, fvec);

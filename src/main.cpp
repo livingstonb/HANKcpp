@@ -161,7 +161,7 @@ int main () {
 		hank_float_type x[n];
 		cal.fill_xguess(params, model, x);
 
-		cminpack_hybrd1_wrapper(HANKCalibration::initial_state_state_obj_fn, &object_ptrs, n, x);
+		cminpack_hybrd1_wrapper(HANKCalibration::initial_steady_state_obj_fn, &object_ptrs, n, x);
 	}
 
 	IRF irf = compute_irfs(object_ptrs);

@@ -75,7 +75,7 @@ class CalibrationArgs {
 		const DistributionStatistics& stats;
 };
 
-int initial_state_state_obj_fn(void* args_void_ptr, int n, const hank_float_type *x, hank_float_type *fvec, int /* iflag */ );
+int initial_steady_state_obj_fn(void* args_void_ptr, int n, const hank_float_type *x, hank_float_type *fvec, int /* iflag */ );
 
 }
 

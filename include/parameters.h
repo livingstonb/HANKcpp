@@ -136,6 +136,7 @@ class Parameters {
 		double lumptransfer = 0.05;
 		GovBCAdjType adjGovBudgetConstraint = GovBCAdjType::fiscal;
 		TaylorRule taylor;
+		double govdebtadjwedge = 0.10;
 
 		// --- OTHER SOLUTION PARAMETERS ---
 		double cmin = 1.0e-5;
