@@ -213,7 +213,7 @@ void IRF::make_transition_guesses(int n, const hank_float_type *x, hank_float_ty
 	trans_equm[Ttrans-1].logydot = 0;
 
 	for (int it=Ttrans-2; it>0; --it) {
-		trans_equm[it].pidot = (trans_equm[it].pi - trans_equm[it].pi) / deltatransvec(it);
+		trans_equm[it].pidot = (trans_equm[it+1].pi - trans_equm[it].pi) / deltatransvec(it);
 		trans_equm[it].logydot = (log(trans_equm[it+1].output) - log(trans_equm[it].output)) / deltatransvec(it);
 	}
 
@@ -229,7 +229,8 @@ void IRF::make_transition_guesses(int n, const hank_float_type *x, hank_float_ty
 
 			// Guess wholesale price
 			hank_float_type mkup = (trans_equm[it].elast - 1.0) / trans_equm[it].elast;
-			trans_equm[it].price_W = (trans_equm[it].firmdiscount - trans_equm[it].logydot) * trans_equm[it].pi * p.priceadjcost / trans_equm[it].elast
+			trans_equm[it].price_W = (trans_equm[it].firmdiscount - trans_equm[it].logydot)
+				* trans_equm[it].pi * p.priceadjcost / trans_equm[it].elast
 				+ mkup - trans_equm[it].pidot * p.priceadjcost / trans_equm[it].elast;
 			trans_equm[it].price_W = fmin(max_price_W, fmax(min_price_W, trans_equm[it].price_W));
 		}
