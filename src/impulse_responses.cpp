@@ -132,7 +132,6 @@ void IRF::compute() {
 
 void IRF::transition_fcn(int n, const hank_float_type *x, hank_float_type *z) {
 	make_transition_guesses(n, x, z);
-
 	solve_trans_equilibrium(trans_equm, p, model, *final_equm_ptr, deltatransvec.data());
 }
 
@@ -142,25 +141,20 @@ void IRF::make_transition_guesses(int n, const hank_float_type *x, hank_float_ty
 	bool set_pi = (shock.type == ShockType::monetary) & (!solveFlexPriceTransitions);
 
 	assert( !(set_pi & set_rb) );
-	assert( set_rb | set_pi );
+	assert( set_rb | set_pi )
 
 	for (int it=0; it<Ttrans; ++it) {
 		trans_equm[it].output = initial_equm.output * exp(x[it]);
 
-		// Guess for rb
+		// Guess for rb or pi
 		if ( set_rb & (it == Ttrans - 1) )
 			trans_equm[it].rb = final_equm_ptr->rb;
 		else if ( set_rb )
 			trans_equm[it].rb = initial_equm.rb + x[Ttrans + it];
-
-		// Guess for pi
-		if ( set_pi & (it == Ttrans - 1) )
+		else if ( set_pi & (it == Ttrans - 1) )
 			trans_equm[it].pi = final_equm_ptr->pi;
 		else if ( set_pi )
 			trans_equm[it].pi = initial_equm.pi + x[Ttrans + it];
-
-		// Guess for labor
-		trans_equm[it].labor_occ = initial_equm.labor_occ;
 
 		// Guess for capital
 		if ( (p.capadjcost > 0) | (p.invadjcost > 0) )
@@ -168,26 +162,35 @@ void IRF::make_transition_guesses(int n, const hank_float_type *x, hank_float_ty
 		else
 			trans_equm[it].qcapital = 1.0;
 
+		// Guess for labor
+		trans_equm[it].labor_occ = initial_equm.labor_occ;
+
 		// Guess for tax increase
 		hank_float_type initlumpincr = 0;
 		if ( p.adjGovBudgetConstraint == GovBCAdjType::debt )
 			initlumpincr = x[Ttrans * (p.nocc + 2) - 1];
 
 		// Inflation and nominal interest rate
-		double ygap =  log(trans_equm[it].output / initial_equm.output);
+		double ygap = log(trans_equm[it].output / initial_equm.output);
 		if ( p.taylor.use_feedback_rule ) {
-			if ( set_rb )
-				trans_equm[it].rnom = (initial_equm.rnom - p.taylor.coeff_pi * trans_equm[it].pi + ygap + trans_equm[it].mpshock) / (1.0 - p.taylor.coeff_pi);
-			else if ( set_pi )
-				trans_equm[it].rnom = initial_equm.rnom + p.taylor.coeff_pi * trans_equm[it].pi + p.taylor.coeff_y * ygap + trans_equm[it].mpshock;
+			if ( set_rb ) {
+				trans_equm[it].rnom = (initial_equm.rnom - p.taylor.coeff_pi * trans_equm[it].pi
+					+ p.taylor.coeff_y * ygap + trans_equm[it].mpshock) / (1.0 - p.taylor.coeff_pi);
+			}
+			else if ( set_pi ) {
+				trans_equm[it].rnom = initial_equm.rnom + p.taylor.coeff_pi * trans_equm[it].rb
+					+ p.taylor.coeff_y * ygap + trans_equm[it].mpshock;
+			}
 		}
 		else {
 			// Partial adjustment rule
 			if ( it == 0 )
 				trans_equm[it].rnom = initial_equm.rnom + trans_equm[it].mpshock;
-			else
+			else {
 				trans_equm[it].rnom = (trans_equm[it-1].rnom + deltatransvec(it-1) * p.taylor.pers
-					* (initial_equm.rnom + p.taylor.coeff_pi * trans_equm[it].pi + p.taylor.coeff_y * ygap + trans_equm[it].mpshock)) / (1.0 + deltatransvec(it-1) * p.taylor.pers); 
+					* (initial_equm.rnom + p.taylor.coeff_pi * trans_equm[it].pi + p.taylor.coeff_y * ygap + trans_equm[it].mpshock))
+					/ (1.0 + deltatransvec(it-1) * p.taylor.pers); 
+			}
 		}
 
 		if ( set_rb )
