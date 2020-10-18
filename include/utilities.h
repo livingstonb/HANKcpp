@@ -39,8 +39,6 @@ inline void print_values(const std::vector<std::string>& names, const std::vecto
 	}
 }
 
-void check_cminpack_success(int info);
-
 template<typename T, typename V>
 void fillarr(T* arr, V val, int n) {
 	for (int i=0; i<n; ++i)

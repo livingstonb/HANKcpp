@@ -321,8 +321,7 @@ void IRF::find_final_steady_state()
 	args.ptr3.reset(&initial_equm);
 	args.ptr5.reset(this);
 
-	int info = cminpack_hybrd1_wrapper(final_steady_state_obj_fn, &args, n, x.data());
-	HankUtilities::check_cminpack_success(info);
+	cminpack_hybrd1_wrapper(final_steady_state_obj_fn, &args, n, x.data());
 
 	final_equm_ptr = std::move(args.ptr4);
 }
