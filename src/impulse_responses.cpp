@@ -137,6 +137,7 @@ void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type 
 	// Set residuals
 	int ix = 0;
 	fvec[ix] = trans_equm[0].capital / initial_equm.capital - 1.0;
+	++ix;
 
 	for (int it=1; it<Ttrans; ++it) {
 		fvec[ix] = trans_stats[it].Ea / (trans_equm[it].valcapital + trans_equm[it].equity_A) - 1.0;
