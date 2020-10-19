@@ -274,7 +274,8 @@ void IRF::make_transition_guesses(const hank_float_type *x) {
 }
 
 void IRF::set_shock_paths() {
-	VectorXr tfp_Y, mpshock, riskaver = VectorXr::Constant(Ttrans, p.riskaver);
+	VectorXr mpshock, tfp_Y = VectorXr::Constant(Ttrans, initial_equm.tfp_Y);
+	VectorXr riskaver = VectorXr::Constant(Ttrans, p.riskaver);
 	hank_float_type initial_mpshock = 0;
 	if ( shock.type == ShockType::tfp_Y )
 		tfp_Y = get_AR1_path_logs(Ttrans, initial_equm.tfp_Y, shock.size, shock.pers, deltatransvec, nendtrans);
