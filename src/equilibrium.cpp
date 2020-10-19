@@ -19,7 +19,6 @@ void Equilibrium::set_from_parameters(const Parameters& p, const Model& model)
 	drs_N = p.drs_N;
 	nocc = p.nocc;
 	rho = p.rho;
-	labtax = p.labtax;
 	nprod = model.nprod;
 }
 
@@ -91,24 +90,17 @@ void Equilibrium::compute_dividends(const Parameters& p)
 	equity_B = dividend_B / rb;
 }
 
-void Equilibrium::compute_govt(const Parameters& p, const Model& model)
+void Equilibrium::compute_netwage(const Parameters& p, const Model& model)
 {
 	std::vector<hank_float_type> wage_occ_rep;
 	Enetwage = 0;
 
 	for (int io=0; io<nocc; ++io) {
-		for (int ip=0; ip<model.nprod; ++ip) {
-			netwagegrid.push_back((1.0 - p.labtax) * model.prodgrid(ip) * wage_occ[io]);
+		for (int ip=0; ip<nprod; ++ip) {
+			netwagegrid.push_back((1.0 - labtax) * model.prodgrid(ip) * wage_occ[io]);
 			Enetwage += model.occdist(io) * model.proddist(ip) * netwagegrid.back();
 		}
 	}
-
-	taxrev = p.corptax * profit - p.lumptransfer;
-	for (int io=0; io<nocc; ++io)
-		taxrev += p.labtax * wage_occ[io] * labor_occ[io];
-
-	if ( p.taxHHProfitIncome )
-		taxrev += p.labtax * p.profdistfracW * profit * (1.0 - p.corptax);
 }
 
 void EquilibriumInitial::set_from_parameters(const Parameters& p, const Model& model)
@@ -116,6 +108,7 @@ void EquilibriumInitial::set_from_parameters(const Parameters& p, const Model& m
 	Equilibrium::set_from_parameters(p, model);
 	price_W = 1.0 - 1.0 / p.elast;
 	riskaver = p.riskaver;
+	labtax = p.labtax;
 }
 
 void EquilibriumInitial::solve(const Parameters& p, const Model& model)
@@ -140,7 +133,14 @@ void EquilibriumInitial::solve(const Parameters& p, const Model& model)
 	compute_profits();
 	compute_factor_prices();
 	compute_dividends(p);
-	compute_govt(p, model);
+	compute_netwage(p, model);
+
+	taxrev = p.corptax * profit - p.lumptransfer;
+	for (int io=0; io<nocc; ++io)
+		taxrev += labtax * wage_occ[io] * labor_occ[io];
+
+	if ( p.taxHHProfitIncome )
+		taxrev += labtax * p.profdistfracW * profit * (1.0 - p.corptax);
 
 	pi = p.pi;
 	rnom = rb - p.pi;
@@ -159,6 +159,7 @@ void EquilibriumFinal::solve(const Parameters& p, const Model& model,
 	const Equilibrium& initial_equm, const hank_float_type* x)
 {
 	set_from_parameters(p, model);
+	labtax = p.labtax;
 
 	capital = x[0];
 
@@ -181,7 +182,14 @@ void EquilibriumFinal::solve(const Parameters& p, const Model& model,
 	compute_profits();
 	compute_factor_prices();
 	compute_dividends(p);
-	compute_govt(p, model);
+	compute_netwage(p, model);
+
+	taxrev = p.corptax * profit - p.lumptransfer;
+	for (int io=0; io<nocc; ++io)
+		taxrev += labtax * wage_occ[io] * labor_occ[io];
+
+	if ( p.taxHHProfitIncome )
+		taxrev += labtax * p.profdistfracW * profit * (1.0 - p.corptax);
 
 	pi = p.pi;
 	rnom = rb - p.pi;
@@ -211,7 +219,7 @@ void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
 	const Parameters& p, const Model& model, const EquilibriumInitial& initial_equm,
 	const EquilibriumFinal& final_equm, const hank_float_type* deltatransvec)
 {
-	int T = p.Ttransition;
+	int T = trans_equms.size();
 	std::vector<hank_float_type> linv(T);
 
 	for (int it=0; it<T; ++it) {
@@ -322,6 +330,7 @@ void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
 	}
 
 	for (int it=0; it<T; ++it) {
+		trans_equms[it].compute_netwage(p, model);
 		trans_equms[it].bond = trans_equms[it].equity_B - trans_equms[it].govbond;
 		trans_equms[it].rborr = trans_equms[it].rb + p.borrwedge;
 	}

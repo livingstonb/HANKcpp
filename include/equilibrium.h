@@ -25,7 +25,7 @@ class Equilibrium {
 
 		void compute_dividends(const Parameters& p);
 
-		void compute_govt(const Parameters& p, const Model& modelmodel);
+		void compute_netwage(const Parameters& p, const Model& model);
 
 		hank_float_type alpha_Y, alpha_N, price_W, drs_Y, drs_N, riskaver, rho;
 
