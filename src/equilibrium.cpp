@@ -20,12 +20,6 @@ void Equilibrium::set_from_parameters(const Parameters& p, const Model& model)
 	nocc = p.nocc;
 	rho = p.rho;
 	labtax = p.labtax;
-
-	if ( is_initial_steady_state() ) {
-		price_W = 1.0 - 1.0 / p.elast;
-		riskaver = p.riskaver;
-	}
-
 	nprod = model.nprod;
 }
 
@@ -49,17 +43,6 @@ void Equilibrium::compute_factors(const Model& model)
 		labor_Y *= pow(labfracY[io] * labor_occ[io], model.occYsharegrid[io]);
 		labor_N *= pow(labfracN[io] * labor_occ[io], model.occNsharegrid[io]);
 		labor += labor_occ[io] * model.occdist[io];
-	}
-
-	if ( is_initial_steady_state() | is_final_steady_state() ) {
-		capital_Y = capfracY * capital;
-		capital_N = capfracN * capital;
-	}
-	else if ( is_trans_equilibrium() ) {
-		capital_Y = pow(output / tfp_Y, 1.0 / drs_Y) / pow(labor_Y, 1.0 - alpha_Y);
-		capital_Y = pow(capital_Y, 1.0 / alpha_Y);
-		capital = capital_Y / capfracY;
-		capital_N = capfracN * capital;
 	}
 }
 
@@ -128,6 +111,13 @@ void Equilibrium::compute_govt(const Parameters& p, const Model& model)
 		taxrev += p.labtax * p.profdistfracW * profit * (1.0 - p.corptax);
 }
 
+void EquilibriumInitial::set_from_parameters(const Parameters& p, const Model& model)
+{
+	Equilibrium::set_from_parameters(p, model);
+	price_W = 1.0 - 1.0 / p.elast;
+	riskaver = p.riskaver;
+}
+
 void EquilibriumInitial::solve(const Parameters& p, const Model& model)
 {
 	set_from_parameters(p, model);
@@ -157,6 +147,12 @@ void EquilibriumInitial::solve(const Parameters& p, const Model& model)
 	illprice = 1;
 	illpricedot = 0;
 	illshares = capital + equity_A;
+}
+
+void EquilibriumInitial::compute_factors(const Model& model) {
+	Equilibrium::compute_factors(model);
+	capital_Y = capfracY * capital;
+	capital_N = capfracN * capital;
 }
 
 void EquilibriumFinal::solve(const Parameters& p, const Model& model,
@@ -195,6 +191,20 @@ void EquilibriumFinal::solve(const Parameters& p, const Model& model,
 
 	govbond = (govexp - taxrev) / rb;
 	bond = equity_B - govbond;
+}
+
+void EquilibriumFinal::compute_factors(const Model& model) {
+	Equilibrium::compute_factors(model);
+	capital_Y = capfracY * capital;
+	capital_N = capfracN * capital;
+}
+
+void EquilibriumTrans::compute_factors(const Model& model) {
+	Equilibrium::compute_factors(model);
+	capital_Y = pow(output / tfp_Y, 1.0 / drs_Y) / pow(labor_Y, 1.0 - alpha_Y);
+	capital_Y = pow(capital_Y, 1.0 / alpha_Y);
+	capital = capital_Y / capfracY;
+	capital_N = capfracN * capital;
 }
 
 void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,

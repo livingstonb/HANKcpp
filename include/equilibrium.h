@@ -15,15 +15,9 @@ class Equilibrium {
 
 		void create_transition();
 
-		void set_from_parameters(const Parameters& p, const Model& model);
+		virtual void set_from_parameters(const Parameters& p, const Model& model);
 
-		virtual bool is_initial_steady_state() {return false;}
-
-		virtual bool is_final_steady_state() {return false;}
-
-		virtual bool is_trans_equilibrium() {return false;}
-
-		void compute_factors(const Model& model);
+		virtual void compute_factors(const Model& model);
 
 		void compute_profits();
 
@@ -71,7 +65,9 @@ class EquilibriumInitial : public Equilibrium {
 	public:
 		void solve(const Parameters& p, const Model& model);
 
-		virtual bool is_initial_steady_state() {return true;}
+		void set_from_parameters(const Parameters& p, const Model& model) override;
+
+		void compute_factors(const Model& model) override;
 };
 
 class EquilibriumFinal : public Equilibrium {
@@ -82,10 +78,12 @@ class EquilibriumFinal : public Equilibrium {
 			*this = *(EquilibriumFinal *) &other_equm;
 		}
 
+		~EquilibriumFinal() {}
+
 		void solve(const Parameters& p, const Model& model,
 			const Equilibrium& initial_equm, const hank_float_type* x);
 
-		virtual bool is_final_steady_state() {return true;}
+		void compute_factors(const Model& model) override;
 };
 
 class EquilibriumTrans : public Equilibrium {
@@ -96,7 +94,11 @@ class EquilibriumTrans : public Equilibrium {
 
 		hank_float_type equity_Adot, equity_Bdot, lIK, bond;
 
-		virtual bool is_trans_equilibrium() {return true;}
+		void set_from_parameters(const Parameters& p, const Model& model) override {
+			Equilibrium::set_from_parameters(p, model);
+		}
+
+		void compute_factors(const Model& model) override;
 };
 
 void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
