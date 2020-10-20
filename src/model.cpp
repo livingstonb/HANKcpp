@@ -109,17 +109,14 @@ void Model::make_asset_grids(const Parameters& p) {
 
 void Model::make_occupation_grids(const Parameters& p) {
 	// Occupation types
-	occYsharegrid.resize(p.nocc);
-	occNsharegrid.resize(p.nocc);
-	occdist.resize(p.nocc);
 	if ( p.nocc == 1 ) {
-		occYsharegrid << 1;
-		occNsharegrid << 1;
-		occdist[0] = 1;
+		occYsharegrid = std::vector<hank_float_type>({1});
+		occNsharegrid = std::vector<hank_float_type>({1});
+		occdist = std::vector<hank_float_type>({1});
 	}
 	else if ( p.nocc == 4 ) {
-		occYsharegrid << 0.325, 0.275, 0.225, 0.175;
-		occNsharegrid << 0.1, 0.15, 0.25, 0.5;
+		occYsharegrid = std::vector<hank_float_type>({0.325, 0.275, 0.225, 0.175});
+		occNsharegrid = std::vector<hank_float_type>({0.1, 0.15, 0.25, 0.5});
 		occdist = std::vector<hank_float_type>({0.25, 0.25, 0.25, 0.25});
 	}
 	else {
@@ -202,12 +199,15 @@ void Model::check_nbl(const Parameters& p) const {
 	}
 }
 
-VectorXr Model::get_rb_effective() const {
-	VectorXr rb_effective, bvec = as_eigen<VectorXr>(bgrid);
-	rb_effective = bvec.unaryExpr([this](hank_float_type x) -> hank_float_type {
-			return (x >= static_cast<hank_float_type>(0.0)) ? p.rb : p.rborr;
-		});
-	rb_effective = rb_effective.array() + p.perfectAnnuityMarkets * p.deathrate;
+std::vector<hank_float_type> Model::get_rb_effective() const {
+	std::vector<hank_float_type> rb_effective;
+	rb_effective.reserve(p.nb);
+	for (auto el : bgrid) {
+		if ( el >= 0.0 )
+			rb_effective.push_back(p.rb + p.perfectAnnuityMarkets * p.deathrate);
+		else
+			rb_effective.push_back(p.rborr + p.perfectAnnuityMarkets * p.deathrate);
+	}
 
 	return rb_effective;
 }

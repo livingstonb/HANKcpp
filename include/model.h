@@ -18,11 +18,9 @@ class Model {
 
 		std::vector<hank_float_type> occgrid, occdist, prodgrid, proddist, logprodgrid, profsharegrid;
 
-		std::vector<hank_float_type> yprodgrid, yoccgrid, ydist;
+		std::vector<hank_float_type> yprodgrid, yoccgrid, ydist, occYsharegrid, occNsharegrid;
 
 		MatrixXr prodmarkov, ymarkov, ymarkovdiag, ymarkovoff;
-
-		VectorXr occYsharegrid, occNsharegrid;
 
 		int nb, na, nocc, nprod, ny, naby, ntot;
 
@@ -42,7 +40,7 @@ class Model {
 
 		void check_nbl(const Parameters& p) const;
 
-		VectorXr get_rb_effective() const;
+		std::vector<hank_float_type> get_rb_effective() const;
 
 		hank_float_type util(hank_float_type c, hank_float_type riskaver) const;
 

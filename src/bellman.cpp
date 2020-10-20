@@ -104,7 +104,7 @@ Upwinding::Policies HJB::update_policies(const Equilibrium& ss) {
 	proftot += p.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
 
 	Eigen::Map<const ArrayXr> bgridvec(model.bgrid.data(), model.bgrid.size());
-	VectorXr bdrift = model.get_rb_effective().array() * bgridvec;
+	VectorXr bdrift = as_eigen<ArrayXr>(model.get_rb_effective()) * bgridvec;
 
 	std::function<Upwinding::ConUpwind(double, double, double, double)> opt_c;
 	if ( p.endogLabor )
@@ -408,7 +408,7 @@ namespace {
 		double lc, u;
 
 		auto bgridvec = as_eigen_map<const ArrayXr>(model.bgrid);
-		VectorXr bdriftnn = model.get_rb_effective().array() * bgridvec;
+		VectorXr bdriftnn = as_eigen<ArrayXr>(model.get_rb_effective()) * bgridvec;
 
 		auto agridvec = as_eigen_map<const ArrayXr>(model.agrid);
 		ArrayXr adriftnn = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * agridvec;
