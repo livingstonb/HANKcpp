@@ -115,12 +115,12 @@ void Model::make_occupation_grids(const Parameters& p) {
 	if ( p.nocc == 1 ) {
 		occYsharegrid << 1;
 		occNsharegrid << 1;
-		occdist << 1;
+		occdist[0] = 1;
 	}
 	else if ( p.nocc == 4 ) {
 		occYsharegrid << 0.325, 0.275, 0.225, 0.175;
 		occNsharegrid << 0.1, 0.15, 0.25, 0.5;
-		occdist << 0.25, 0.25, 0.25, 0.25;
+		occdist = std::vector<hank_float_type>({0.25, 0.25, 0.25, 0.25});
 	}
 	else {
 		std::cerr << "Invalid number of occupation points\n";
@@ -132,28 +132,31 @@ void Model::make_occupation_grids(const Parameters& p) {
 void Model::create_income_process(const Parameters& p) {
 
 	std::string grid_loc = "../input/" + p.income_dir + "/ygrid_combined.txt";
-	logprodgrid = vector2eigenv(HankUtilities::read_matrix(grid_loc));
+	logprodgrid = HankUtilities::read_matrix(grid_loc);
 
 	std::string dist_loc = "../input/" + p.income_dir + "/ydist_combined.txt";
-	proddist = vector2eigenv(HankUtilities::read_matrix(dist_loc));
+	proddist = HankUtilities::read_matrix(dist_loc);
 
 	std::string markov_loc = "../input/" + p.income_dir + "/ymarkov_combined.txt";
 
 	if ( p.adjustProdGridFrisch )
-		logprodgrid = logprodgrid / (1.0 + p.adjFrischGridFrac * p.frisch);
+		for (auto& el : logprodgrid)
+			el /= (1.0 + p.adjFrischGridFrac * p.frisch);
 
 	int k = proddist.size();
 	prodmarkov = vector2eigenm(HankUtilities::read_matrix(markov_loc), k, k);
 	fix_rounding(prodmarkov);
 
-	prodgrid = logprodgrid.array().exp();
+	for (auto el : logprodgrid)
+		prodgrid.push_back(exp(el));
+
 	nprod = prodgrid.size();
 
 	// Normalize mean productivity
-	double lmean = prodgrid.dot(proddist);
-	prodgrid *= p.meanlabeff / lmean;
+	double lmean = EigenFunctions::dot(prodgrid, proddist);
 
-	nprod = prodgrid.size();
+	for (auto& el : prodgrid)
+		el *= p.meanlabeff / lmean;
 }
 
 void Model::create_combined_variables(const Parameters& p) {
@@ -169,7 +172,6 @@ void Model::create_combined_variables(const Parameters& p) {
 	for (int io=0; io<nocc; ++io) {
 		for (int ip=0; ip<nprod; ++ip) {
 			yprodgrid[iy] = prodgrid[ip];
-			// yoccgrid_(iy) = occgrid_(io);
 			ydist[iy] = proddist[ip] * occdist[io];
 
 			for (int ip2=0; ip2<nprod; ++ip2) {
@@ -258,23 +260,23 @@ void Model::print_values() const {
 	print_value("ny", ny);
 
 	for (int io=0; io<nprod; ++io)
-		print_value("prodgrid[io]", prodgrid(io));
+		print_value("prodgrid[io]", prodgrid[io]);
 
 	for (int io=0; io<nprod; ++io)
-		print_value("proddist[io]", proddist(io));
+		print_value("proddist[io]", proddist[io]);
 
-	print_value("E[prod]", prodgrid.dot(proddist));
+	print_value("E[prod]", EigenFunctions::dot(prodgrid, proddist));
 	
 	HankUtilities::horzline();
 }
 
 void Model::assertions() const {
-	if ( abs(1.0-proddist.sum()) > 1.0e-7 ) {
+	if ( abs(1.0 - EigenFunctions::sum(proddist)) > 1.0e-7 ) {
 		std::cerr << "Proddist does not sum to one\n";
 		throw 0;
 	}
 
-	if ( abs(1.0-occdist.sum()) > 1.0e-7 ) {
+	if ( abs(1.0 - EigenFunctions::sum(occdist)) > 1.0e-7 ) {
 		std::cerr << "Occdist does not sum to one\n";
 		throw 0;
 	}

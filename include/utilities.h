@@ -11,7 +11,7 @@
 
 namespace HankUtilities {
 
-std::vector<double> read_matrix(const std::string& file_loc);
+std::vector<hank_float_type> read_matrix(const std::string& file_loc);
 
 std::size_t find_multiple(const std::string& line, int pos);
 

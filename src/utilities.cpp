@@ -2,14 +2,14 @@
 
 namespace HankUtilities {
 
-std::vector<double> read_matrix(const std::string& file_loc)
+std::vector<hank_float_type> read_matrix(const std::string& file_loc)
 {
 	std::string line, word;
 	std::ifstream yfile;
 	std::size_t current, previous;
 	yfile.open(file_loc.data(), std::ios::in);
 
-	std::vector<double> out;
+	std::vector<hank_float_type> out;
 
 	while ( getline(yfile, line) ) {
 		previous = 0;

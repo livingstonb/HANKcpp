@@ -132,4 +132,21 @@ inline MatrixXr deye(int n) {
 	return mat;
 }
 
+namespace EigenFunctions {
+	template<typename T>
+	double sum(const T& arr) {
+		auto earr = as_eigen_map<const VectorXr>(arr);
+		return earr.sum();
+	}
+
+	template<typename T, typename V>
+	double dot(const T& arr1, const V& arr2) {
+		auto earr1 = as_eigen_map<const VectorXr>(arr1);
+		auto earr2 = as_eigen_map<const VectorXr>(arr2);
+
+		return earr1.dot(earr2);
+	}
+}
+
+
 #endif
