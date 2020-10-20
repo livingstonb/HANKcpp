@@ -164,15 +164,16 @@ void Model::create_combined_variables(const Parameters& p) {
 
 	ymarkov = MatrixXr::Zero(ny, ny);
 	ymarkovdiag = MatrixXr::Zero(ny, ny);
-	yprodgrid = VectorXr(ny);
-	yoccgrid = VectorXr::Zero(ny);
-	ydist = VectorXr(ny);
+	yprodgrid.resize(ny);
+	yoccgrid.resize(ny);
+	ydist.resize(ny);
 
 	int iy = 0;
 	for (int io=0; io<nocc; ++io) {
 		for (int ip=0; ip<nprod; ++ip) {
 			yprodgrid[iy] = prodgrid[ip];
 			ydist[iy] = proddist[ip] * occdist[io];
+			// yoccgrid[iy] = occgrid[iy];
 
 			for (int ip2=0; ip2<nprod; ++ip2) {
 				ymarkov(iy, ip2 + nprod * io) = prodmarkov(ip, ip2);
@@ -186,7 +187,9 @@ void Model::create_combined_variables(const Parameters& p) {
 		ymarkovdiag(iy,iy) = ymarkov(iy,iy);
 	
 	ymarkovoff = ymarkov - ymarkovdiag;
-	profsharegrid = yprodgrid.array() / p.meanlabeff;
+	profsharegrid = yprodgrid;
+	for (auto& el : profsharegrid)
+		el /= p.meanlabeff;
 }
 
 void Model::check_nbl(const Parameters& p) const {
@@ -281,7 +284,7 @@ void Model::assertions() const {
 		throw 0;
 	}
 
-	if ( abs(1.0-ydist.sum()) > 1.0e-7 ) {
+	if ( abs(1.0 - EigenFunctions::sum(ydist)) > 1.0e-7 ) {
 		std::cerr << "ydist does not sum to one\n";
 		throw 0;
 	}

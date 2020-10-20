@@ -100,7 +100,7 @@ Upwinding::Policies HJB::update_policies(const Equilibrium& ss) {
 		prof_keep = 1.0;
 
 	ArrayXr proftot = prof_keep * p.profdistfracW
-		* (1.0 - p.corptax) * ss.profit * model.profsharegrid.array();
+		* (1.0 - p.corptax) * ss.profit * as_eigen_map<const ArrayXr>(model.profsharegrid);
 	proftot += p.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
 
 	Eigen::Map<const ArrayXr> bgridvec(model.bgrid.data(), model.bgrid.size());

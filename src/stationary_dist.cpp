@@ -102,9 +102,9 @@ namespace {
 			if ( p.deathrate == 0.0 )
 				++bpos;
 
-			gmat(TO_INDEX_1D(0, bpos, p.na, p.nb), iy) = model.ydist(iy);
+			gmat(TO_INDEX_1D(0, bpos, p.na, p.nb), iy) = model.ydist[iy];
 			gmass = gmat.col(iy).dot(abdeltavec);
-			gmat.col(iy) *= model.ydist(iy) / gmass;
+			gmat.col(iy) *= model.ydist[iy] / gmass;
 		}
 		return gmat;
 	}
@@ -123,7 +123,7 @@ namespace {
 	void check_dist(const MatrixXr& distcheck, const Model& model) {
 		VectorXr py = distcheck.array().colwise().sum();
 		for (int iy=0; iy<model.ny; ++iy) {
-			assert( abs(py(iy) - model.ydist(iy)) < 1.0e-6 );
+			assert( abs(py(iy) - model.ydist[iy]) < 1.0e-6 );
 		}
 	}
 }

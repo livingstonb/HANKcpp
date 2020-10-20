@@ -38,7 +38,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 				nw_aby(iab, iy) = model.agrid[ia] + model.bgrid[ib];
 				agrid_aby(iab, iy) = model.agrid[ia];
 				bgrid_aby(iab, iy) = model.bgrid[ib];
-				labor_aby(iab, iy) = policies.h(ia, ib, iy) * model.yprodgrid(iy);
+				labor_aby(iab, iy) = policies.h(ia, ib, iy) * model.yprodgrid[iy];
 				h_aby(iab, iy) = policies.h(ia, ib, iy);
 			}
 		}

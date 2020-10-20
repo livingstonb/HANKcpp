@@ -16,11 +16,9 @@ class Model {
 
 		std::vector<hank_float_type> bgrid, dbgrid, bdelta, agrid, dagrid, adelta, abdelta;
 
-		std::vector<hank_float_type> occgrid, occdist, prodgrid, proddist, logprodgrid;
+		std::vector<hank_float_type> occgrid, occdist, prodgrid, proddist, logprodgrid, profsharegrid;
 
-		VectorXr profsharegrid;
-
-		VectorXr yprodgrid, yoccgrid, ydist;
+		std::vector<hank_float_type> yprodgrid, yoccgrid, ydist;
 
 		MatrixXr prodmarkov, ymarkov, ymarkovdiag, ymarkovoff;
 
