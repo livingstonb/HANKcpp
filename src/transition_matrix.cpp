@@ -25,7 +25,7 @@ SparseMatContainer construct_transition_matrix(const Parameters& p, const Model&
 			iab = TO_INDEX_1D(ia, ib, p.na, p.nb);
 			d = policies.d(ia,ib,iy);
 			s = policies.s(ia,ib,iy);
-			acost = model.adjcosts->cost(d, model.agrid(ia));
+			acost = model.adjcosts->cost(d, model.agrid[ia]);
 			areturn = adriftvec(ia);
 
 			// Compute drifts
@@ -33,43 +33,43 @@ SparseMatContainer construct_transition_matrix(const Parameters& p, const Model&
 
 			// Matrix entries, ia-1
 			if ( (ia > 0) & (drifts.aB != 0.0) ) {
-				val = -drifts.aB / model.dagrid(ia-1);
+				val = -drifts.aB / model.dagrid[ia-1];
 				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia-1, ib, na, p.nb), val));
 			}
 
 			// Matrix entries, ib-1
 			if ( (ib > 0) & (drifts.bB != 0.0) ) {
-				val = -drifts.bB / model.dbgrid(ib-1);
+				val = -drifts.bB / model.dbgrid[ib-1];
 				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia, ib-1, na, p.nb), val));
 			}
 
 			// Matrix entries, diagonal
 			if ( ia == 0 )
-				val1 = -drifts.aF / model.dagrid(ia);
+				val1 = -drifts.aF / model.dagrid[ia];
 			else if ( ia == p.na - 1 )
-				val1 = drifts.aB / model.dagrid(ia-1);
+				val1 = drifts.aB / model.dagrid[ia-1];
 			else
-				val1 = drifts.aB / model.dagrid(ia-1) - drifts.aF / model.dagrid(ia);
+				val1 = drifts.aB / model.dagrid[ia-1] - drifts.aF / model.dagrid[ia];
 
 			if ( ib == 0 )
-				val2 = -drifts.bF / model.dbgrid(ib);
+				val2 = -drifts.bF / model.dbgrid[ib];
 			else if ( ib == p.nb - 1 )
-				val2 = drifts.bB / model.dbgrid(ib-1);
+				val2 = drifts.bB / model.dbgrid[ib-1];
 			else
-				val2 = drifts.bB / model.dbgrid(ib-1) - drifts.bF / model.dbgrid(ib);
+				val2 = drifts.bB / model.dbgrid[ib-1] - drifts.bF / model.dbgrid[ib];
 
 			if ( val1 + val2 != 0 )
 				Aentries.push_back(triplet_type(iab, iab, val1 + val2));
 
 			// Matrix entries, ia+1
 			if ( (ia < p.na - 1 ) & (drifts.aF != 0.0) ) {
-				val = drifts.aF / model.dagrid(ia);
+				val = drifts.aF / model.dagrid[ia];
 				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia+1, ib, na, p.nb), val));
 			}
 			
 			// Matrix entries, ib+1
 			if ( (ib < p.nb - 1) & (drifts.bF != 0.0) ) {
-				val = drifts.bF /  model.dbgrid(ib);
+				val = drifts.bF /  model.dbgrid[ib];
 				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia, ib+1, na, p.nb), val));
 			}
 		}

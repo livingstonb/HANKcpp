@@ -97,8 +97,8 @@ void Equilibrium::compute_netwage(const Parameters& p, const Model& model)
 
 	for (int io=0; io<nocc; ++io) {
 		for (int ip=0; ip<nprod; ++ip) {
-			netwagegrid.push_back((1.0 - labtax) * model.prodgrid(ip) * wage_occ[io]);
-			Enetwage += model.occdist(io) * model.proddist(ip) * netwagegrid.back();
+			netwagegrid.push_back((1.0 - labtax) * model.prodgrid[ip] * wage_occ[io]);
+			Enetwage += model.occdist[io] * model.proddist[ip] * netwagegrid.back();
 		}
 	}
 }

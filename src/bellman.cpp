@@ -145,7 +145,7 @@ Upwinding::Policies HJB::update_policies(const Equilibrium& ss) {
 				policies.update_c(ia, ib, iy, upwindF, upwindB, upwind0);
 
 				// DEPOSIT UPWINDING
-				illiq = model.agrid(ia) * ss.illprice;
+				illiq = model.agrid[ia] * ss.illprice;
 
 				// Deposit decision: a forward, b backward
 				if ( (ia < p.na - 1) & (ib > 0) ) {
@@ -196,23 +196,23 @@ ValueFnDerivatives HJB::compute_derivatives(int ia, int ib, int iy) const {
 
 	// Forward derivatives
 	if (ia < p.na - 1) {
-		d.VaF = (V(ia+1,ib,iy) - V(ia,ib,iy)) / model.dagrid(ia);
+		d.VaF = (V(ia+1,ib,iy) - V(ia,ib,iy)) / model.dagrid[ia];
 		d.VaF = fmax(d.VaF, dVamin);
 	}
 
 	if (ib < p.nb - 1) {
-		d.VbF = (V(ia,ib+1,iy) - V(ia,ib,iy)) / model.dbgrid(ib);
+		d.VbF = (V(ia,ib+1,iy) - V(ia,ib,iy)) / model.dbgrid[ib];
 		d.VbF = fmax(d.VbF, dVbmin);
 	}
 
 	// Backward derivatives
 	if (ia > 0) {
-		d.VaB = (V(ia,ib,iy) - V(ia-1,ib,iy)) / model.dagrid(ia-1);
+		d.VaB = (V(ia,ib,iy) - V(ia-1,ib,iy)) / model.dagrid[ia-1];
 		d.VaB = fmax(d.VaB, dVamin);
 	}
 
 	if (ib > 0) {
-		d.VbB = (V(ia,ib,iy) - V(ia,ib-1,iy)) / model.dbgrid(ib-1);
+		d.VbB = (V(ia,ib,iy) - V(ia,ib-1,iy)) / model.dbgrid[ib-1];
 		d.VbB = fmax(d.VbB, dVbmin);
 	}
 

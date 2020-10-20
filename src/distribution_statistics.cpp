@@ -35,9 +35,9 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 		for (int ib=0; ib<p.nb; ++ib) {
 			iab = TO_INDEX_1D(ia, ib, p.na, p.nb);
 			for (int iy=0; iy<model.ny; ++iy) {
-				nw_aby(iab, iy) = model.agrid(ia) + model.bgrid(ib);
-				agrid_aby(iab, iy) = model.agrid(ia);
-				bgrid_aby(iab, iy) = model.bgrid(ib);
+				nw_aby(iab, iy) = model.agrid[ia] + model.bgrid[ib];
+				agrid_aby(iab, iy) = model.agrid[ia];
+				bgrid_aby(iab, iy) = model.bgrid[ib];
 				labor_aby(iab, iy) = policies.h(ia, ib, iy) * model.yprodgrid(iy);
 				h_aby(iab, iy) = policies.h(ia, ib, iy);
 			}

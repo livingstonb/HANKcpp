@@ -163,9 +163,9 @@ void Model::create_combined_variables(const Parameters& p) {
 	int iy = 0;
 	for (int io=0; io<nocc; ++io) {
 		for (int ip=0; ip<nprod; ++ip) {
-			yprodgrid(iy) = prodgrid(ip);
+			yprodgrid[iy] = prodgrid[ip];
 			// yoccgrid_(iy) = occgrid_(io);
-			ydist(iy) = proddist(ip) * occdist(io);
+			ydist[iy] = proddist[ip] * occdist[io];
 
 			for (int ip2=0; ip2<nprod; ++ip2) {
 				ymarkov(iy, ip2 + nprod * io) = prodmarkov(ip, ip2);
@@ -186,7 +186,7 @@ void Model::check_nbl(const Parameters& p) const {
 	if ( p.borrowing ) {
 		double nbl = -p.lumptransfer / (p.rborr + p.perfectAnnuityMarkets * p.deathrate);
 
-		if (bgrid(0) < nbl) {
+		if (bgrid[0] < nbl) {
 			throw "Natural borrowing limit violated";
 		}
 	}
