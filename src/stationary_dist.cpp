@@ -23,7 +23,7 @@ namespace {
 void StationaryDist::compute(const Model& model, const Equilibrium& ss, const HJB& hjb) {
 	const Parameters& p = model.p;
 
-	VectorXr abdeltavec = as_eigen<VectorXr>(model.abdelta);
+	Eigen::Map<const VectorXr> abdeltavec(model.abdelta.data(), model.abdelta.size());
 	VectorXr inv_abdelta = abdeltavec.cwiseInverse();
 	Eigen::MatrixXd lmat = deye(model.ny).cast<double>() + delta * model.ymarkovoff.cast<double>().transpose();
 	int iabx = TO_INDEX_1D(0, p.nb_neg, p.na, p.nb);
@@ -89,6 +89,7 @@ namespace {
 	MatrixXr make_dist_guess(const Model& model) {
 		const Parameters& p = model.p;
 		MatrixXr gmat = MatrixXr::Zero(p.nab, model.ny);
+		Eigen::Map<const VectorXr> abdeltavec(model.abdelta.data(), model.abdelta.size());
 
 		double gmass;
 		int bpos;
@@ -102,7 +103,7 @@ namespace {
 				++bpos;
 
 			gmat(TO_INDEX_1D(0, bpos, p.na, p.nb), iy) = model.ydist(iy);
-			gmass = gmat.col(iy).dot(as_eigen<VectorXr>(model.abdelta));
+			gmass = gmat.col(iy).dot(abdeltavec);
 			gmat.col(iy) *= model.ydist(iy) / gmass;
 		}
 		return gmat;

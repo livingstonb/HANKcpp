@@ -105,6 +105,11 @@ V as_eigen(int n, const hank_float_type *arr) {
 	return out;
 }
 
+template<typename T, typename V>
+Eigen::Map<T> as_eigen_map(V& arr) {
+	return Eigen::Map<T>(arr.data(), arr.size());
+}
+
 template<typename T>
 VectorXr cumsum(const T& arr) {
 	VectorXr out(arr.size());

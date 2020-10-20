@@ -103,7 +103,7 @@ Upwinding::Policies HJB::update_policies(const Equilibrium& ss) {
 		* (1.0 - p.corptax) * ss.profit * model.profsharegrid.array();
 	proftot += p.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
 
-	ArrayXr bgridvec = as_eigen<ArrayXr>(model.bgrid);
+	Eigen::Map<const ArrayXr> bgridvec(model.bgrid.data(), model.bgrid.size());
 	VectorXr bdrift = model.get_rb_effective().array() * bgridvec;
 
 	std::function<Upwinding::ConUpwind(double, double, double, double)> opt_c;
@@ -407,10 +407,10 @@ namespace {
 		vector3dr V(p.na, p.nb, model.ny);
 		double lc, u;
 
-		ArrayXr bgridvec = as_eigen<ArrayXr>(model.bgrid);
+		auto bgridvec = as_eigen_map<const ArrayXr>(model.bgrid);
 		VectorXr bdriftnn = model.get_rb_effective().array() * bgridvec;
 
-		ArrayXr agridvec = as_eigen<ArrayXr>(model.agrid);
+		auto agridvec = as_eigen_map<const ArrayXr>(model.agrid);
 		ArrayXr adriftnn = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * agridvec;
 
 		for (int ia=0; ia<p.na; ++ia) {
