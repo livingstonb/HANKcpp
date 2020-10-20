@@ -23,7 +23,8 @@ namespace {
 void StationaryDist::compute(const Model& model, const Equilibrium& ss, const HJB& hjb) {
 	const Parameters& p = model.p;
 
-	Eigen::VectorXd inv_abdelta = model.abdelta.cast<double>().cwiseInverse();
+	VectorXr abdeltavec = as_eigen<VectorXr>(model.abdelta);
+	VectorXr inv_abdelta = abdeltavec.cwiseInverse();
 	Eigen::MatrixXd lmat = deye(model.ny).cast<double>() + delta * model.ymarkovoff.cast<double>().transpose();
 	int iabx = TO_INDEX_1D(0, p.nb_neg, p.na, p.nb);
 
@@ -38,7 +39,7 @@ void StationaryDist::compute(const Model& model, const Equilibrium& ss, const HJ
 		SparseXd& A = Acont.get();
 
 		// Adjust A' matrix for non-linearly spaced grids
-		B[iy] = inv_abdelta.asDiagonal() * A.transpose() * model.abdelta.cast<double>().asDiagonal();
+		B[iy] = inv_abdelta.cast<double>().asDiagonal() * A.transpose() * abdeltavec.cast<double>().asDiagonal();
 		B[iy] *= -delta;
 		B[iy] += speye(p.na * p.nb) * (1.0 + delta * p.deathrate - delta * model.ymarkovdiag(iy,iy));
 		B[iy].makeCompressed();
@@ -54,7 +55,7 @@ void StationaryDist::compute(const Model& model, const Equilibrium& ss, const HJ
 	while ( (diff > gtol) & (ii < maxiter) ) {
 		for (int iy=0; iy<model.ny; ++iy) {
 			Eigen::VectorXd lgmat = gmat.cast<double>() * Eigen::VectorXd(lmat.row(iy));
-			lgmat(iabx) += delta * p.deathrate * gmat.col(iy).dot(model.abdelta) / model.abdelta(iabx);
+			lgmat(iabx) += delta * p.deathrate * gmat.col(iy).dot(abdeltavec) / model.abdelta[iabx];
 
 			gmat_update.col(iy) = spsolvers[iy].solve(lgmat).cast<hank_float_type>();
 			if ( spsolvers[iy].info() != Eigen::Success )
@@ -71,7 +72,7 @@ void StationaryDist::compute(const Model& model, const Equilibrium& ss, const HJ
 		std::cout << "KFE did not converge" << '\n';
 	gmat = gmat.array().max(0.0);
 
-	double pmass = (gmat.array().colwise() * model.abdelta.array()).matrix().sum();
+	double pmass = (gmat.array().colwise() * abdeltavec.array()).matrix().sum();
 	assert( abs(1.0 - pmass) < 1.0e-6 );
 
 	density = vector3dr(p.na, p.nb, model.ny);
@@ -80,7 +81,7 @@ void StationaryDist::compute(const Model& model, const Equilibrium& ss, const HJ
 			for (int iy=0; iy<model.ny; ++iy)
 				density(ia, ib, iy) = gmat(TO_INDEX_1D(ia, ib, p.na, p.nb), iy);
 
-	MatrixXr distcheck = gmat.array().colwise() * model.abdelta.array();
+	MatrixXr distcheck = gmat.array().colwise() * abdeltavec.array();
 	check_dist(distcheck, model);
 }
 
@@ -101,7 +102,7 @@ namespace {
 				++bpos;
 
 			gmat(TO_INDEX_1D(0, bpos, p.na, p.nb), iy) = model.ydist(iy);
-			gmass = gmat.col(iy).dot(model.abdelta);
+			gmass = gmat.col(iy).dot(as_eigen<VectorXr>(model.abdelta));
 			gmat.col(iy) *= model.ydist(iy) / gmass;
 		}
 		return gmat;

@@ -103,13 +103,14 @@ Upwinding::Policies HJB::update_policies(const Equilibrium& ss) {
 		* (1.0 - p.corptax) * ss.profit * model.profsharegrid.array();
 	proftot += p.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
 
-	VectorXr bdrift = model.get_rb_effective().array() * model.bgrid.array();
+	ArrayXr bgridvec = as_eigen<ArrayXr>(model.bgrid);
+	VectorXr bdrift = model.get_rb_effective().array() * bgridvec;
 
 	std::function<Upwinding::ConUpwind(double, double, double, double)> opt_c;
 	if ( p.endogLabor )
-		opt_c = std::bind(&HJB::optimal_consumption_sep_labor, *this, _1, _2, _3, chi, _4);
+		opt_c = std::bind(&HJB::optimal_consumption_sep_labor, this, _1, _2, _3, chi, _4);
 	else
-		opt_c = std::bind(&HJB::optimal_consumption_no_laborsupply, *this, _1, _2, _3);
+		opt_c = std::bind(&HJB::optimal_consumption_no_laborsupply, this, _1, _2, _3);
 
 	for (int ia=0; ia<p.na; ++ia) {
 		for (int ib=0; ib<p.nb; ++ib) {
@@ -405,8 +406,12 @@ namespace {
 
 		vector3dr V(p.na, p.nb, model.ny);
 		double lc, u;
-		ArrayXr bdriftnn = model.get_rb_effective().array() * model.bgrid.array();
-		ArrayXr adriftnn = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * model.agrid.array();
+
+		ArrayXr bgridvec = as_eigen<ArrayXr>(model.bgrid);
+		VectorXr bdriftnn = model.get_rb_effective().array() * bgridvec;
+
+		ArrayXr agridvec = as_eigen<ArrayXr>(model.agrid);
+		ArrayXr adriftnn = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * agridvec;
 
 		for (int ia=0; ia<p.na; ++ia) {
 			for (int ib=0; ib<p.nb; ++ib) {

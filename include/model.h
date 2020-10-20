@@ -14,11 +14,7 @@ class Model {
 	public:
 		Model(const Parameters& p);
 
-		VectorXr bgrid, dbgrid, bdelta;
-
-		VectorXr agrid, dagrid, adelta;
-
-		VectorXr abdelta;
+		std::vector<hank_float_type> bgrid, dbgrid, bdelta, agrid, dagrid, adelta, abdelta;
 
 		VectorXr occgrid, occdist;
 

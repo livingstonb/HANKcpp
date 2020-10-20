@@ -11,11 +11,12 @@
 namespace {
 	void fix_rounding(MatrixXr& mat);
 
-	VectorXr compute_grid_deltas(const VectorXr& grid, const VectorXr& dgrid);
+	std::vector<hank_float_type> compute_grid_deltas(
+		const std::vector<hank_float_type>& grid, const std::vector<hank_float_type>& dgrid);
 
-	void powerSpacedGrid(double low, double high, double curv, VectorXr& grid);
+	void powerSpacedGrid(double low, double high, double curv, std::vector<hank_float_type>& grid);
 
-	void adjustPowerSpacedGrid(VectorXr& grid);
+	void adjustPowerSpacedGrid(std::vector<hank_float_type>& grid);
 
 	void print_value(const std::string& pname, double value, bool insert_endline);
 
@@ -56,50 +57,54 @@ Model::Model(const Parameters& p_) : p(p_) {
 
 void Model::make_asset_grids(const Parameters& p) {
 	// Liquid asset
-	bgrid = VectorXr(p.nb);
+	bgrid.resize(p.nb);
 	if ( !p.borrowing ) {
 		powerSpacedGrid(p.bmin, p.bmax, p.bcurv, bgrid);
 	}
 	else {
-		VectorXr bgridpos(p.nb_pos);
+		std::vector<hank_float_type> bgridpos(p.nb_pos);
 		powerSpacedGrid(0.0, p.bmax, p.bcurv, bgridpos);
 
 		double nbl = -p.lumptransfer / (p.rborr + p.perfectAnnuityMarkets * p.deathrate);
 		double abl = fmax(nbl + p.cmin, p.blim);
 
 		int nn = static_cast<int>(floor(p.nb_neg / 2.0) + 1);
-		VectorXr bgridneg(nn);
+		std::vector<hank_float_type> bgridneg(nn);
 		powerSpacedGrid(abl, (abl+bgridpos[0])/2.0, p.bcurv_neg, bgridneg);
 
-		bgrid(seq(0, nn-1)) = bgridneg;
-		bgrid(seq(p.nb_neg, p.nb-1)) = bgridpos;
+		std::copy(bgridneg.begin(), bgridneg.end(), bgrid.begin());
+		std::copy(bgridpos.begin(), bgridpos.end(), bgrid.begin() + p.nb_neg);
+
 		for (int i=nn; i<p.nb_neg; ++i)
 			bgrid[i] = bgrid[p.nb_neg] - (bgrid[p.nb_neg-i] - bgrid[0]);
 	}
 	
+	for (int ib=0; ib<p.nb-1; ++ib)
+		dbgrid.push_back(bgrid[ib+1] - bgrid[ib]);
 
-	dbgrid = bgrid(seq(1,p.nb-1)) - bgrid(seq(0,p.nb-2));
 	bdelta = compute_grid_deltas(bgrid, dbgrid);
 
 	// Illiquid asset
+	agrid.resize(p.na);
 	if ( p.oneAssetNoCapital ) {
-		agrid = VectorXr::Constant(p.na, 0.0);
-		dagrid = VectorXr::Constant(p.na-1, 1.0);
-		adelta = VectorXr::Constant(p.na, 1.0);
+		std::fill(agrid.begin(), agrid.end(), 0);
+		std::fill(dagrid.begin(), dagrid.end(), 1);
+		std::fill(adelta.begin(), adelta.end(), 1);
 	}
 	else {
-		agrid = VectorXr(p.na);
 		powerSpacedGrid(p.amin, p.amax, p.acurv, agrid);
 		adjustPowerSpacedGrid(agrid);
 
-		dagrid = agrid(seq(1,p.na-1)) - agrid(seq(0,p.na-2));
+		for (int ia=0; ia<p.na-1; ++ia)
+			dagrid.push_back(agrid[ia+1]-agrid[ia]);
+
 		adelta = compute_grid_deltas(agrid, dagrid);
 	}
 
 	abdelta.resize(p.nab);
 	for (int ia=0; ia<p.na; ++ia)
 		for (int ib=0; ib<p.nb; ++ib)
-			abdelta(TO_INDEX_1D(ia, ib, p.na, p.nb)) = adelta(ia) * bdelta(ib);
+			abdelta[TO_INDEX_1D(ia, ib, p.na, p.nb)] = adelta[ia] * bdelta[ib];
 }
 
 void Model::make_occupation_grids(const Parameters& p) {
@@ -193,7 +198,7 @@ void Model::check_nbl(const Parameters& p) const {
 }
 
 VectorXr Model::get_rb_effective() const {
-	VectorXr rb_effective, bvec = bgrid;
+	VectorXr rb_effective, bvec = as_eigen<VectorXr>(bgrid);
 	rb_effective = bvec.unaryExpr([this](hank_float_type x) -> hank_float_type {
 			return (x >= static_cast<hank_float_type>(0.0)) ? p.rb : p.rborr;
 		});
@@ -295,19 +300,22 @@ namespace {
 		}
 	}
 
-	VectorXr compute_grid_deltas(const VectorXr& grid, const VectorXr& dgrid) {
+	std::vector<hank_float_type> compute_grid_deltas(
+		const std::vector<hank_float_type>& grid, const std::vector<hank_float_type>& dgrid)
+	{
 		int n = grid.size();
-		int n_d = n - 1;
-		VectorXr deltas(n);
+		std::vector<hank_float_type> deltas(n);
 
-		deltas(0) = 0.5 * dgrid(0);
-		deltas(seq(1,n-2)) = 0.5 * (dgrid(seq(0,n_d-2)) + dgrid(seq(1,n_d-1)));
-		deltas(n-1) = 0.5 * dgrid(n_d-1);
+		deltas[0] = 0.5 * dgrid[0];
+		for (int id=1; id<n-1; ++id)
+			deltas[id] = 0.5 * (dgrid[id-1] + dgrid[id]);
+
+		deltas[n-1] = 0.5 * dgrid[n-2];
 
 		return deltas;
 	}
 
-	void powerSpacedGrid(double low, double high, double curv, VectorXr& grid) {
+	void powerSpacedGrid(double low, double high, double curv, std::vector<hank_float_type>& grid) {
 		int n = grid.size();
 		HankNumerics::linspace(0.0, 1.0, n, grid);
 
@@ -315,7 +323,7 @@ namespace {
 			grid[i] = low + (high - low) * pow(grid[i], 1.0 / curv);
 	}
 
-	void adjustPowerSpacedGrid(VectorXr& grid) {
+	void adjustPowerSpacedGrid(std::vector<hank_float_type>& grid) {
 		if (grid.size() > 10)
 			for (int i=0; i<9; ++i)
 				grid[i] = i * grid[9] / (10.0 - 1.0);

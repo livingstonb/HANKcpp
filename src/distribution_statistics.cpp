@@ -48,7 +48,8 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 	ArrayXr gdistvec = as_eigen<ArrayXr>(sdist.density);
 	MatrixXr gdistmat = Eigen::Map<MatrixXr>(gdistvec.data(), p.nab, model.ny);
 
-	MatrixXr pdistmat = gdistmat.array().colwise() * model.abdelta.array();
+	VectorXr abdeltavec = as_eigen<VectorXr>(model.abdelta);
+	MatrixXr pdistmat = gdistmat.array().colwise() * abdeltavec.array();
 	VectorXr pdistvec = eflatten(pdistmat);
 
 	// Joint asset-income distributions
@@ -59,8 +60,8 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 		for (int ib=0; ib<p.nb; ++ib) {
 			iab = TO_INDEX_1D(ia, ib, p.na, p.nb);
 			for (int iy=0; iy<model.ny; ++iy) {
-				p_ay(ia, iy) += gdistmat(iab, iy) * model.abdelta(iab);
-				p_by(ib, iy) += gdistmat(iab, iy) * model.abdelta(iab);
+				p_ay(ia, iy) += gdistmat(iab, iy) * model.abdelta[iab];
+				p_by(ib, iy) += gdistmat(iab, iy) * model.abdelta[iab];
 			}
 		}
 	}
@@ -84,7 +85,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 	int inw;
 	for (int iab=0; iab<p.nab; ++iab) {
 		inw = nw_order(iab);
-		p_nw(iab) = model.abdelta(inw) * gdistmat.row(inw).sum();
+		p_nw(iab) = model.abdelta[iab] * gdistmat.row(inw).sum();
 	}
 	VectorXr pcum_nw = cumsum(p_nw);
 
