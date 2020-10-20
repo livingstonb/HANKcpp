@@ -1,8 +1,12 @@
+#ifndef _CMINPACK_WRAPPER_H
+#define _CMINPACK_WRAPPER_H
 
 #include <hank_config.h>
-#include <utilities.h>
+
 #include <cminpack.h>
 #include <cminpackP.h>
+
+#include <utilities.h>
 
 class Parameters;
 
@@ -81,3 +85,5 @@ void cminpack_hybrd1_wrapper(cminpack_func_nn fcn, T* args, int n, real *x) {
 // 	Hybrd1ObjectiveFn& obj_fn = *(Hybrd1ObjectiveFn *) fn_ptr;
 // 	obj_fn(x, fvec);
 // }
+
+#endif

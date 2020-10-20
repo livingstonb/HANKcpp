@@ -6,7 +6,7 @@
 #include <boost/algorithm/string.hpp>
 #include <assert.h>
 #include <hank_macros.h>
-#include <adjustment_costs.h>
+#include <hank_eigen_dense.h>
 
 namespace {
 	void fix_rounding(MatrixXr& mat);
@@ -26,6 +26,8 @@ namespace {
 }
 
 Model::Model(const Parameters& p_) : p(p_) {
+	matrices = new ModelMatrices;
+
 	make_asset_grids(p);
 	make_occupation_grids(p);
 	create_income_process(p);
@@ -53,6 +55,10 @@ Model::Model(const Parameters& p_) : p(p_) {
 
 	if ( global_hank_options->print_diagnostics )
 		print_values();
+}
+
+Model::~Model() {
+	delete[] matrices;
 }
 
 void Model::make_asset_grids(const Parameters& p) {
@@ -141,8 +147,8 @@ void Model::create_income_process(const Parameters& p) {
 			el /= (1.0 + p.adjFrischGridFrac * p.frisch);
 
 	int k = proddist.size();
-	prodmarkov = vector2eigenm(HankUtilities::read_matrix(markov_loc), k, k);
-	fix_rounding(prodmarkov);
+	matrices->prodmarkov = vector2eigenm(HankUtilities::read_matrix(markov_loc), k, k);
+	fix_rounding(matrices->prodmarkov);
 
 	for (auto el : logprodgrid)
 		prodgrid.push_back(exp(el));
@@ -159,8 +165,8 @@ void Model::create_income_process(const Parameters& p) {
 void Model::create_combined_variables(const Parameters& p) {
 	ny = nprod * nocc;
 
-	ymarkov = MatrixXr::Zero(ny, ny);
-	ymarkovdiag = MatrixXr::Zero(ny, ny);
+	matrices->ymarkov = MatrixXr::Zero(ny, ny);
+	matrices->ymarkovdiag = MatrixXr::Zero(ny, ny);
 	yprodgrid.resize(ny);
 	yoccgrid.resize(ny);
 	ydist.resize(ny);
@@ -173,7 +179,7 @@ void Model::create_combined_variables(const Parameters& p) {
 			// yoccgrid[iy] = occgrid[iy];
 
 			for (int ip2=0; ip2<nprod; ++ip2) {
-				ymarkov(iy, ip2 + nprod * io) = prodmarkov(ip, ip2);
+				matrices->ymarkov(iy, ip2 + nprod * io) = matrices->prodmarkov(ip, ip2);
 			}
 
 			++iy;
@@ -181,9 +187,9 @@ void Model::create_combined_variables(const Parameters& p) {
 	}
 
 	for (int iy=0; iy<ny; ++iy)
-		ymarkovdiag(iy,iy) = ymarkov(iy,iy);
+		matrices->ymarkovdiag(iy,iy) = matrices->ymarkov(iy,iy);
 	
-	ymarkovoff = ymarkov - ymarkovdiag;
+	matrices->ymarkovoff = matrices->ymarkov - matrices->ymarkovdiag;
 	profsharegrid = yprodgrid;
 	for (auto& el : profsharegrid)
 		el /= p.meanlabeff;
@@ -289,7 +295,7 @@ void Model::assertions() const {
 		throw 0;
 	}
 
-	ArrayXr rowsums = ymarkov.rowwise().sum();
+	ArrayXr rowsums = matrices->ymarkov.rowwise().sum();
 	if ( rowsums.abs().maxCoeff() > 1.0e-7 ) {
 		std::cerr << "Markov ytrans matrix rows do not sum to zero\n";
 		throw 0;

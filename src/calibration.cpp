@@ -11,6 +11,8 @@
 #include <distribution_statistics.h>
 #include <stationary_dist.h>
 
+#include <assert.h>
+
 using namespace std::placeholders;
 
 namespace {

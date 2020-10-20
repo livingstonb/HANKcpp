@@ -26,6 +26,10 @@ using MapMatrixXr = Eigen::Map<MatrixXr>;
 
 using Eigen::VectorXi;
 
+struct ModelMatrices {
+	MatrixXr prodmarkov, ymarkov, ymarkovdiag, ymarkovoff;
+};
+
 inline VectorXr eflatten(const MatrixXr& arr) {
 	const Eigen::Map<const VectorXr> arr_map(arr.data(), arr.size());
 	VectorXr flattened = arr_map;

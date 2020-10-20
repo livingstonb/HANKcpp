@@ -255,7 +255,7 @@ Upwinding::ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift
 
 		if ( (v1_at_max > 0) & (v1_at_min < 0) ) {
 			std::function<double(double)> objective = std::bind(
-				&Model::util1BC, model, _1, riskaver, chi, bdrift, netwage, idioscale);
+				&Model::util1BC, &model, _1, riskaver, chi, bdrift, netwage, idioscale);
 			double facc = 1.0e-8;
 			upwind.h = HankNumerics::rtsec(objective, hmin, hmax, facc);
 		}
@@ -305,7 +305,7 @@ void HJB::update_value_fn(const Equilibrium& ss, const Upwinding::Policies& poli
 
 	for ( int iy=0; iy<model.ny; ++iy ) {
 		triplet_list Aentries;
-		ycol = model.prodmarkovscale * model.ymarkovoff.row(iy);
+		ycol = model.prodmarkovscale * model.matrices->ymarkovoff.row(iy);
 
 		for (int ia=0; ia<p.na; ++ia) {
 			for (int ib=0; ib<p.nb; ++ib) {
@@ -323,7 +323,7 @@ void HJB::update_value_fn(const Equilibrium& ss, const Upwinding::Policies& poli
 		SparseXd& A = Acont.get();
 
 		// Construct B matrix = I + delta * (rho * I - A)
-		double ldiag = 1.0 + delta * (p.rho + p.deathrate) - delta * model.prodmarkovscale * model.ymarkovdiag(iy,iy);
+		double ldiag = 1.0 + delta * (p.rho + p.deathrate) - delta * model.prodmarkovscale * model.matrices->ymarkovdiag(iy,iy);
 		ldiagmat = sparseI * ldiag;
 		SparseXd B = ldiagmat - delta * A;
 		B.makeCompressed();

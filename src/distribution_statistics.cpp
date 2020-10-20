@@ -10,6 +10,7 @@
 #include <utilities.h>
 
 #include <hank_macros.h>
+#include <hank_eigen_dense.h>
 
 namespace {
 	void print_result(const std::string& expr, double val);

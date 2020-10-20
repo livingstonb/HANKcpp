@@ -4,15 +4,19 @@
 #include <hank_config.h>
 #include <string>
 #include <vector>
-#include <hank_eigen_dense.h>
 #include <adjustment_costs.h>
 #include <parameters.h>
 #include <memory>
+
+// Class to store Eigen::Matrix variables
+struct ModelMatrices;
 
 // Binds the attributes constructed in Model to const references
 class Model {
 	public:
 		Model(const Parameters& p);
+
+		~Model();
 
 		std::vector<hank_float_type> bgrid, dbgrid, bdelta, agrid, dagrid, adelta, abdelta;
 
@@ -20,7 +24,7 @@ class Model {
 
 		std::vector<hank_float_type> yprodgrid, yoccgrid, ydist, occYsharegrid, occNsharegrid;
 
-		MatrixXr prodmarkov, ymarkov, ymarkovdiag, ymarkovoff;
+		ModelMatrices* matrices = nullptr;
 
 		int nb, na, nocc, nprod, ny, naby, ntot;
 

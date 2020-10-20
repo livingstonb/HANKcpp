@@ -2,6 +2,7 @@
 #include <parameters.h>
 #include <model.h>
 #include <algorithm>
+#include <math.h>
 
 namespace
 {

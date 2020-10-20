@@ -1,8 +1,8 @@
 #include <impulse_responses.h>
+
 #include <parameters.h>
 #include <model.h>
 #include <equilibrium.h>
-#include <math.h>
 #include <iostream>
 #include <functional>
 #include <utilities.h>
@@ -10,6 +10,9 @@
 #include <bellman.h>
 #include <stationary_dist.h>
 #include <distribution_statistics.h>
+
+#include <hank_eigen_dense.h>
+#include <math.h>
 
 #include <cminpack_wrapper.h>
 

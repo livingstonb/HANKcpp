@@ -25,7 +25,7 @@ void StationaryDist::compute(const Model& model, const Equilibrium& ss, const HJ
 
 	Eigen::Map<const VectorXr> abdeltavec(model.abdelta.data(), model.abdelta.size());
 	VectorXr inv_abdelta = abdeltavec.cwiseInverse();
-	Eigen::MatrixXd lmat = deye(model.ny).cast<double>() + delta * model.ymarkovoff.cast<double>().transpose();
+	Eigen::MatrixXd lmat = deye(model.ny).cast<double>() + delta * model.matrices->ymarkovoff.cast<double>().transpose();
 	int iabx = TO_INDEX_1D(0, p.nb_neg, p.na, p.nb);
 
 	MatrixXr gmat = make_dist_guess(model);
@@ -41,7 +41,7 @@ void StationaryDist::compute(const Model& model, const Equilibrium& ss, const HJ
 		// Adjust A' matrix for non-linearly spaced grids
 		B[iy] = inv_abdelta.cast<double>().asDiagonal() * A.transpose() * abdeltavec.cast<double>().asDiagonal();
 		B[iy] *= -delta;
-		B[iy] += speye(p.na * p.nb) * (1.0 + delta * p.deathrate - delta * model.ymarkovdiag(iy,iy));
+		B[iy] += speye(p.na * p.nb) * (1.0 + delta * p.deathrate - delta * model.matrices->ymarkovdiag(iy,iy));
 		B[iy].makeCompressed();
 
 		spsolvers[iy].compute(B[iy]);

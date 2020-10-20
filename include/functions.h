@@ -2,7 +2,7 @@
 #define _HANK_FUNCTIONS_H
 
 #include <hank_config.h>
-#include <cmath>
+#include <math.h>
 
 enum class FnType { function, deriv, deriv_inv };
 
