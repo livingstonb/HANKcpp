@@ -158,7 +158,7 @@ Upwinding::Policies HJB::update_policies(const Equilibrium& ss) {
 				// Deposit decision: a backward, b forward
 				if ( (ia > 0) & (ib < p.nb - 1) ) {
 					depositBF = optimal_deposits(model, derivs.VaB, derivs.VbF, illiq, ss.illprice);
-					worth_adjusting = ( depositBF.d <= -model.adjcosts.cost(depositBF.d, illiq) );
+					worth_adjusting = ( depositBF.d <= -model.adjcosts->cost(depositBF.d, illiq) );
 					depositBF.valid = ( worth_adjusting & (depositBF.Hd > 0) );
 				}
 				else
@@ -170,7 +170,7 @@ Upwinding::Policies HJB::update_policies(const Equilibrium& ss) {
 						derivs.VbB = model.util1(upwindB.c, riskaver);
 
 					depositBB = optimal_deposits(model, derivs.VaB, derivs.VbB, illiq, ss.illprice);
-					worth_adjusting = ( depositBB.d > -model.adjcosts.cost(depositBB.d, illiq) );
+					worth_adjusting = ( depositBB.d > -model.adjcosts->cost(depositBB.d, illiq) );
 					depositBB.valid = ( worth_adjusting & (depositBB.d <= 0) & (depositBB.Hd > 0));
 				}
 				else
@@ -423,9 +423,9 @@ namespace {
 
 	Upwinding::DepositUpwind optimal_deposits(const Model& model, double Va, double Vb, double a, double illprice) {
 		Upwinding::DepositUpwind dupwind;
-		dupwind.d = model.adjcosts.cost1inv(Va / (Vb * illprice) - 1.0, a);
+		dupwind.d = model.adjcosts->cost1inv(Va / (Vb * illprice) - 1.0, a);
 
-		dupwind.Hd = Va * dupwind.d / illprice - Vb * (dupwind.d + model.adjcosts.cost(dupwind.d, a));
+		dupwind.Hd = Va * dupwind.d / illprice - Vb * (dupwind.d + model.adjcosts->cost(dupwind.d, a));
 		return dupwind;
 	}
 }

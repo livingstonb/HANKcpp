@@ -24,6 +24,8 @@ namespace HANK {
 	const hank_float_type ValueNotSet = -91912395.1;
 }
 
+using model_vector_type = std::vector<hank_float_type>;
+
 class WealthTarget {
 	public:
 		enum class Type { mean, median, none };

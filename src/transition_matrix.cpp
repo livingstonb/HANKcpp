@@ -25,7 +25,7 @@ SparseMatContainer construct_transition_matrix(const Parameters& p, const Model&
 			iab = TO_INDEX_1D(ia, ib, p.na, p.nb);
 			d = policies.d(ia,ib,iy);
 			s = policies.s(ia,ib,iy);
-			acost = model.adjcosts.cost(d, model.agrid(ia));
+			acost = model.adjcosts->cost(d, model.agrid(ia));
 			areturn = adriftvec(ia);
 
 			// Compute drifts

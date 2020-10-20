@@ -21,14 +21,21 @@ namespace {
 
 	void print_value(const std::string& pname, double value);
 
-	void check_adjcosts(const Parameters& p, const AdjustmentCosts& adjcosts);
+	void check_adjcosts(const Parameters& p, const std::shared_ptr<AdjustmentCosts>& adjcosts);
 }
 
-ModelBase::ModelBase(const Parameters& p) {
+Model::Model(const Parameters& p_) : p(p_) {
 	make_asset_grids(p);
 	make_occupation_grids(p);
 	create_income_process(p);
 	create_combined_variables(p);
+
+	nocc = p.nocc;
+	naby = p.nb * p.na * nocc * nprod;
+	ntot = p.nb * p.na * nocc * nprod;
+	dims = std::vector<int>({p.na, p.nb, ny});
+
+	assertions();
 
 	check_nbl(p);
 
@@ -38,15 +45,20 @@ ModelBase::ModelBase(const Parameters& p) {
 		p.kappa_w_fc, p.kappa_d_fc, p.kappa_w, p.kappa_d, adjcost1max, p.dmax);
 
 	adjcost1max = adjcosts_initial.cost1(p.dmax, 1.0);
-	adjcosts_ = std::move(AdjustmentCosts(p.adjCostRatioMode, p.exponential_adjcosts,
+	adjcosts.reset(new AdjustmentCosts(p.adjCostRatioMode, p.exponential_adjcosts,
 		p.kappa_w_fc, p.kappa_d_fc, p.kappa_w, p.kappa_d, adjcost1max, p.dmax));
+
+	check_adjcosts(p, adjcosts);
+
+	if ( global_hank_options->print_diagnostics )
+		print_values();
 }
 
-void ModelBase::make_asset_grids(const Parameters& p) {
+void Model::make_asset_grids(const Parameters& p) {
 	// Liquid asset
-	bgrid_ = VectorXr(p.nb);
+	bgrid = VectorXr(p.nb);
 	if ( !p.borrowing ) {
-		powerSpacedGrid(p.bmin, p.bmax, p.bcurv, bgrid_);
+		powerSpacedGrid(p.bmin, p.bmax, p.bcurv, bgrid);
 	}
 	else {
 		VectorXr bgridpos(p.nb_pos);
@@ -59,102 +71,104 @@ void ModelBase::make_asset_grids(const Parameters& p) {
 		VectorXr bgridneg(nn);
 		powerSpacedGrid(abl, (abl+bgridpos[0])/2.0, p.bcurv_neg, bgridneg);
 
-		bgrid_(seq(0, nn-1)) = bgridneg;
-		bgrid_(seq(p.nb_neg, p.nb-1)) = bgridpos;
+		bgrid(seq(0, nn-1)) = bgridneg;
+		bgrid(seq(p.nb_neg, p.nb-1)) = bgridpos;
 		for (int i=nn; i<p.nb_neg; ++i)
-			bgrid_[i] = bgrid_[p.nb_neg] - (bgrid_[p.nb_neg-i] - bgrid_[0]);
+			bgrid[i] = bgrid[p.nb_neg] - (bgrid[p.nb_neg-i] - bgrid[0]);
 	}
 	
 
-	dbgrid_ = bgrid_(seq(1,p.nb-1)) - bgrid_(seq(0,p.nb-2));
-	bdelta_ = compute_grid_deltas(bgrid_, dbgrid_);
+	dbgrid = bgrid(seq(1,p.nb-1)) - bgrid(seq(0,p.nb-2));
+	bdelta = compute_grid_deltas(bgrid, dbgrid);
 
 	// Illiquid asset
 	if ( p.oneAssetNoCapital ) {
-		agrid_ = VectorXr::Constant(p.na, 0.0);
-		dagrid_ = VectorXr::Constant(p.na-1, 1.0);
-		adelta_ = VectorXr::Constant(p.na, 1.0);
+		agrid = VectorXr::Constant(p.na, 0.0);
+		dagrid = VectorXr::Constant(p.na-1, 1.0);
+		adelta = VectorXr::Constant(p.na, 1.0);
 	}
 	else {
-		agrid_ = VectorXr(p.na);
-		powerSpacedGrid(p.amin, p.amax, p.acurv, agrid_);
-		adjustPowerSpacedGrid(agrid_);
+		agrid = VectorXr(p.na);
+		powerSpacedGrid(p.amin, p.amax, p.acurv, agrid);
+		adjustPowerSpacedGrid(agrid);
 
-		dagrid_ = agrid_(seq(1,p.na-1)) - agrid_(seq(0,p.na-2));
-		adelta_ = compute_grid_deltas(agrid_, dagrid_);
+		dagrid = agrid(seq(1,p.na-1)) - agrid(seq(0,p.na-2));
+		adelta = compute_grid_deltas(agrid, dagrid);
 	}
 
-	abdelta_.resize(p.nab);
+	abdelta.resize(p.nab);
 	for (int ia=0; ia<p.na; ++ia)
 		for (int ib=0; ib<p.nb; ++ib)
-			abdelta_(TO_INDEX_1D(ia, ib, p.na, p.nb)) = adelta_(ia) * bdelta_(ib);
+			abdelta(TO_INDEX_1D(ia, ib, p.na, p.nb)) = adelta(ia) * bdelta(ib);
 }
 
-void ModelBase::make_occupation_grids(const Parameters& p) {
+void Model::make_occupation_grids(const Parameters& p) {
 	// Occupation types
-	occYsharegrid_.resize(p.nocc);
-	occNsharegrid_.resize(p.nocc);
-	occdist_.resize(p.nocc);
+	occYsharegrid.resize(p.nocc);
+	occNsharegrid.resize(p.nocc);
+	occdist.resize(p.nocc);
 	if ( p.nocc == 1 ) {
-		occYsharegrid_ << 1;
-		occNsharegrid_ << 1;
-		occdist_ << 1;
+		occYsharegrid << 1;
+		occNsharegrid << 1;
+		occdist << 1;
 	}
 	else if ( p.nocc == 4 ) {
-		occYsharegrid_ << 0.325, 0.275, 0.225, 0.175;
-		occNsharegrid_ << 0.1, 0.15, 0.25, 0.5;
-		occdist_ << 0.25, 0.25, 0.25, 0.25;
+		occYsharegrid << 0.325, 0.275, 0.225, 0.175;
+		occNsharegrid << 0.1, 0.15, 0.25, 0.5;
+		occdist << 0.25, 0.25, 0.25, 0.25;
 	}
 	else {
 		std::cerr << "Invalid number of occupation points\n";
 		throw 0;
 	}
-	nocc_ = p.nocc;
+	nocc = p.nocc;
 }
 
-void ModelBase::create_income_process(const Parameters& p) {
+void Model::create_income_process(const Parameters& p) {
 
 	std::string grid_loc = "../input/" + p.income_dir + "/ygrid_combined.txt";
-	logprodgrid_ = vector2eigenv(HankUtilities::read_matrix(grid_loc));
+	logprodgrid = vector2eigenv(HankUtilities::read_matrix(grid_loc));
 
 	std::string dist_loc = "../input/" + p.income_dir + "/ydist_combined.txt";
-	proddist_ = vector2eigenv(HankUtilities::read_matrix(dist_loc));
+	proddist = vector2eigenv(HankUtilities::read_matrix(dist_loc));
 
 	std::string markov_loc = "../input/" + p.income_dir + "/ymarkov_combined.txt";
 
 	if ( p.adjustProdGridFrisch )
-		logprodgrid_ = logprodgrid_ / (1.0 + p.adjFrischGridFrac * p.frisch);
+		logprodgrid = logprodgrid / (1.0 + p.adjFrischGridFrac * p.frisch);
 
-	int k = proddist_.size();
-	prodmarkov_ = vector2eigenm(HankUtilities::read_matrix(markov_loc), k, k);
-	fix_rounding(prodmarkov_);
+	int k = proddist.size();
+	prodmarkov = vector2eigenm(HankUtilities::read_matrix(markov_loc), k, k);
+	fix_rounding(prodmarkov);
 
-	prodgrid_ = logprodgrid_.array().exp();
-	nprod_ = prodgrid_.size();
+	prodgrid = logprodgrid.array().exp();
+	nprod = prodgrid.size();
 
 	// Normalize mean productivity
-	double lmean = prodgrid_.dot(proddist_);
-	prodgrid_ *= p.meanlabeff / lmean;
+	double lmean = prodgrid.dot(proddist);
+	prodgrid *= p.meanlabeff / lmean;
+
+	nprod = prodgrid.size();
 }
 
-void ModelBase::create_combined_variables(const Parameters& p) {
-	int ny = nprod_ * nocc_;
+void Model::create_combined_variables(const Parameters& p) {
+	ny = nprod * nocc;
 
-	ymarkov_ = MatrixXr::Zero(ny, ny);
-	ymarkovdiag_ = MatrixXr::Zero(ny, ny);
-	yprodgrid_ = VectorXr(ny);
-	yoccgrid_ = VectorXr::Zero(ny);
-	ydist_ = VectorXr(ny);
+	ymarkov = MatrixXr::Zero(ny, ny);
+	ymarkovdiag = MatrixXr::Zero(ny, ny);
+	yprodgrid = VectorXr(ny);
+	yoccgrid = VectorXr::Zero(ny);
+	ydist = VectorXr(ny);
 
 	int iy = 0;
-	for (int io=0; io<nocc_; ++io) {
-		for (int ip=0; ip<nprod_; ++ip) {
-			yprodgrid_(iy) = prodgrid_(ip);
+	for (int io=0; io<nocc; ++io) {
+		for (int ip=0; ip<nprod; ++ip) {
+			yprodgrid(iy) = prodgrid(ip);
 			// yoccgrid_(iy) = occgrid_(io);
-			ydist_(iy) = proddist_(ip) * occdist_(io);
+			ydist(iy) = proddist(ip) * occdist(io);
 
-			for (int ip2=0; ip2<nprod_; ++ip2) {
-				ymarkov_(iy, ip2 + nprod_ * io) = prodmarkov_(ip, ip2);
+			for (int ip2=0; ip2<nprod; ++ip2) {
+				ymarkov(iy, ip2 + nprod * io) = prodmarkov(ip, ip2);
 			}
 
 			++iy;
@@ -162,30 +176,20 @@ void ModelBase::create_combined_variables(const Parameters& p) {
 	}
 
 	for (int iy=0; iy<ny; ++iy)
-		ymarkovdiag_(iy,iy) = ymarkov_(iy,iy);
+		ymarkovdiag(iy,iy) = ymarkov(iy,iy);
 	
-	ymarkovoff_ = ymarkov_ - ymarkovdiag_;
-	profsharegrid_ = yprodgrid_.array() / p.meanlabeff;
+	ymarkovoff = ymarkov - ymarkovdiag;
+	profsharegrid = yprodgrid.array() / p.meanlabeff;
 }
 
-void ModelBase::check_nbl(const Parameters& p) const {
+void Model::check_nbl(const Parameters& p) const {
 	if ( p.borrowing ) {
 		double nbl = -p.lumptransfer / (p.rborr + p.perfectAnnuityMarkets * p.deathrate);
 
-		if (bgrid_(0) < nbl) {
+		if (bgrid(0) < nbl) {
 			throw "Natural borrowing limit violated";
 		}
 	}
-}
-
-Model::Model(const Parameters& p_)
-	: ModelBase(p_), p(p_) {
-	assertions();
-
-	if ( global_hank_options->print_diagnostics )
-		print_values();
-
-	check_adjcosts(p_, adjcosts);
 }
 
 VectorXr Model::get_rb_effective() const {
@@ -328,13 +332,13 @@ namespace {
 		print_value(pname, value, true);
 	}
 
-	void check_adjcosts(const Parameters& p, const AdjustmentCosts& adjcosts) {
-		assert( p.kappa_w_fc == adjcosts.kappa_w_fc );
-		assert( p.kappa_d_fc == adjcosts.kappa_d_fc );
+	void check_adjcosts(const Parameters& p, const std::shared_ptr<AdjustmentCosts>& adjcosts) {
+		assert( p.kappa_w_fc == adjcosts->kappa_w_fc );
+		assert( p.kappa_d_fc == adjcosts->kappa_d_fc );
 
 		for (int i=0; i<5; ++i) {
-			assert( p.kappa_w[i] == adjcosts.kappa_w[i] );
-			assert( p.kappa_d[i] == adjcosts.kappa_d[i] );
+			assert( p.kappa_w[i] == adjcosts->kappa_w[i] );
+			assert( p.kappa_d[i] == adjcosts->kappa_d[i] );
 		}
 	}
 }
