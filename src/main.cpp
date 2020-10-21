@@ -148,6 +148,9 @@ int main () {
 		DistributionStatistics stats(params, model, hjb, sdist);
 		object_ptrs.ptr4.reset(&stats);
 		stats.print();
+
+		iss.update_with_stats(stats);
+		iss.check_results();
 	}
 	else {
 		// Calibrate

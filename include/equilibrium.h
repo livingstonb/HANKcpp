@@ -3,15 +3,21 @@
 
 #include <hank_config.h>
 #include <hank_types.h>
+#include <string>
+#include <map>
 #include <memory>
 
 class Parameters;
 
 class Model;
 
+class DistributionStatistics;
+
 class Equilibrium {
 	public:
-		Equilibrium() {}
+		Equilibrium();
+
+		virtual void set_pointers();
 
 		void create_transition();
 
@@ -45,17 +51,13 @@ class Equilibrium {
 
 		hank_float_type bond, govbond, labtax, govexp;
 
-		hank_float_type output = 1.0;
-
-		hank_float_type varieties = 1.0;
-
-		hank_float_type qcapital = 1.0;
-
-		hank_float_type capital = HANK::ValueNotSet;
+		hank_float_type capital, output, varieties, qcapital;
 
 		std::vector<hank_float_type> labshareY, labshareN, labfracY, labfracN, labor_occ, wage_occ;
 
 		std::vector<hank_float_type> netwagegrid, yprodgrid;
+
+		std::map<std::string, hank_float_type*> variable_ptrs;
 
 		int nocc, nprod;
 
@@ -68,14 +70,19 @@ class EquilibriumInitial : public Equilibrium {
 		void set_from_parameters(const Parameters& p, const Model& model) override;
 
 		void compute_factors(const Model& model) override;
+
+		void update_with_stats(const DistributionStatistics& model);
+
+		void check_results() const;
 };
 
 class EquilibriumFinal : public Equilibrium {
 	public:
-		EquilibriumFinal() {}
+		EquilibriumFinal() : Equilibrium() {}
 
 		EquilibriumFinal(const Equilibrium& other_equm) {
 			*this = *(EquilibriumFinal *) &other_equm;
+			set_pointers();
 		}
 
 		~EquilibriumFinal() {}
@@ -84,21 +91,34 @@ class EquilibriumFinal : public Equilibrium {
 			const Equilibrium& initial_equm, const hank_float_type* x);
 
 		void compute_factors(const Model& model) override;
+
+		void set_from_parameters(const Parameters& p, const Model& model) override;
+
+		void check_results() const;
 };
 
 class EquilibriumTrans : public Equilibrium {
 	public:
-		hank_float_type mpshock, pi, pricelev, priceadjust, capadjust, qdot;
+		EquilibriumTrans() : Equilibrium() {
+			set_pointers();
+			HANK::initialize_unset(variable_ptrs);
+		}
 
-		hank_float_type pidot, logydot, elast, firmdiscount, qinvestment, invadjust;
+		hank_float_type mpshock, pricelev, priceadjust, capadjust, qdot;
 
-		hank_float_type equity_Adot, equity_Bdot, lIK, bond;
+		hank_float_type pidot, logydot, firmdiscount, qinvestment, invadjust;
+
+		hank_float_type equity_Adot, equity_Bdot, inv_cap_ratio;
+
+		void set_pointers() override;
 
 		void set_from_parameters(const Parameters& p, const Model& model) override {
 			Equilibrium::set_from_parameters(p, model);
 		}
 
 		void compute_factors(const Model& model) override;
+
+		void check_results() const;
 };
 
 void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,

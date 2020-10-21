@@ -124,6 +124,9 @@ void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type 
 	make_transition_guesses(x);
 	solve_trans_equilibrium(trans_equm, p, model, initial_equm, *final_equm_ptr, deltatransvec.data());
 
+	for (int it=0; it<Ttrans; ++it)
+		trans_equm[it].check_results();
+
 	// Solve distribution
 	std::vector<DistributionStatistics> trans_stats;
 	for (int it=0; it<Ttrans; ++it) {
@@ -157,7 +160,7 @@ void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type 
 		}
 
 		if ( (p.capadjcost > 0) | (p.invadjcost > 0) ) {
-			fvec[ix] = trans_equm[it].lIK / (trans_equm[it].investment / trans_equm[it].capital) - 1.0;
+			fvec[ix] = trans_equm[it].inv_cap_ratio / (trans_equm[it].investment / trans_equm[it].capital) - 1.0;
 			++ix;
 		}
 	}
@@ -258,7 +261,7 @@ void IRF::make_transition_guesses(const hank_float_type *x) {
 	for (int it=0; it<Ttrans; ++it) {
 		// Guess wholesale price
 		if ( flextransition ) {
-			trans_equm[it].price_W = 1.0 - 1.0 / trans_equm[it].elast;
+			trans_equm[it].price_W = 1.0 - 1.0 / p.elast;
 			trans_equm[it].firmdiscount = -1e6;
 		}
 		else {
@@ -266,10 +269,10 @@ void IRF::make_transition_guesses(const hank_float_type *x) {
 			trans_equm[it].firmdiscount = get_firmdiscount(p.firm_discount_rate_type, initial_equm, trans_equm[it]);
 
 			// Guess wholesale price
-			hank_float_type mkup = (trans_equm[it].elast - 1.0) / trans_equm[it].elast;
+			hank_float_type mkup = (p.elast - 1.0) / p.elast;
 			trans_equm[it].price_W = (trans_equm[it].firmdiscount - trans_equm[it].logydot)
-				* trans_equm[it].pi * p.priceadjcost / trans_equm[it].elast
-				+ mkup - trans_equm[it].pidot * p.priceadjcost / trans_equm[it].elast;
+				* trans_equm[it].pi * p.priceadjcost / p.elast
+				+ mkup - trans_equm[it].pidot * p.priceadjcost / p.elast;
 			trans_equm[it].price_W = fmin(max_price_W, fmax(min_price_W, trans_equm[it].price_W));
 		}
 	}
@@ -295,12 +298,9 @@ void IRF::set_shock_paths() {
 	}
 
 	for (int it=0; it<Ttrans; ++it) {
-		if ( shock.type == ShockType::tfp_Y )
-			trans_equm[it].tfp_Y = tfp_Y[it];
-		else if ( shock.type == ShockType::monetary )
-			trans_equm[it].mpshock = mpshock[it];
-		else if ( shock.type == ShockType::riskaver )
-			trans_equm[it].riskaver = riskaver[it];
+		trans_equm[it].tfp_Y = tfp_Y[it];
+		trans_equm[it].mpshock = mpshock[it];
+		trans_equm[it].riskaver = riskaver[it];
 	}
 }
 
@@ -343,6 +343,7 @@ int final_steady_state_obj_fn(void* solver_args_voidptr, int /* n */, const real
 		final_ss.riskaver = p.riskaver;
 
 	final_ss.solve(p, model, iss, x);
+	final_ss.check_results();
 	solver_args.ptr4.reset(&final_ss);
 
 	HJB hjb(model, final_ss);

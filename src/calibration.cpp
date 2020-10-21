@@ -247,9 +247,8 @@ int initial_steady_state_obj_fn(void* args_void_ptr, int n, const hank_float_typ
 	args.ptr4.reset(&stats);
 	stats.print();
 
-	iss.bond = stats.Eb;
-	iss.govbond = iss.equity_B - iss.bond;
-	iss.govexp = iss.taxrev + iss.rb * iss.govbond;
+	iss.update_with_stats(stats);
+	iss.check_results();
 
 	CalibrationArgs cal_args(args);
 	cal.fill_fvec(cal_args, fvec);

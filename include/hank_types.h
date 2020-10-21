@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <memory>
+#include <map>
 
 #if STACK_LIQ_FIRST == 0
 	#define TO_INDEX_1D(a, b, y, na, nb) ((a) + (na) * (b) + (na) * (nb) * (y))
@@ -22,11 +23,37 @@ enum class FirmDiscountRateType { rho, rb_iss, ra_iss, rb_trans, ra_trans };
 
 namespace HANK {
 	const hank_float_type ValueNotSet = -91912395.1;
+
+	template<typename T, typename V>
+	void initialize_unset(std::map<T, V*>& variables)
+	{
+		for (auto& var : variables)
+			*var.second = ValueNotSet;
+	}
+
+	template<typename T, typename V>
+	void check_if_unset(const std::map<T, V*>& variables)
+	{
+		std::vector<std::string> unset_variables;
+		for (auto& var : variables)
+			if ( *var.second == ValueNotSet )
+				unset_variables.push_back(var.first);
+
+		if ( unset_variables.size() > 0 ) {
+			std::cout << "----------------------------\n";
+
+			for (auto var : unset_variables)
+				std::cout << "Warning: '" << var << "' has not been assigned a value\n";
+
+			std::cout << "----------------------------\n";
+		}
+	}
 }
 
 using model_vector_type = std::vector<hank_float_type>;
 
-class WealthTarget {
+class WealthTarget
+{
 	public:
 		enum class Type { mean, median, none };
 
