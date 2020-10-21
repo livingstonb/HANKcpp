@@ -193,7 +193,7 @@ void IRF::make_transition_guesses(const hank_float_type *x) {
 		// Guess for labor
 		trans_equm[it].labor_occ.resize(p.nocc);
 		trans_equm[it].labor = 0;
-		int ixo = Ttrans - 1;
+		int ixo = 2 * Ttrans + it - 1;
 		for (int io=0; io<p.nocc; ++io) {
 			trans_equm[it].labor_occ[io] = initial_equm.labor_occ[io] * exp(x[ixo]);
 			trans_equm[it].labor += trans_equm[it].labor_occ[io] * model.occdist[io];
@@ -250,7 +250,7 @@ void IRF::make_transition_guesses(const hank_float_type *x) {
 	trans_equm[Ttrans-1].pidot = 0;
 	trans_equm[Ttrans-1].logydot = 0;
 
-	for (int it=Ttrans-2; it>0; --it) {
+	for (int it=Ttrans-2; it>=0; --it) {
 		trans_equm[it].pidot = (trans_equm[it+1].pi - trans_equm[it].pi) / deltatransvec[it];
 		trans_equm[it].logydot = (log(trans_equm[it+1].output) - log(trans_equm[it].output)) / deltatransvec[it];
 	}
@@ -277,7 +277,8 @@ void IRF::make_transition_guesses(const hank_float_type *x) {
 }
 
 void IRF::set_shock_paths() {
-	VectorXr mpshock, tfp_Y = VectorXr::Constant(Ttrans, initial_equm.tfp_Y);
+	VectorXr mpshock = VectorXr::Constant(Ttrans, 0);
+	VectorXr tfp_Y = VectorXr::Constant(Ttrans, initial_equm.tfp_Y);
 	VectorXr riskaver = VectorXr::Constant(Ttrans, p.riskaver);
 	hank_float_type initial_mpshock = 0;
 	if ( shock.type == ShockType::tfp_Y )
@@ -294,10 +295,6 @@ void IRF::set_shock_paths() {
 	}
 
 	for (int it=0; it<Ttrans; ++it) {
-		trans_equm[it].tfp_Y = 0;
-		trans_equm[it].mpshock = 0;
-		trans_equm[it].riskaver = 0;
-
 		if ( shock.type == ShockType::tfp_Y )
 			trans_equm[it].tfp_Y = tfp_Y[it];
 		else if ( shock.type == ShockType::monetary )
