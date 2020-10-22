@@ -367,15 +367,13 @@ void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
 
 	for (int it=0; it<T; ++it) {
 		double deltatrans = deltatransvec[it];
-
-		trans_equms[it].tfp_N = initial_equm.tfp_N;
-		trans_equms[it].illshares = initial_equm.illshares;
 		trans_equms[it].compute_factors(model);
 
 		trans_equms[it].varieties = trans_equms[it].tfp_N * pow(
 			cobb_douglas(trans_equms[it].capital_N, trans_equms[it].labor_N, trans_equms[it].alpha_N),
 			trans_equms[it].drs_N);
 
+		trans_equms[it].compute_profits();
 		trans_equms[it].compute_factor_prices();
 		trans_equms[it].investment = p.depreciation * trans_equms[it].capital;
 		if (it < T - 1)
@@ -493,8 +491,6 @@ namespace
 	{
 		for (int it=0; it<T; ++it) {
 			trans_equms[it].valcapital = trans_equms[it].qcapital * trans_equms[it].capital + trans_equms[it].qinvestment * linv[it];
-
-			trans_equms[it].compute_profits();
 			trans_equms[it].dividend_A = p.profdistfracA * trans_equms[it].profit * (1.0 - p.corptax);
 			trans_equms[it].dividend_B = p.profdistfracB * trans_equms[it].profit * (1.0 - p.corptax);
 		}

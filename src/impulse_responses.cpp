@@ -178,7 +178,7 @@ void IRF::make_transition_guesses(const hank_float_type *x) {
 		trans_equm[it].output = initial_equm.output * exp(x[it]);
 
 		// Guess for rb or pi
-		ix0 = Ttrans - 1;
+		ix0 = Ttrans;
 		if ( set_rb & (it == Ttrans - 1) )
 			trans_equm[it].rb = final_equm_ptr->rb;
 		else if ( set_rb )
@@ -196,14 +196,14 @@ void IRF::make_transition_guesses(const hank_float_type *x) {
 					+ p.taylor.coeff_y * ygap + trans_equm[it].mpshock) / (1.0 - p.taylor.coeff_pi);
 			}
 			else if ( set_pi ) {
-				trans_equm[it].rnom = initial_equm.rnom + p.taylor.coeff_pi * trans_equm[it].rb
+				trans_equm[it].rnom += p.taylor.coeff_pi * trans_equm[it].rb
 					+ p.taylor.coeff_y * ygap + trans_equm[it].mpshock;
 			}
 		}
 		else {
 			// Partial adjustment rule
 			if ( it == 0 )
-				trans_equm[it].rnom = initial_equm.rnom + trans_equm[it].mpshock;
+				trans_equm[it].rnom += trans_equm[it].mpshock;
 			else {
 				trans_equm[it].rnom = (trans_equm[it-1].rnom + deltatransvec[it-1] * p.taylor.pers
 					* (initial_equm.rnom + p.taylor.coeff_pi * trans_equm[it].pi + p.taylor.coeff_y * ygap + trans_equm[it].mpshock))
@@ -288,7 +288,6 @@ void IRF::set_shock_paths() {
 		tfp_Y = get_AR1_path_logs(Ttrans, initial_equm.tfp_Y, shock.size, shock.pers, deltatransvec, nendtrans);
 	else if ( shock.type == ShockType::monetary ) {
 		mpshock = get_AR1_path_levels(Ttrans, initial_mpshock, shock.size, shock.pers, deltatransvec, nendtrans);
-		mpshock(seq(1, Ttrans-1)) = VectorXr::Constant(Ttrans-1, 0.0);
 	}
 	else if ( shock.type == ShockType::riskaver ) {
 		if ( permanentShock )

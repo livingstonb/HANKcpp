@@ -82,7 +82,7 @@ class Parameters {
 		double priceadjcost = 100.0;
 		bool make_profit_correction = true;
 		double capadjcost = 0.0;
-		double invadjcost = 0.01;
+		double invadjcost = 0.0;
 		FirmDiscountRateType firm_discount_rate_type = FirmDiscountRateType::ra_iss;
 
 		// --- LABOR MARKET PARAMETERS ---
@@ -142,7 +142,7 @@ class Parameters {
 		double cmin = 1.0e-5;
 		double dmax = 100;
 		double facc = 1.0e-10;
-		bool solveFlexPriceTransition = true;
+		bool solveFlexPriceTransition = false;
 		bool solveStickyPriceTransition = true;
 
 		// --- CALIBRATION TARGETS ---
