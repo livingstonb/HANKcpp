@@ -205,14 +205,14 @@ void Model::check_nbl(const Parameters& p) const {
 	}
 }
 
-std::vector<hank_float_type> Model::get_rb_effective() const {
+std::vector<hank_float_type> Model::get_rb_effective(hank_float_type rb, hank_float_type rborr) const {
 	std::vector<hank_float_type> rb_effective;
 	rb_effective.reserve(p.nb);
 	for (auto el : bgrid) {
 		if ( el >= 0.0 )
-			rb_effective.push_back(p.rb + p.perfectAnnuityMarkets * p.deathrate);
+			rb_effective.push_back(rb + p.perfectAnnuityMarkets * p.deathrate);
 		else
-			rb_effective.push_back(p.rborr + p.perfectAnnuityMarkets * p.deathrate);
+			rb_effective.push_back(rborr + p.perfectAnnuityMarkets * p.deathrate);
 	}
 
 	return rb_effective;

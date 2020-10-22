@@ -85,6 +85,7 @@ void Equilibrium::set_from_parameters(const Parameters& p, const Model& model)
 	nprod = model.nprod;
 	rborr = p.rborr;
 	transfershock = 1.0;
+	lumptransfer = p.lumptransfer;
 }
 
 void Equilibrium::compute_factors(const Model& model)

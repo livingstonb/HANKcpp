@@ -44,7 +44,7 @@ class Model {
 
 		void check_nbl(const Parameters& p) const;
 
-		std::vector<hank_float_type> get_rb_effective() const;
+		std::vector<hank_float_type> get_rb_effective(hank_float_type rb, hank_float_type rborr) const;
 
 		hank_float_type util(hank_float_type c, hank_float_type riskaver) const;
 

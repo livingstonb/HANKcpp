@@ -101,10 +101,10 @@ Upwinding::Policies HJB::update_policies(const Equilibrium& ss) {
 
 	ArrayXr proftot = prof_keep * p.profdistfracW
 		* (1.0 - p.corptax) * ss.profit * as_eigen_map<const ArrayXr>(model.profsharegrid);
-	proftot += p.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
+	proftot += ss.lumptransfer + p.profdistfracL * (1.0 - p.corptax) * ss.profit;
 
 	Eigen::Map<const ArrayXr> bgridvec(model.bgrid.data(), model.bgrid.size());
-	VectorXr bdrift = as_eigen<ArrayXr>(model.get_rb_effective()) * bgridvec;
+	VectorXr bdrift = as_eigen<ArrayXr>(model.get_rb_effective(ss.rb, ss.rborr)) * bgridvec;
 
 	std::function<Upwinding::ConUpwind(double, double, double, double)> opt_c;
 	if ( p.endogLabor )
@@ -408,7 +408,7 @@ namespace {
 		double lc, u;
 
 		auto bgridvec = as_eigen_map<const ArrayXr>(model.bgrid);
-		VectorXr bdriftnn = as_eigen<ArrayXr>(model.get_rb_effective()) * bgridvec;
+		VectorXr bdriftnn = as_eigen<ArrayXr>(model.get_rb_effective(ss.rb, ss.rborr)) * bgridvec;
 
 		auto agridvec = as_eigen_map<const ArrayXr>(model.agrid);
 		ArrayXr adriftnn = (ss.ra + p.perfectAnnuityMarkets * p.deathrate) * agridvec;
@@ -416,7 +416,7 @@ namespace {
 		for (int ia=0; ia<p.na; ++ia) {
 			for (int ib=0; ib<p.nb; ++ib) {
 				for (int iy=0; iy<model.ny; ++iy) {
-					lc = ss.netwagegrid[iy] + p.lumptransfer + bdriftnn(ib) + adriftnn(ia);
+					lc = ss.netwagegrid[iy] + ss.lumptransfer + bdriftnn(ib) + adriftnn(ia);
 					u = model.util(lc, riskaver);
 					V(ia,ib,iy) = u / (p.rho + p.deathrate);
 				}
