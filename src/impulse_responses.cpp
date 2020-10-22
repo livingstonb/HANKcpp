@@ -61,9 +61,8 @@ void IRF::setup() {
 	flextransition = p.solveFlexPriceTransition;
 	stickytransition = p.solveStickyPriceTransition;
 
-	trans_equm.resize(Ttrans);
 	for (int it=0; it<Ttrans; ++it)
-		trans_equm[it].set_from_parameters(p, model);
+		trans_equm.push_back(EquilibriumTrans(initial_equm));
 
 	construct_delta_trans_vectors();
 	set_shock_paths();
@@ -175,38 +174,19 @@ void IRF::make_transition_guesses(const hank_float_type *x) {
 	assert( set_rb | set_pi );
 
 	for (int it=0; it<Ttrans; ++it) {
+		int ix0 = 0;
 		trans_equm[it].output = initial_equm.output * exp(x[it]);
 
 		// Guess for rb or pi
+		ix0 = Ttrans - 1;
 		if ( set_rb & (it == Ttrans - 1) )
 			trans_equm[it].rb = final_equm_ptr->rb;
 		else if ( set_rb )
-			trans_equm[it].rb = initial_equm.rb + x[Ttrans + it];
+			trans_equm[it].rb += x[ix0+it];
 		else if ( set_pi & (it == Ttrans - 1) )
 			trans_equm[it].pi = final_equm_ptr->pi;
 		else if ( set_pi )
-			trans_equm[it].pi = initial_equm.pi + x[Ttrans + it];
-
-		// Guess for capital
-		if ( (p.capadjcost > 0) | (p.invadjcost > 0) )
-			trans_equm[it].qcapital = initial_equm.qcapital + exp(x[Ttrans * (p.nocc + 2) + it - 1]);
-		else
-			trans_equm[it].qcapital = 1.0;
-
-		// Guess for labor
-		trans_equm[it].labor_occ.resize(p.nocc);
-		trans_equm[it].labor = 0;
-		int ixo = 2 * Ttrans + it - 1;
-		for (int io=0; io<p.nocc; ++io) {
-			trans_equm[it].labor_occ[io] = initial_equm.labor_occ[io] * exp(x[ixo]);
-			trans_equm[it].labor += trans_equm[it].labor_occ[io] * model.occdist[io];
-			ixo += Ttrans;
-		}
-
-		// Guess for tax increase
-		hank_float_type initlumpincr = 0;
-		if ( p.adjGovBudgetConstraint == GovBCAdjType::debt )
-			initlumpincr = x[Ttrans * (p.nocc + 2) - 1];
+			trans_equm[it].pi += x[ix0+it];
 
 		// Inflation and nominal interest rate
 		double ygap = log(trans_equm[it].output / initial_equm.output);
@@ -235,6 +215,26 @@ void IRF::make_transition_guesses(const hank_float_type *x) {
 			trans_equm[it].pi = trans_equm[it].rnom - trans_equm[it].rb;
 		else
 			trans_equm[it].rb = trans_equm[it].rnom - trans_equm[it].pi;
+
+		// Guess for labor
+		trans_equm[it].labor_occ.resize(p.nocc);
+		trans_equm[it].labor = 0;
+		ix0 = 2 * Ttrans - 1;
+		for (int io=0; io<p.nocc; ++io) {
+			trans_equm[it].labor_occ[io] = initial_equm.labor_occ[io] * exp(x[ix0+it]);
+			trans_equm[it].labor += trans_equm[it].labor_occ[io] * model.occdist[io];
+			ix0 += Ttrans;
+		}
+
+		// Guess for capital
+		if ( (p.capadjcost > 0) | (p.invadjcost > 0) )
+			trans_equm[it].qcapital += exp(x[ix0+it]);
+
+		// Guess for tax increase
+		// hank_float_type initlumpincr = 0;
+		// if ( p.adjGovBudgetConstraint == GovBCAdjType::debt )
+		// 	initlumpincr = x[ix0];
+
 
 		// Guess price level
 		if ( it == 0 )

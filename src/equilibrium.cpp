@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <math.h>
 #include <distribution_statistics.h>
+#include <assert.h>
 
 namespace
 {
@@ -98,11 +99,15 @@ void Equilibrium::compute_factors(const Model& model)
 	labor_Y = 1.0;
 	labor_N = 1.0;
 	labor = 0;
+	labshareY.resize(nocc);
+	labshareN.resize(nocc);
+	labfracY.resize(nocc);
+	labfracN.resize(nocc);
 	for (int io=0; io<nocc; ++io) {
-		labshareY.push_back((1.0 - alpha_Y) * price_W * drs_Y * model.occYsharegrid[io]);
-		labshareN.push_back((1.0 - alpha_N) * (1.0 - price_W) * drs_N * model.occNsharegrid[io]);
-		labfracY.push_back(labshareY[io] / (labshareY[io] + labshareN[io]));
-		labfracN.push_back(labshareN[io] / (labshareY[io] + labshareN[io]));
+		labshareY[io] = (1.0 - alpha_Y) * price_W * drs_Y * model.occYsharegrid[io];
+		labshareN[io] = (1.0 - alpha_N) * (1.0 - price_W) * drs_N * model.occNsharegrid[io];
+		labfracY[io] = labshareY[io] / (labshareY[io] + labshareN[io]);
+		labfracN[io] = labshareN[io] / (labshareY[io] + labshareN[io]);
 		labor_Y *= pow(labfracY[io] * labor_occ[io], model.occYsharegrid[io]);
 		labor_N *= pow(labfracN[io] * labor_occ[io], model.occNsharegrid[io]);
 		labor += labor_occ[io] * model.occdist[io];
@@ -121,8 +126,9 @@ void Equilibrium::compute_factor_prices()
 {
 	rcapital = (capshareY + capshareN) * output / capital;
 
+	wage_occ.resize(nocc);
 	for (int io=0; io<nocc; ++io)
-		wage_occ.push_back((labshareN[io] + labshareY[io]) * output / labor_occ[io]);
+		wage_occ[io] = (labshareN[io] + labshareY[io]) * output / labor_occ[io];
 
 	// Wholesale
 	if ( (alpha_Y == 1.0) | (drs_Y == 0.0) )
@@ -159,10 +165,13 @@ void Equilibrium::compute_netwage(const Parameters& p, const Model& model)
 	std::vector<hank_float_type> wage_occ_rep;
 	Enetwage = 0;
 
+	netwagegrid.resize(nocc * nprod);
+	int iy = 0;
 	for (int io=0; io<nocc; ++io) {
 		for (int ip=0; ip<nprod; ++ip) {
-			netwagegrid.push_back((1.0 - labtax) * model.prodgrid[ip] * wage_occ[io]);
+			netwagegrid[iy] = (1.0 - labtax) * model.prodgrid[ip] * wage_occ[io];
 			Enetwage += model.occdist[io] * model.proddist[ip] * netwagegrid.back();
+			++iy;
 		}
 	}
 }
@@ -294,6 +303,29 @@ void EquilibriumFinal::compute_factors(const Model& model) {
 
 void EquilibriumFinal::check_results() const {
 	HANK::check_if_unset(variable_ptrs);
+}
+
+EquilibriumTrans::EquilibriumTrans() : Equilibrium() {
+	set_pointers();
+	HANK::initialize_unset(variable_ptrs);
+}
+
+EquilibriumTrans::EquilibriumTrans(const Equilibrium& other_equm) : Equilibrium() {
+	set_pointers();
+	auto variable_ptrs_copy = variable_ptrs;
+
+	HANK::initialize_unset(variable_ptrs);
+	*this = *(EquilibriumTrans *) &other_equm;
+	variable_ptrs = variable_ptrs_copy;
+
+	labshareY.clear();
+	labshareN.clear();
+	labfracY.clear();
+	labfracN.clear();
+	labor_occ.clear();
+	wage_occ.clear();
+	netwagegrid.clear();
+	yprodgrid.clear();
 }
 
 void EquilibriumTrans::set_pointers() {

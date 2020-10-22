@@ -99,10 +99,9 @@ class EquilibriumFinal : public Equilibrium {
 
 class EquilibriumTrans : public Equilibrium {
 	public:
-		EquilibriumTrans() : Equilibrium() {
-			set_pointers();
-			HANK::initialize_unset(variable_ptrs);
-		}
+		EquilibriumTrans();
+
+		EquilibriumTrans(const Equilibrium& other_equm);
 
 		hank_float_type mpshock, pricelev, priceadjust, capadjust, qdot;
 
