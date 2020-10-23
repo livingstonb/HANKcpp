@@ -15,66 +15,6 @@ namespace
 		const EquilibriumFinal& final_equm, std::vector<EquilibriumTrans>& trans_equms, int T);
 }
 
-Equilibrium::Equilibrium() {
-	set_pointers();
-	HANK::initialize_unset(variable_ptrs);
-}
-
-void Equilibrium::set_pointers() {
-	variable_ptrs.insert({"output", &output});
-	variable_ptrs.insert({"varieties", &varieties});
-	variable_ptrs.insert({"qcapital", &qcapital});
-	variable_ptrs.insert({"alpha_Y", &alpha_Y});
-	variable_ptrs.insert({"alpha_N", &alpha_N});
-	variable_ptrs.insert({"price_W", &price_W});
-	variable_ptrs.insert({"drs_Y", &drs_Y});
-	variable_ptrs.insert({"drs_N", &drs_N});
-	variable_ptrs.insert({"riskaver", &riskaver});
-	variable_ptrs.insert({"rho", &rho});
-	variable_ptrs.insert({"capshareY", &capshareY});
-	variable_ptrs.insert({"capshareN", &capshareN});
-	variable_ptrs.insert({"capfracY", &capfracY});
-	variable_ptrs.insert({"capfracN", &capfracN});
-	variable_ptrs.insert({"capital_Y", &capital_Y});
-	variable_ptrs.insert({"capital_N", &capital_N});
-	variable_ptrs.insert({"valcapital", &valcapital});
-	variable_ptrs.insert({"labor_Y", &labor_Y});
-	variable_ptrs.insert({"labor_N", &labor_N});
-	variable_ptrs.insert({"labor", &labor});
-	variable_ptrs.insert({"tfp_Y", &tfp_Y});
-	variable_ptrs.insert({"tfp_N", &tfp_N});
-	variable_ptrs.insert({"investment", &investment});
-	variable_ptrs.insert({"illprice", &illprice});
-	variable_ptrs.insert({"illshares", &illshares});
-	variable_ptrs.insert({"illpricedot", &illpricedot});
-	variable_ptrs.insert({"netprofit_W", &netprofit_W});
-	variable_ptrs.insert({"grossprofit_R", &grossprofit_R});
-	variable_ptrs.insert({"netprofit_R", &netprofit_R});
-	variable_ptrs.insert({"profit", &profit});
-	variable_ptrs.insert({"wage_Y", &wage_Y});
-	variable_ptrs.insert({"wage_N", &wage_N});
-	variable_ptrs.insert({"mc_Y", &mc_Y});
-	variable_ptrs.insert({"mc_N", &mc_N});
-	variable_ptrs.insert({"ra", &ra});
-	variable_ptrs.insert({"rb", &rb});
-	variable_ptrs.insert({"rnom", &rnom});
-	variable_ptrs.insert({"pi", &pi});
-	variable_ptrs.insert({"dividend_A", &dividend_A});
-	variable_ptrs.insert({"dividend_B", &dividend_B});
-	variable_ptrs.insert({"equity_A", &equity_A});
-	variable_ptrs.insert({"equity_B", &equity_B});
-	variable_ptrs.insert({"Enetwage", &Enetwage});
-	variable_ptrs.insert({"taxrev", &taxrev});
-	variable_ptrs.insert({"transfershock", &transfershock});
-	variable_ptrs.insert({"lumptransfer", &lumptransfer});
-	variable_ptrs.insert({"rborr", &rborr});
-	variable_ptrs.insert({"bond", &bond});
-	variable_ptrs.insert({"govbond", &govbond});
-	variable_ptrs.insert({"labtax", &labtax});
-	variable_ptrs.insert({"govexp", &govexp});
-	variable_ptrs.insert({"capital", &capital});
-}
-
 void Equilibrium::set_from_parameters(const Parameters& p, const Model& model)
 {
 	alpha_Y = p.alpha_Y;
@@ -87,6 +27,12 @@ void Equilibrium::set_from_parameters(const Parameters& p, const Model& model)
 	rborr = p.rborr;
 	transfershock = 1.0;
 	lumptransfer = p.lumptransfer;
+	price_W = 1.0 - 1.0 / p.elast;
+	riskaver = p.riskaver;
+	labtax = p.labtax;
+	output = 1.0;
+	varieties = 1.0;
+	qcapital = 1.0;
 }
 
 void Equilibrium::compute_factors(const Model& model)
@@ -164,9 +110,7 @@ void Equilibrium::compute_dividends(const Parameters& p)
 
 void Equilibrium::compute_netwage(const Parameters& p, const Model& model)
 {
-	std::vector<hank_float_type> wage_occ_rep;
 	Enetwage = 0;
-
 	netwagegrid.resize(nocc * nprod);
 	int iy = 0;
 	for (int io=0; io<nocc; ++io) {
@@ -182,21 +126,9 @@ void Equilibrium::print() const
 {
 	HankUtilities::horzline();
 	std::cout << "EQUILIBRIUM VARIABLES:\n";
-	for (auto& variable : variable_ptrs)
-		std::cout << "    " << variable.first << " = " << *variable.second << '\n';
+	// for (auto& variable : variable_ptrs)
+	// 	std::cout << "    " << variable.first << " = " << *variable.second << '\n';
 	HankUtilities::horzline();
-}
-
-
-void EquilibriumInitial::set_from_parameters(const Parameters& p, const Model& model)
-{
-	Equilibrium::set_from_parameters(p, model);
-	price_W = 1.0 - 1.0 / p.elast;
-	riskaver = p.riskaver;
-	labtax = p.labtax;
-	output = 1.0;
-	varieties = 1.0;
-	qcapital = 1.0;
 }
 
 void EquilibriumInitial::solve(const Parameters& p, const Model& model)
@@ -237,36 +169,37 @@ void EquilibriumInitial::solve(const Parameters& p, const Model& model)
 	illshares = capital + equity_A;
 }
 
-void EquilibriumInitial::compute_factors(const Model& model) {
+void EquilibriumInitial::compute_factors(const Model& model)
+{
 	Equilibrium::compute_factors(model);
 	capital_Y = capfracY * capital;
 	capital_N = capfracN * capital;
 }
 
-void EquilibriumInitial::update_with_stats(const DistributionStatistics& stats) {
+void EquilibriumInitial::update_with_stats(const DistributionStatistics& stats)
+{
 	bond = stats.Eb;
 	govbond = equity_B - bond;
 	govexp = taxrev + rb * govbond;
 }
 
-void EquilibriumInitial::check_results() const {
-	HANK::check_if_unset(variable_ptrs);
-}
-
-void EquilibriumFinal::set_from_parameters(const Parameters& p, const Model& model)
+EquilibriumFinal::EquilibriumFinal(const Equilibrium& other_equm)
 {
-	Equilibrium::set_from_parameters(p, model);
-	price_W = 1.0 - 1.0 / p.elast;
-	labtax = p.labtax;
-	qcapital = 1.0;
-}
+	*this = *(EquilibriumFinal *) &other_equm;
 
+	labshareY.clear();
+	labshareN.clear();
+	labfracY.clear();
+	labfracN.clear();
+	labor_occ.clear();
+	wage_occ.clear();
+	netwagegrid.clear();
+	yprodgrid.clear();
+}
 
 void EquilibriumFinal::solve(const Parameters& p, const Model& model,
 	const Equilibrium& initial_equm, const hank_float_type* x)
 {
-	set_from_parameters(p, model);
-
 	capital = x[0];
 
 	if ( labor_occ.size() == 0 )
@@ -307,76 +240,34 @@ void EquilibriumFinal::solve(const Parameters& p, const Model& model,
 	bond = equity_B - govbond;
 }
 
-void EquilibriumFinal::compute_factors(const Model& model) {
+void EquilibriumFinal::compute_factors(const Model& model)
+{
 	Equilibrium::compute_factors(model);
 	capital_Y = capfracY * capital;
 	capital_N = capfracN * capital;
 }
 
-void EquilibriumFinal::check_results() const {
-	HANK::check_if_unset(variable_ptrs);
+EquilibriumTrans::EquilibriumTrans(const Equilibrium& other_equm)
+{
+	*this = *(EquilibriumTrans *) &other_equm;
+
+	 labshareY.clear();
+	 labshareN.clear();
+	 labfracY.clear();
+	 labfracN.clear();
+	 labor_occ.clear();
+	 wage_occ.clear();
+	 netwagegrid.clear();
+	 yprodgrid.clear();
 }
 
-EquilibriumTrans::EquilibriumTrans() : Equilibrium() {
-	set_pointers();
-	HANK::initialize_unset(variable_ptrs);
-}
-
-EquilibriumTrans::EquilibriumTrans(const Equilibrium& other_equm) : Equilibrium() {
-	set_pointers();
-	// auto variable_ptrs_copy = variable_ptrs;
-
-	HANK::initialize_unset(variable_ptrs);
-	// *this = *(EquilibriumTrans *) &other_equm;
-	// variable_ptrs = variable_ptrs_copy;
-
-	for (auto& variable : variable_ptrs) {
-		auto iter = other_equm.variable_ptrs.find(variable.first);
-
-		if ( iter != other_equm.variable_ptrs.end() )
-			*variable.second = *(iter->second);
-	}
-
-	nocc = other_equm.nocc;
-	nprod = other_equm.nprod;
-
-	// labshareY.clear();
-	// labshareN.clear();
-	// labfracY.clear();
-	// labfracN.clear();
-	// labor_occ.clear();
-	// wage_occ.clear();
-	// netwagegrid.clear();
-	// yprodgrid.clear();
-}
-
-void EquilibriumTrans::set_pointers() {
-	variable_ptrs.insert({"mpshock", &mpshock});
-	variable_ptrs.insert({"pricelev", &pricelev});
-	variable_ptrs.insert({"priceadjust", &priceadjust});
-	variable_ptrs.insert({"capadjust", &capadjust});
-	variable_ptrs.insert({"qdot", &qdot});
-	variable_ptrs.insert({"pidot", &pidot});
-	variable_ptrs.insert({"logydot", &logydot});
-	variable_ptrs.insert({"firmdiscount", &firmdiscount});
-	variable_ptrs.insert({"qinvestment", &qinvestment});
-	variable_ptrs.insert({"invadjust", &invadjust});
-	variable_ptrs.insert({"equity_Adot", &equity_Adot});
-	variable_ptrs.insert({"equity_Bdot", &equity_Bdot});
-	variable_ptrs.insert({"inv_cap_ratio", &inv_cap_ratio});
-	variable_ptrs.insert({"output", &output});
-}
-
-void EquilibriumTrans::compute_factors(const Model& model) {
+void EquilibriumTrans::compute_factors(const Model& model)
+{
 	Equilibrium::compute_factors(model);
 	capital_Y = pow(output / tfp_Y, 1.0 / drs_Y) / pow(labor_Y, 1.0 - alpha_Y);
 	capital_Y = pow(capital_Y, 1.0 / alpha_Y);
 	capital = capital_Y / capfracY;
 	capital_N = capfracN * capital;
-}
-
-void EquilibriumTrans::check_results() const {
-	HANK::check_if_unset(variable_ptrs);
 }
 
 void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,

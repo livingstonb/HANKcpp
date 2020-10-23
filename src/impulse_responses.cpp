@@ -6,6 +6,7 @@
 #include <iostream>
 #include <functional>
 #include <utilities.h>
+#include <algorithm>
 #include <hank_numerics.h>
 #include <bellman.h>
 #include <stationary_dist.h>
@@ -66,15 +67,10 @@ void IRF::setup() {
 
 	construct_delta_trans_vectors();
 	set_shock_paths();
-
-	std::cout << "initial_equm:\n";
-	initial_equm.print();
-
-	std::cout << "trans_equm[0]:\n";
-	trans_equm[0].print();
 }
 
-void IRF::construct_delta_trans_vectors() {
+void IRF::construct_delta_trans_vectors()
+{
 	double lb = (Ttrans + 1) * (deltatranstot - Ttrans * deltatransmin) / (Ttrans * (deltatranstot - deltatransmin));
 	double la = (Ttrans + 1) * deltatransmin - deltatransmin * lb;
 
@@ -88,56 +84,37 @@ void IRF::construct_delta_trans_vectors() {
 		deltatransvec.push_back(cumdeltatrans[it] - cumdeltatrans[it-1]);
 }
 
-void IRF::compute() {
-	std::cout << "initial_equm:\n";
-	initial_equm.print();
-
-	std::cout << "trans_equm[0]:\n";
-	EquilibriumTrans& trans0 = trans_equm[0];
-	trans0.print();
-
-	// Final steady state	
+void IRF::compute()
+{
+	// Final steady state
 	if ( !permanentShock )
 		final_equm_ptr.reset(new EquilibriumFinal(initial_equm));
 	else {
-		// Compute final steady state
 		find_final_steady_state();
 	}
 
 	// Guess log deviations from steady state
-	VectorXr xguess = VectorXr::Zero(npricetrans);
+	std::vector<hank_float_type> xguess(npricetrans);
+	std::fill(xguess.begin(), xguess.end(), 0);
 	if ( (shock.type == ShockType::tfp_Y)  & !permanentShock ) {
 		// Guess output changes so capital constant
 		for (int it=0; it<Ttrans; ++it) {
-			xguess(it) = log(fmax(p.capadjcost, 1.0) * trans_equm[it].tfp_Y / initial_equm.tfp_Y);
+			xguess[it] = log(fmax(p.capadjcost, 1.0) * trans_equm[it].tfp_Y / initial_equm.tfp_Y);
 		}
 	}
-	
-	std::cout << "initial_equm:\n";
-	initial_equm.print();
-
-	std::cout << "trans_equm[0]:\n";
-	EquilibriumTrans& trans0p = trans_equm[0];
-	trans0p.print();
-
-	std::cout << "initial_equm:\n";
-	initial_equm.print();
-
-	std::cout << "trans_equm[0]:\n";
-	trans_equm[0].print();
 
 	if ( solver == SolverType::broyden ) {
 		std::function<void(int, const hank_float_type*, hank_float_type*)>
 			obj_fn = std::bind(&IRF::transition_fcn, this, _1, _2, _3);
 
-		hank_float_type z[npricetrans];
-		HankUtilities::fillarr(z, 0.0, npricetrans);
+		std::vector<hank_float_type> z(npricetrans);
+		std::fill(z.begin(), z.end(), 0);
 
 		obj_fn(npricetrans, xguess.data(), z);
 
 		double jacstepprice = 1.0e-6;
 		hank_float_type fjac[npricetrans * npricetrans];
-		HankNumerics::jacobian_square(obj_fn, npricetrans, xguess.data(), z, fjac, jacstepprice);
+		HankNumerics::jacobian_square(obj_fn, npricetrans, xguess.data(), z.data(), fjac, jacstepprice);
 	}
 	else {
 		std::cerr << "Must select Broyden solver\n";
@@ -361,13 +338,11 @@ int final_steady_state_obj_fn(void* solver_args_voidptr, int /* n */, const real
 	const EquilibriumInitial& iss = *(solver_args.ptr3);
 	const IRF& irf = *(solver_args.ptr5);
 	
-	solver_args.ptr4.reset(new EquilibriumFinal);
+	solver_args.ptr4.reset(new EquilibriumFinal(iss));
 	EquilibriumFinal& final_ss = *solver_args.ptr4;
 
 	if ( irf.permanentShock & (irf.shock.type == ShockType::riskaver) )
-		final_ss.riskaver = p.riskaver + irf.shock.size;
-	else
-		final_ss.riskaver = p.riskaver;
+		final_ss.riskaver += irf.shock.size;
 
 	final_ss.solve(p, model, iss, x);
 	final_ss.check_results();

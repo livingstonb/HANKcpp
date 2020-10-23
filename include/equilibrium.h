@@ -15,13 +15,11 @@ class DistributionStatistics;
 
 class Equilibrium {
 	public:
-		Equilibrium();
-
-		virtual void set_pointers();
+		Equilibrium() {};
 
 		void create_transition();
 
-		virtual void set_from_parameters(const Parameters& p, const Model& model);
+		void set_from_parameters(const Parameters& p, const Model& model);
 
 		virtual void compute_factors(const Model& model);
 
@@ -59,8 +57,6 @@ class Equilibrium {
 
 		std::vector<hank_float_type> netwagegrid, yprodgrid;
 
-		std::map<std::string, hank_float_type*> variable_ptrs;
-
 		int nocc, nprod;
 
 };
@@ -69,39 +65,26 @@ class EquilibriumInitial : public Equilibrium {
 	public:
 		void solve(const Parameters& p, const Model& model);
 
-		void set_from_parameters(const Parameters& p, const Model& model) override;
-
 		void compute_factors(const Model& model) override;
 
 		void update_with_stats(const DistributionStatistics& model);
-
-		void check_results() const;
 };
 
 class EquilibriumFinal : public Equilibrium {
 	public:
-		EquilibriumFinal() : Equilibrium() {}
+		EquilibriumFinal() {}
 
-		EquilibriumFinal(const Equilibrium& other_equm) {
-			*this = *(EquilibriumFinal *) &other_equm;
-			set_pointers();
-		}
-
-		~EquilibriumFinal() {}
+		EquilibriumFinal(const Equilibrium& other_equm);
 
 		void solve(const Parameters& p, const Model& model,
 			const Equilibrium& initial_equm, const hank_float_type* x);
 
 		void compute_factors(const Model& model) override;
-
-		void set_from_parameters(const Parameters& p, const Model& model) override;
-
-		void check_results() const;
 };
 
 class EquilibriumTrans : public Equilibrium {
 	public:
-		EquilibriumTrans();
+		EquilibriumTrans() {};
 
 		EquilibriumTrans(const Equilibrium& other_equm);
 
@@ -111,15 +94,11 @@ class EquilibriumTrans : public Equilibrium {
 
 		hank_float_type equity_Adot, equity_Bdot, inv_cap_ratio;
 
-		void set_pointers() override;
-
 		void set_from_parameters(const Parameters& p, const Model& model) override {
 			Equilibrium::set_from_parameters(p, model);
 		}
 
 		void compute_factors(const Model& model) override;
-
-		void check_results() const;
 };
 
 void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
