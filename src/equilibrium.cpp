@@ -5,6 +5,7 @@
 #include <math.h>
 #include <distribution_statistics.h>
 #include <assert.h>
+#include <utilities.h>
 
 namespace
 {
@@ -177,6 +178,16 @@ void Equilibrium::compute_netwage(const Parameters& p, const Model& model)
 	}
 }
 
+void Equilibrium::print() const
+{
+	HankUtilities::horzline();
+	std::cout << "EQUILIBRIUM VARIABLES:\n";
+	for (auto& variable : variable_ptrs)
+		std::cout << "    " << variable.first << " = " << *variable.second << '\n';
+	HankUtilities::horzline();
+}
+
+
 void EquilibriumInitial::set_from_parameters(const Parameters& p, const Model& model)
 {
 	Equilibrium::set_from_parameters(p, model);
@@ -313,20 +324,30 @@ EquilibriumTrans::EquilibriumTrans() : Equilibrium() {
 
 EquilibriumTrans::EquilibriumTrans(const Equilibrium& other_equm) : Equilibrium() {
 	set_pointers();
-	auto variable_ptrs_copy = variable_ptrs;
+	// auto variable_ptrs_copy = variable_ptrs;
 
 	HANK::initialize_unset(variable_ptrs);
-	*this = *(EquilibriumTrans *) &other_equm;
-	variable_ptrs = variable_ptrs_copy;
+	// *this = *(EquilibriumTrans *) &other_equm;
+	// variable_ptrs = variable_ptrs_copy;
 
-	labshareY.clear();
-	labshareN.clear();
-	labfracY.clear();
-	labfracN.clear();
-	labor_occ.clear();
-	wage_occ.clear();
-	netwagegrid.clear();
-	yprodgrid.clear();
+	for (auto& variable : variable_ptrs) {
+		auto iter = other_equm.variable_ptrs.find(variable.first);
+
+		if ( iter != other_equm.variable_ptrs.end() )
+			*variable.second = *(iter->second);
+	}
+
+	nocc = other_equm.nocc;
+	nprod = other_equm.nprod;
+
+	// labshareY.clear();
+	// labshareN.clear();
+	// labfracY.clear();
+	// labfracN.clear();
+	// labor_occ.clear();
+	// wage_occ.clear();
+	// netwagegrid.clear();
+	// yprodgrid.clear();
 }
 
 void EquilibriumTrans::set_pointers() {

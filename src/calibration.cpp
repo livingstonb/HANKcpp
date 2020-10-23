@@ -226,25 +226,25 @@ int initial_steady_state_obj_fn(void* args_void_ptr, int n, const hank_float_typ
 
 	cal.update_params(&p, x);
 
-	Model model(p);
-	args.ptr2.reset(&model);
+	args.ptr2.reset(new Model(p));
+	const Model& model = *args.ptr2;
 
-	EquilibriumInitial iss;
-	args.ptr3.reset(&iss);
+	args.ptr3.reset(new EquilibriumInitial);
+	EquilibriumInitial& iss = *args.ptr3;
 	cal.update_ss(&p, &iss, x);
 	std::cout << '\n';
 
 	iss.solve(p, model);
 
-	HJB hjb(*args.ptr2, iss);
+	HJB hjb(model, iss);
 	hjb.iterate(iss);
 
 	StationaryDist sdist;
 	sdist.gtol = 1.0e-9;
 	sdist.compute(model, iss, hjb);
 
-	DistributionStatistics stats(p, model, hjb, sdist);
-	args.ptr4.reset(&stats);
+	args.ptr4.reset(new DistributionStatistics(p, model, hjb, sdist));
+	const DistributionStatistics& stats = *args.ptr4;
 	stats.print();
 
 	iss.update_with_stats(stats);

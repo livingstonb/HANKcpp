@@ -146,7 +146,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 }
 
 
-void DistributionStatistics::print() {
+void DistributionStatistics::print() const {
 	std::cout << '\n' << '\n' << "--------------------------\n" << "Output:\n";
 	print_result("E[h]", Ehours);
 	print_result("E[labor]", Elabor);

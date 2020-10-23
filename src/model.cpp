@@ -26,7 +26,7 @@ namespace {
 }
 
 Model::Model(const Parameters& p_) : p(p_) {
-	matrices = new ModelMatrices;
+	matrices.reset(new ModelMatrices);
 
 	make_asset_grids(p);
 	make_occupation_grids(p);
@@ -55,10 +55,6 @@ Model::Model(const Parameters& p_) : p(p_) {
 
 	if ( global_hank_options->print_diagnostics )
 		print_values();
-}
-
-Model::~Model() {
-	delete[] matrices;
 }
 
 void Model::make_asset_grids(const Parameters& p) {

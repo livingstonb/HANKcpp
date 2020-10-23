@@ -25,6 +25,8 @@ class Equilibrium {
 
 		virtual void compute_factors(const Model& model);
 
+		void print() const;
+
 		void compute_profits();
 
 		void compute_factor_prices();

@@ -16,15 +16,13 @@ class Model {
 	public:
 		Model(const Parameters& p);
 
-		~Model();
-
 		std::vector<hank_float_type> bgrid, dbgrid, bdelta, agrid, dagrid, adelta, abdelta;
 
 		std::vector<hank_float_type> occgrid, occdist, prodgrid, proddist, logprodgrid, profsharegrid;
 
 		std::vector<hank_float_type> yprodgrid, yoccgrid, ydist, occYsharegrid, occNsharegrid;
 
-		ModelMatrices* matrices = nullptr;
+		std::shared_ptr<ModelMatrices> matrices = nullptr;
 
 		int nb, na, nocc, nprod, ny, naby, ntot;
 

@@ -66,6 +66,12 @@ void IRF::setup() {
 
 	construct_delta_trans_vectors();
 	set_shock_paths();
+
+	std::cout << "initial_equm:\n";
+	initial_equm.print();
+
+	std::cout << "trans_equm[0]:\n";
+	trans_equm[0].print();
 }
 
 void IRF::construct_delta_trans_vectors() {
@@ -83,6 +89,13 @@ void IRF::construct_delta_trans_vectors() {
 }
 
 void IRF::compute() {
+	std::cout << "initial_equm:\n";
+	initial_equm.print();
+
+	std::cout << "trans_equm[0]:\n";
+	EquilibriumTrans& trans0 = trans_equm[0];
+	trans0.print();
+
 	// Final steady state	
 	if ( !permanentShock )
 		final_equm_ptr.reset(new EquilibriumFinal(initial_equm));
@@ -99,6 +112,19 @@ void IRF::compute() {
 			xguess(it) = log(fmax(p.capadjcost, 1.0) * trans_equm[it].tfp_Y / initial_equm.tfp_Y);
 		}
 	}
+	
+	std::cout << "initial_equm:\n";
+	initial_equm.print();
+
+	std::cout << "trans_equm[0]:\n";
+	EquilibriumTrans& trans0p = trans_equm[0];
+	trans0p.print();
+
+	std::cout << "initial_equm:\n";
+	initial_equm.print();
+
+	std::cout << "trans_equm[0]:\n";
+	trans_equm[0].print();
 
 	if ( solver == SolverType::broyden ) {
 		std::function<void(int, const hank_float_type*, hank_float_type*)>
@@ -120,6 +146,7 @@ void IRF::compute() {
 }
 
 void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type *fvec) {
+	trans_equm[0].print();
 	make_transition_guesses(x);
 	solve_trans_equilibrium(trans_equm, p, model, initial_equm, *final_equm_ptr, deltatransvec.data());
 
@@ -334,7 +361,8 @@ int final_steady_state_obj_fn(void* solver_args_voidptr, int /* n */, const real
 	const EquilibriumInitial& iss = *(solver_args.ptr3);
 	const IRF& irf = *(solver_args.ptr5);
 	
-	EquilibriumFinal final_ss;
+	solver_args.ptr4.reset(new EquilibriumFinal);
+	EquilibriumFinal& final_ss = *solver_args.ptr4;
 
 	if ( irf.permanentShock & (irf.shock.type == ShockType::riskaver) )
 		final_ss.riskaver = p.riskaver + irf.shock.size;
@@ -343,7 +371,7 @@ int final_steady_state_obj_fn(void* solver_args_voidptr, int /* n */, const real
 
 	final_ss.solve(p, model, iss, x);
 	final_ss.check_results();
-	solver_args.ptr4.reset(&final_ss);
+	
 
 	HJB hjb(model, final_ss);
 	hjb.iterate(final_ss);

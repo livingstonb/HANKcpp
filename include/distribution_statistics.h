@@ -32,7 +32,7 @@ class DistributionStatistics {
 			return *this;
 		}
 
-		void print();
+		void print() const;
 
 		double Ehours, Ea, Eb, Enetworth, Elabor;
 

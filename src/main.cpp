@@ -82,18 +82,18 @@ void set_to_fortran_params(HANKCalibration::SSCalibrator& cal) {
 	cal.calibrateRb = true;
 }
 
-IRF compute_irfs(const HANKCalibration::ObjectPointers& object_ptrs) {
-	Parameters& p = *object_ptrs.ptr1;
-	Model& model = *object_ptrs.ptr2;
-	EquilibriumInitial& iss = *object_ptrs.ptr3;
+void compute_irfs(const HANKCalibration::ObjectPointers& object_ptrs) {
+	const Parameters& p = *object_ptrs.ptr1;
+	const Model& model = *object_ptrs.ptr2;
+	const EquilibriumInitial& iss = *object_ptrs.ptr3;
 
 	IRF irf(p, model, iss);
 	irf.shock.type = ShockType::tfp_Y;
 	irf.permanentShock = false;
-	irf.setup();
-	irf.compute();
 
-	return irf;
+	irf.setup();
+
+	irf.compute();
 }
 
 int main () {
@@ -107,8 +107,8 @@ int main () {
 	HANKCalibration::ObjectPointers object_ptrs;
 
 	// Parameters
-	Parameters params;
-	object_ptrs.ptr1.reset(&params);
+	object_ptrs.ptr1.reset(new Parameters);
+	Parameters& params = *object_ptrs.ptr1;
 
 	params.income_dir = "2point_3_5";
 	params.rho = 0.022;
@@ -129,13 +129,12 @@ int main () {
 	set_to_fortran_params(params);
 	params.setup(options);
 
-	Model model(params);
+	object_ptrs.ptr2.reset(new Model(params));
+	const Model& model = *object_ptrs.ptr2;
 
 	if ( options.skip_calibration ) {
-		object_ptrs.ptr2.reset(&model);
-
-		EquilibriumInitial iss;
-		object_ptrs.ptr3.reset(&iss);
+		object_ptrs.ptr3.reset(new EquilibriumInitial);
+		EquilibriumInitial& iss = *object_ptrs.ptr3;
 		iss.solve(params, model);
 
 		HJB hjb(model, iss);
@@ -145,17 +144,19 @@ int main () {
 		sdist.gtol = 1.0e-9;
 		sdist.compute(model, iss, hjb);
 
-		DistributionStatistics stats(params, model, hjb, sdist);
-		object_ptrs.ptr4.reset(&stats);
+		object_ptrs.ptr4.reset(new DistributionStatistics(params, model, hjb, sdist));
+		const DistributionStatistics& stats = *object_ptrs.ptr4;
 		stats.print();
 
 		iss.update_with_stats(stats);
 		iss.check_results();
+
+		compute_irfs(object_ptrs);
 	}
 	else {
 		// Calibrate
-		HANKCalibration::SSCalibrator cal;
-		object_ptrs.ptr5.reset(&cal);
+		object_ptrs.ptr5.reset(new HANKCalibration::SSCalibrator);
+		HANKCalibration::SSCalibrator& cal = *object_ptrs.ptr5;
 		set_to_fortran_params(cal);
 		cal.setup(params);
 
@@ -167,5 +168,5 @@ int main () {
 		cminpack_hybrd1_wrapper(HANKCalibration::initial_steady_state_obj_fn, &object_ptrs, n, x);
 	}
 
-	IRF irf = compute_irfs(object_ptrs);
+	// compute_irfs(object_ptrs);
 }
