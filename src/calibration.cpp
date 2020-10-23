@@ -248,7 +248,6 @@ int initial_steady_state_obj_fn(void* args_void_ptr, int n, const hank_float_typ
 	stats.print();
 
 	iss.update_with_stats(stats);
-	iss.check_results();
 
 	CalibrationArgs cal_args(args);
 	cal.fill_fvec(cal_args, fvec);

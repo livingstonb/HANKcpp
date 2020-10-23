@@ -110,7 +110,7 @@ void IRF::compute()
 		std::vector<hank_float_type> z(npricetrans);
 		std::fill(z.begin(), z.end(), 0);
 
-		obj_fn(npricetrans, xguess.data(), z);
+		obj_fn(npricetrans, xguess.data(), z.data());
 
 		double jacstepprice = 1.0e-6;
 		hank_float_type fjac[npricetrans * npricetrans];
@@ -126,9 +126,6 @@ void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type 
 	trans_equm[0].print();
 	make_transition_guesses(x);
 	solve_trans_equilibrium(trans_equm, p, model, initial_equm, *final_equm_ptr, deltatransvec.data());
-
-	for (int it=0; it<Ttrans; ++it)
-		trans_equm[it].check_results();
 
 	// Solve distribution
 	std::vector<DistributionStatistics> trans_stats;
@@ -344,9 +341,7 @@ int final_steady_state_obj_fn(void* solver_args_voidptr, int /* n */, const real
 	if ( irf.permanentShock & (irf.shock.type == ShockType::riskaver) )
 		final_ss.riskaver += irf.shock.size;
 
-	final_ss.solve(p, model, iss, x);
-	final_ss.check_results();
-	
+	final_ss.solve(p, model, iss, x);	
 
 	HJB hjb(model, final_ss);
 	hjb.iterate(final_ss);

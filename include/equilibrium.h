@@ -23,7 +23,9 @@ class Equilibrium {
 
 		virtual void compute_factors(const Model& model);
 
-		void print() const;
+		virtual std::map<std::string, hank_float_type> get_variables_map() const;
+
+		virtual void print() const;
 
 		void compute_profits();
 
@@ -51,7 +53,9 @@ class Equilibrium {
 
 		hank_float_type bond, govbond, labtax, govexp;
 
-		hank_float_type capital, output, varieties, qcapital;
+		hank_float_type output, varieties, qcapital;
+
+		hank_float_type capital = HANK::ValueNotSet;
 
 		std::vector<hank_float_type> labshareY, labshareN, labfracY, labfracN, labor_occ, wage_occ;
 
@@ -68,6 +72,8 @@ class EquilibriumInitial : public Equilibrium {
 		void compute_factors(const Model& model) override;
 
 		void update_with_stats(const DistributionStatistics& model);
+
+		void print() const override;
 };
 
 class EquilibriumFinal : public Equilibrium {
@@ -80,6 +86,8 @@ class EquilibriumFinal : public Equilibrium {
 			const Equilibrium& initial_equm, const hank_float_type* x);
 
 		void compute_factors(const Model& model) override;
+
+		void print() const override;
 };
 
 class EquilibriumTrans : public Equilibrium {
@@ -94,11 +102,11 @@ class EquilibriumTrans : public Equilibrium {
 
 		hank_float_type equity_Adot, equity_Bdot, inv_cap_ratio;
 
-		void set_from_parameters(const Parameters& p, const Model& model) override {
-			Equilibrium::set_from_parameters(p, model);
-		}
-
 		void compute_factors(const Model& model) override;
+
+		void print() const override;
+
+		virtual std::map<std::string, hank_float_type> get_variables_map() const override;
 };
 
 void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,

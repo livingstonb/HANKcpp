@@ -149,7 +149,6 @@ int main () {
 		stats.print();
 
 		iss.update_with_stats(stats);
-		iss.check_results();
 
 		compute_irfs(object_ptrs);
 	}

@@ -6,6 +6,7 @@
 #include <distribution_statistics.h>
 #include <assert.h>
 #include <utilities.h>
+#include <string>
 
 namespace
 {
@@ -24,6 +25,7 @@ void Equilibrium::set_from_parameters(const Parameters& p, const Model& model)
 	nocc = p.nocc;
 	rho = p.rho;
 	nprod = model.nprod;
+	rb = p.rb;
 	rborr = p.rborr;
 	transfershock = 1.0;
 	lumptransfer = p.lumptransfer;
@@ -101,7 +103,6 @@ void Equilibrium::compute_factor_prices()
 void Equilibrium::compute_dividends(const Parameters& p)
 {
 	ra = rcapital - p.depreciation;
-	rb = p.rb;
 	dividend_A = p.profdistfracA * profit * (1.0 - p.corptax);
 	dividend_B = p.profdistfracB * profit * (1.0 - p.corptax);
 	equity_A = dividend_A / ra;
@@ -124,11 +125,70 @@ void Equilibrium::compute_netwage(const Parameters& p, const Model& model)
 
 void Equilibrium::print() const
 {
-	HankUtilities::horzline();
-	std::cout << "EQUILIBRIUM VARIABLES:\n";
-	// for (auto& variable : variable_ptrs)
-	// 	std::cout << "    " << variable.first << " = " << *variable.second << '\n';
-	HankUtilities::horzline();
+	std::map<std::string, hank_float_type> variables = get_variables_map();
+	for (auto variable : variables)
+		std::cout << variable.first << " = " << variable.second << '\n';
+}
+
+std::map<std::string, hank_float_type> Equilibrium::get_variables_map() const
+{
+	std::map<std::string, hank_float_type> variables;
+
+	variables.insert({"alpha_Y", alpha_Y});
+	variables.insert({"alpha_N", alpha_N});
+	variables.insert({"drs_Y", drs_Y});
+	variables.insert({"drs_N", drs_N});
+	variables.insert({"rb", rb});
+	variables.insert({"rborr", rborr});
+	variables.insert({"transfershock", transfershock});
+	variables.insert({"lumptransfer", lumptransfer});
+	variables.insert({"price_W", price_W});
+	variables.insert({"riskaver", riskaver});
+	variables.insert({"rho", rho});
+	variables.insert({"labtax", labtax});
+	variables.insert({"output", output});
+	variables.insert({"varieties", varieties});
+	variables.insert({"qcapital", qcapital});
+	variables.insert({"capshareY", capshareY});
+	variables.insert({"capshareN", capshareN});
+	variables.insert({"capfracY", capfracY});
+	variables.insert({"capfracN", capfracN});
+	variables.insert({"capital_Y", capital_Y});
+	variables.insert({"capital_N", capital_N});
+	variables.insert({"valcapital", valcapital});
+	variables.insert({"labor_Y", labor_Y});
+	variables.insert({"labor_N", labor_N});
+	variables.insert({"labor", labor});
+	variables.insert({"tfp_Y", tfp_Y});
+	variables.insert({"tfp_N", tfp_N});
+	variables.insert({"investment", investment});
+	variables.insert({"illprice", illprice});
+	variables.insert({"illshares", illshares});
+	variables.insert({"illpricedot", illpricedot});
+	variables.insert({"netprofit_W", netprofit_W});
+	variables.insert({"grossprofit_R", grossprofit_R});
+	variables.insert({"netprofit_R", netprofit_R});
+	variables.insert({"profit", profit});
+	variables.insert({"rcapital", rcapital});
+	variables.insert({"wage_Y", wage_Y});
+	variables.insert({"wage_N", wage_N});
+	variables.insert({"mc_Y", mc_Y});
+	variables.insert({"mc_N", mc_N});
+	variables.insert({"ra", ra});
+	variables.insert({"rnom", rnom});
+	variables.insert({"pi", pi});
+	variables.insert({"dividend_A", dividend_A});
+	variables.insert({"dividend_B", dividend_B});
+	variables.insert({"equity_A", equity_A});
+	variables.insert({"equity_B", equity_B});
+	variables.insert({"Enetwage", Enetwage});
+	variables.insert({"taxrev", taxrev});
+	variables.insert({"bond", bond});
+	variables.insert({"govbond", govbond});
+	variables.insert({"govexp", govexp});
+	variables.insert({"capital", capital});
+
+	return variables;
 }
 
 void EquilibriumInitial::solve(const Parameters& p, const Model& model)
@@ -181,6 +241,14 @@ void EquilibriumInitial::update_with_stats(const DistributionStatistics& stats)
 	bond = stats.Eb;
 	govbond = equity_B - bond;
 	govexp = taxrev + rb * govbond;
+}
+
+void EquilibriumInitial::print() const
+{
+	HankUtilities::horzline();
+	std::cout << "INITIAL EQUILIBRIUM VARIABLES:\n";
+	Equilibrium::print();
+	HankUtilities::horzline();
 }
 
 EquilibriumFinal::EquilibriumFinal(const Equilibrium& other_equm)
@@ -247,6 +315,14 @@ void EquilibriumFinal::compute_factors(const Model& model)
 	capital_N = capfracN * capital;
 }
 
+void EquilibriumFinal::print() const
+{
+	HankUtilities::horzline();
+	std::cout << "FINAL EQUILIBRIUM VARIABLES:\n";
+	Equilibrium::print();
+	HankUtilities::horzline();
+}
+
 EquilibriumTrans::EquilibriumTrans(const Equilibrium& other_equm)
 {
 	*this = *(EquilibriumTrans *) &other_equm;
@@ -268,6 +344,34 @@ void EquilibriumTrans::compute_factors(const Model& model)
 	capital_Y = pow(capital_Y, 1.0 / alpha_Y);
 	capital = capital_Y / capfracY;
 	capital_N = capfracN * capital;
+}
+
+void EquilibriumTrans::print() const
+{
+	HankUtilities::horzline();
+	std::cout << "TRANSITION EQUILIBRIUM VARIABLES:\n";
+	Equilibrium::print();
+	HankUtilities::horzline();
+}
+
+std::map<std::string, hank_float_type> EquilibriumTrans::get_variables_map() const
+{
+	std::map<std::string, hank_float_type> variables = Equilibrium::get_variables_map();
+
+	variables.insert({"mpshock", mpshock});
+	variables.insert({"pricelev", pricelev});
+	variables.insert({"priceadjust", priceadjust});
+	variables.insert({"capadjust", capadjust});
+	variables.insert({"qdot", qdot});
+	variables.insert({"pidot", pidot});
+	variables.insert({"logydot", logydot});
+	variables.insert({"firmdiscount", firmdiscount});
+	variables.insert({"qinvestment", qinvestment});
+	variables.insert({"invadjust", invadjust});
+	variables.insert({"equity_Adot", equity_Adot});
+	variables.insert({"equity_Bdot", equity_Bdot});
+
+	return variables;
 }
 
 void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
