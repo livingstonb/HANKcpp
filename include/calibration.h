@@ -9,6 +9,7 @@
 #include <distribution_statistics.h>
 #include <vector>
 #include <string>
+#include <functional>
 
 namespace HANKCalibration {
 

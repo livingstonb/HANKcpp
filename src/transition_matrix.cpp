@@ -6,6 +6,7 @@
 #include <hank_eigen_dense.h>
 #include <hank_eigen_sparse.h>
 #include <hank_macros.h>
+#include <adjustment_costs.h>
 
 SparseMatContainer construct_transition_matrix(const Parameters& p, const Model& model, double ra,
 	double illprice, double illpricedot, const Upwinding::Policies& policies, int iy, bool kfe) {

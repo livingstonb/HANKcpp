@@ -1,5 +1,4 @@
 #include <calibration.h>
-#include <functional>
 #include <iostream>
 #include <string>
 #include <math.h>

@@ -1,3 +1,4 @@
+#include <hank_types.h>
 #include <model.h>
 #include <utilities.h>
 #include <hank_numerics.h>
@@ -7,6 +8,8 @@
 #include <assert.h>
 #include <hank_macros.h>
 #include <hank_eigen_dense.h>
+#include <parameters.h>
+#include <adjustment_costs.h>
 
 namespace {
 	void fix_rounding(MatrixXr& mat);

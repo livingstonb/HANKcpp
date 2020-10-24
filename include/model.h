@@ -4,12 +4,15 @@
 #include <hank_config.h>
 #include <string>
 #include <vector>
-#include <adjustment_costs.h>
-#include <parameters.h>
+
 #include <memory>
 
 // Class to store Eigen::Matrix variables
 struct ModelMatrices;
+
+class Parameters;
+
+class AdjustmentCosts;
 
 // Binds the attributes constructed in Model to const references
 class Model {
