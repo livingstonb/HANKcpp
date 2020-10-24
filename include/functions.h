@@ -8,22 +8,6 @@ enum class FnType { function, deriv, deriv_inv };
 
 namespace HankFunctions {
 
-// template<FnType ftype=FnType::function>
-// hank_float_type utility(hank_float_type c, hank_float_type prefshock, hank_float_type riskaver) {
-// 	if (riskaver == 1.0)
-// 		return prefshock * log(c);
-// 	else
-// 		return prefshock * pow(c, 1.0 - riskaver) / (1.0 - riskaver);
-// }
-
-// template<>
-// hank_float_type utility<FnType::deriv>(hank_float_type c, hank_float_type prefshock, hank_float_type riskaver) {
-// 	if (riskaver == 1.0)
-// 		return prefshock * log(c);
-// 	else
-// 		return prefshock * pow(c, 1.0 - riskaver) / (1.0 - riskaver);
-// }
-
 inline hank_float_type utility(hank_float_type c, hank_float_type prefshock, hank_float_type riskaver) {
 	if (riskaver == 1.0)
 		return prefshock * log(c);
