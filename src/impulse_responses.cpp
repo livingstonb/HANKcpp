@@ -62,8 +62,9 @@ void IRF::setup() {
 	flextransition = p.solveFlexPriceTransition;
 	stickytransition = p.solveStickyPriceTransition;
 
-	for (int it=0; it<Ttrans; ++it)
-		trans_equm.push_back(EquilibriumTrans(initial_equm));
+	for (int it=0; it<Ttrans; ++it) {
+		trans_equm.push_back(EquilibriumBase(initial_equm));
+	}
 
 	construct_delta_trans_vectors();
 	set_shock_paths();
