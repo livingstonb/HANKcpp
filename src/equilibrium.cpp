@@ -1,10 +1,10 @@
 #include <equilibrium.h>
 #include <parameters.h>
-#include <model.h>
 #include <algorithm>
 #include <math.h>
 #include <assert.h>
 #include <utilities.h>
+#include <functions.h>
 
 namespace
 {
@@ -14,7 +14,7 @@ namespace
 		const EquilibriumFinal& final_equm, std::vector<EquilibriumTrans>& trans_equms, int T);
 }
 
-void Equilibrium::set_from_parameters(const Parameters& p, const Model& model)
+void Equilibrium::set_from_parameters(const Parameters& p)
 {
 	alpha_Y = p.alpha_Y;
 	alpha_N = p.alpha_N;
@@ -22,7 +22,6 @@ void Equilibrium::set_from_parameters(const Parameters& p, const Model& model)
 	drs_N = p.drs_N;
 	nocc = p.nocc;
 	rho = p.rho;
-	nprod = model.nprod;
 	rb = p.rb;
 	rborr = p.rborr;
 	transfershock = 1.0;
@@ -33,9 +32,12 @@ void Equilibrium::set_from_parameters(const Parameters& p, const Model& model)
 	output = 1.0;
 	varieties = 1.0;
 	qcapital = 1.0;
+
+	capadjcost = p.capadjcost;
+	depreciation = p.depreciation;
 }
 
-void Equilibrium::compute_factors(const Model& model)
+void Equilibrium::compute_factors()
 {
 	// Capital
 	capshareY = alpha_Y * price_W * drs_Y;
@@ -52,13 +54,13 @@ void Equilibrium::compute_factors(const Model& model)
 	labfracY.resize(nocc);
 	labfracN.resize(nocc);
 	for (int io=0; io<nocc; ++io) {
-		labshareY[io] = (1.0 - alpha_Y) * price_W * drs_Y * model.occYsharegrid[io];
-		labshareN[io] = (1.0 - alpha_N) * (1.0 - price_W) * drs_N * model.occNsharegrid[io];
+		labshareY[io] = (1.0 - alpha_Y) * price_W * drs_Y * occYsharegrid[io];
+		labshareN[io] = (1.0 - alpha_N) * (1.0 - price_W) * drs_N * occNsharegrid[io];
 		labfracY[io] = labshareY[io] / (labshareY[io] + labshareN[io]);
 		labfracN[io] = labshareN[io] / (labshareY[io] + labshareN[io]);
-		labor_Y *= pow(labfracY[io] * labor_occ[io], model.occYsharegrid[io]);
-		labor_N *= pow(labfracN[io] * labor_occ[io], model.occNsharegrid[io]);
-		labor += labor_occ[io] * model.occdist[io];
+		labor_Y *= pow(labfracY[io] * labor_occ[io], occYsharegrid[io]);
+		labor_N *= pow(labfracN[io] * labor_occ[io], occNsharegrid[io]);
+		labor += labor_occ[io] * occdist[io];
 	}
 }
 
@@ -100,22 +102,22 @@ void Equilibrium::compute_factor_prices()
 
 void Equilibrium::compute_dividends(const Parameters& p)
 {
-	ra = rcapital - p.depreciation;
+	ra = rcapital - depreciation;
 	dividend_A = p.profdistfracA * profit * (1.0 - p.corptax);
 	dividend_B = p.profdistfracB * profit * (1.0 - p.corptax);
 	equity_A = dividend_A / ra;
 	equity_B = dividend_B / rb;
 }
 
-void Equilibrium::compute_netwage(const Parameters& p, const Model& model)
+void Equilibrium::compute_netwage(const Parameters& p)
 {
 	Enetwage = 0;
 	netwagegrid.resize(nocc * nprod);
 	int iy = 0;
 	for (int io=0; io<nocc; ++io) {
 		for (int ip=0; ip<nprod; ++ip) {
-			netwagegrid[iy] = (1.0 - labtax) * model.prodgrid[ip] * wage_occ[io];
-			Enetwage += model.occdist[io] * model.proddist[ip] * netwagegrid.back();
+			netwagegrid[iy] = (1.0 - labtax) * prodgrid[ip] * wage_occ[io];
+			Enetwage += occdist[io] * proddist[ip] * netwagegrid.back();
 			++iy;
 		}
 	}
@@ -189,29 +191,27 @@ std::map<std::string, hank_float_type> Equilibrium::get_variables_map() const
 	return variables;
 }
 
-void EquilibriumInitial::solve(const Parameters& p, const Model& model)
+void EquilibriumInitial::solve(const Parameters& p)
 {
-	set_from_parameters(p, model);
-
 	if ( labor_occ.size() == 0 )
 		for (int io=0; io<nocc; ++io)
-			labor_occ.push_back(p.hourtarget * p.meanlabeff * model.occdist[io]);
+			labor_occ.push_back(p.hourtarget * p.meanlabeff * occdist[io]);
 
 	if ( capital == HANK::ValueNotSet )
 		capital = p.target_KY_ratio;
 
-	compute_factors(model);
+	compute_factors();
 
 	tfp_Y = output / pow(cobb_douglas(capital_Y, labor_Y, alpha_Y), drs_Y);
 	tfp_N = varieties / pow(cobb_douglas(capital_N, labor_N, alpha_N), drs_N);
 
 	valcapital = capital;
-	investment = p.depreciation * capital;
+	investment = depreciation * capital;
 
 	compute_profits();
 	compute_factor_prices();
 	compute_dividends(p);
-	compute_netwage(p, model);
+	compute_netwage(p);
 
 	taxrev = p.corptax * profit - p.lumptransfer;
 	for (int io=0; io<nocc; ++io)
@@ -227,9 +227,9 @@ void EquilibriumInitial::solve(const Parameters& p, const Model& model)
 	illshares = capital + equity_A;
 }
 
-void EquilibriumInitial::compute_factors(const Model& model)
+void EquilibriumInitial::compute_factors()
 {
-	Equilibrium::compute_factors(model);
+	Equilibrium::compute_factors();
 	capital_Y = capfracY * capital;
 	capital_N = capfracN * capital;
 }
@@ -253,11 +253,9 @@ EquilibriumFinal::EquilibriumFinal(const Equilibrium& other_equm)
 	labor_occ.clear();
 	wage_occ.clear();
 	netwagegrid.clear();
-	yprodgrid.clear();
 }
 
-void EquilibriumFinal::solve(const Parameters& p, const Model& model,
-	const Equilibrium& initial_equm, const hank_float_type* x)
+void EquilibriumFinal::solve(const Parameters& p, const Equilibrium& initial_equm, const hank_float_type* x)
 {
 	capital = x[0];
 
@@ -267,7 +265,7 @@ void EquilibriumFinal::solve(const Parameters& p, const Model& model,
 
 	rb = exp(x[nocc+1]);
 
-	compute_factors(model);
+	compute_factors();
 
 	tfp_Y = initial_equm.tfp_Y;
 	tfp_N = initial_equm.tfp_N;
@@ -275,12 +273,12 @@ void EquilibriumFinal::solve(const Parameters& p, const Model& model,
 	varieties = tfp_N * pow(cobb_douglas(capital_N, labor_N, alpha_N), drs_N);
 
 	valcapital = capital;
-	investment = p.depreciation * capital;
+	investment = depreciation * capital;
 
 	compute_profits();
 	compute_factor_prices();
 	compute_dividends(p);
-	compute_netwage(p, model);
+	compute_netwage(p);
 
 	taxrev = p.corptax * profit - p.lumptransfer;
 	for (int io=0; io<nocc; ++io)
@@ -299,9 +297,9 @@ void EquilibriumFinal::solve(const Parameters& p, const Model& model,
 	bond = equity_B - govbond;
 }
 
-void EquilibriumFinal::compute_factors(const Model& model)
+void EquilibriumFinal::compute_factors()
 {
-	Equilibrium::compute_factors(model);
+	Equilibrium::compute_factors();
 	capital_Y = capfracY * capital;
 	capital_N = capfracN * capital;
 }
@@ -325,12 +323,11 @@ EquilibriumTrans::EquilibriumTrans(const Equilibrium& other_equm)
 	 labor_occ.clear();
 	 wage_occ.clear();
 	 netwagegrid.clear();
-	 yprodgrid.clear();
 }
 
-void EquilibriumTrans::compute_factors(const Model& model)
+void EquilibriumTrans::compute_factors()
 {
-	Equilibrium::compute_factors(model);
+	Equilibrium::compute_factors();
 	capital_Y = pow(output / tfp_Y, 1.0 / drs_Y) / pow(labor_Y, 1.0 - alpha_Y);
 	capital_Y = pow(capital_Y, 1.0 / alpha_Y);
 	capital = capital_Y / capfracY;
@@ -366,7 +363,7 @@ std::map<std::string, hank_float_type> EquilibriumTrans::get_variables_map() con
 }
 
 void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
-	const Parameters& p, const Model& model, const EquilibriumInitial& initial_equm,
+	const Parameters& p, const EquilibriumInitial& initial_equm,
 	const EquilibriumFinal& final_equm, const hank_float_type* deltatransvec)
 {
 	int T = trans_equms.size();
@@ -374,7 +371,7 @@ void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
 
 	for (int it=0; it<T; ++it) {
 		double deltatrans = deltatransvec[it];
-		trans_equms[it].compute_factors(model);
+		trans_equms[it].compute_factors();
 
 		trans_equms[it].varieties = trans_equms[it].tfp_N * pow(
 			cobb_douglas(trans_equms[it].capital_N, trans_equms[it].labor_N, trans_equms[it].alpha_N),
@@ -401,15 +398,17 @@ void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
 			trans_equms[it].qinvestment = 0;
 			trans_equms[it].invadjust = 0;
 
-			trans_equms[it].inv_cap_ratio = model.capadjcost1inv(trans_equms[it].qcapital - 1.0);
+			trans_equms[it].inv_cap_ratio = HankFunctions::capadjcost1inv(
+				trans_equms[it].qcapital - 1.0, p.capadjcost, p.depreciation);
 
 			if (it < T - 1)
 				trans_equms[it].qdot = (trans_equms[it+1].qcapital - trans_equms[it].qcapital) / deltatrans;
 			else
 				trans_equms[it].qdot = 0;
 
-			trans_equms[it].capadjust = model.capadjcost(trans_equms[it].inv_cap_ratio);
-			trans_equms[it].ra = (trans_equms[it].rcapital + trans_equms[it].inv_cap_ratio * model.capadjcost1(trans_equms[it].inv_cap_ratio) - trans_equms[it].capadjust + trans_equms[it].qdot)
+			trans_equms[it].capadjust = HankFunctions::capadjcost1(trans_equms[it].inv_cap_ratio, p.capadjcost, p.depreciation);
+			trans_equms[it].ra =
+				(trans_equms[it].rcapital + trans_equms[it].inv_cap_ratio * trans_equms[it].capadjust - trans_equms[it].capadjust + trans_equms[it].qdot)
 				/ trans_equms[it].qcapital - p.depreciation;
 
 			linv[it] = 0;
@@ -435,7 +434,7 @@ void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
 		for (int it=1; it<T; ++it)
 			linv[it] = linv[it-1] / (1.0 - deltatransvec[it] * trans_equms[it-1].qinvestment / p.invadjcost);
 
-		trans_equms[T-1].inv_cap_ratio = model.capadjcost1inv(trans_equms[T-1].qcapital - 1.0);
+		trans_equms[T-1].inv_cap_ratio = HankFunctions::capadjcost1inv(trans_equms[T-1].qcapital - 1.0, p.capadjcost, p.depreciation);
 		for (int it=0; it<T; ++it)
 			trans_equms[it].inv_cap_ratio = linv[it] / trans_equms[it].capital;
 	}
@@ -480,7 +479,7 @@ void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
 	}
 
 	for (int it=0; it<T; ++it) {
-		trans_equms[it].compute_netwage(p, model);
+		trans_equms[it].compute_netwage(p);
 		trans_equms[it].bond = trans_equms[it].equity_B - trans_equms[it].govbond;
 		trans_equms[it].rborr = trans_equms[it].rb + p.borrwedge;
 	}

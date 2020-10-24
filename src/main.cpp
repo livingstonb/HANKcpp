@@ -135,7 +135,8 @@ int main () {
 	if ( options.skip_calibration ) {
 		object_ptrs.ptr3.reset(new EquilibriumInitial);
 		EquilibriumInitial& iss = *object_ptrs.ptr3;
-		iss.solve(params, model);
+		iss.setup(params, model);
+		iss.solve(params);
 
 		HJB hjb(model, iss);
 		hjb.iterate(iss);

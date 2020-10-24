@@ -234,7 +234,8 @@ int initial_steady_state_obj_fn(void* args_void_ptr, int n, const hank_float_typ
 	cal.update_ss(&p, &iss, x);
 	std::cout << '\n';
 
-	iss.solve(p, model);
+	iss.setup(p, model);
+	iss.solve(p);
 
 	HJB hjb(model, iss);
 	hjb.iterate(iss);

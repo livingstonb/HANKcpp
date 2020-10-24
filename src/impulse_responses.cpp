@@ -125,7 +125,7 @@ void IRF::compute()
 void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type *fvec) {
 	trans_equm[0].print();
 	make_transition_guesses(x);
-	solve_trans_equilibrium(trans_equm, p, model, initial_equm, *final_equm_ptr, deltatransvec.data());
+	solve_trans_equilibrium(trans_equm, p, initial_equm, *final_equm_ptr, deltatransvec.data());
 
 	// Solve distribution
 	std::vector<DistributionStatistics> trans_stats;
@@ -341,7 +341,7 @@ int final_steady_state_obj_fn(void* solver_args_voidptr, int /* n */, const real
 	if ( irf.permanentShock & (irf.shock.type == ShockType::riskaver) )
 		final_ss.riskaver += irf.shock.size;
 
-	final_ss.solve(p, model, iss, x);	
+	final_ss.solve(p, iss, x);	
 
 	HJB hjb(model, final_ss);
 	hjb.iterate(final_ss);
