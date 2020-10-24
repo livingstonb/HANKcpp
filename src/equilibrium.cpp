@@ -3,10 +3,8 @@
 #include <model.h>
 #include <algorithm>
 #include <math.h>
-#include <distribution_statistics.h>
 #include <assert.h>
 #include <utilities.h>
-#include <string>
 
 namespace
 {
@@ -234,13 +232,6 @@ void EquilibriumInitial::compute_factors(const Model& model)
 	Equilibrium::compute_factors(model);
 	capital_Y = capfracY * capital;
 	capital_N = capfracN * capital;
-}
-
-void EquilibriumInitial::update_with_stats(const DistributionStatistics& stats)
-{
-	bond = stats.Eb;
-	govbond = equity_B - bond;
-	govexp = taxrev + rb * govbond;
 }
 
 void EquilibriumInitial::print() const

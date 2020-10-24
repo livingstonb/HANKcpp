@@ -5,7 +5,6 @@
 #include <hank_types.h>
 #include <string>
 #include <map>
-#include <memory>
 
 class Parameters;
 
@@ -71,7 +70,8 @@ class EquilibriumInitial : public Equilibrium {
 
 		void compute_factors(const Model& model) override;
 
-		void update_with_stats(const DistributionStatistics& model);
+		template<typename T>
+		void update_with_stats(const T& stats);
 
 		void print() const override;
 };
@@ -108,6 +108,14 @@ class EquilibriumTrans : public Equilibrium {
 
 		virtual std::map<std::string, hank_float_type> get_variables_map() const override;
 };
+
+template<typename T>
+void EquilibriumInitial::update_with_stats(const T& stats)
+{
+	bond = stats.Eb;
+	govbond = equity_B - bond;
+	govexp = taxrev + rb * govbond;
+}
 
 void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
 	const Parameters& p, const Model& model, const EquilibriumInitial& initial_equm,
