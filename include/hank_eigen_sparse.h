@@ -8,12 +8,16 @@
 using SparseXd = Eigen::SparseMatrix<double>;
 
 struct SparseMatContainer {
-	SparseMatContainer(SparseXd matrix_) : matrix(matrix_) {}
+	SparseMatContainer(SparseXd&& matrix_) : matrix(matrix_) {}
 
 	SparseXd matrix;
 
 	SparseXd& get() {return matrix;}
 };
+
+// struct EigenTripletContainer {
+// 	EigenTripletContainer()
+// }
 
 #if HANK_EIGEN_SPARSE_SOLVER == 0
 	#include <Eigen/SparseQR>
@@ -26,17 +30,15 @@ struct SparseMatContainer {
 	using sparse_solver = Eigen::UmfPackLU<SparseXd>;
 #endif
 
-using triplet_type = Eigen::Triplet<hank_float_type>;
-
-using triplet_list = std::vector<triplet_type>;
+using EigenTriplet = Eigen::Triplet<hank_float_type>;
 
 inline SparseXd speye(int n) {
 	SparseXd mat(n, n);
-	triplet_list trips;
+	std::vector<EigenTriplet> trips;
 	trips.reserve(n);
 
 	for (int i=0; i<n; ++i)
-		trips.push_back(triplet_type(i, i, 1.0));
+		trips.push_back(EigenTriplet(i, i, 1.0));
 
 	mat.setFromTriplets(trips.begin(), trips.end());
 	return mat;

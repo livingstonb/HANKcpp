@@ -13,6 +13,8 @@ class Equilibrium;
 
 class Parameters;
 
+class SparseMatContainer;
+
 // Container for value function derivatives
 struct ValueFnDerivatives {
 	static const int StationaryPtOrLimit = -999.9;

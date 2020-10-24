@@ -316,13 +316,13 @@ EquilibriumTrans::EquilibriumTrans(const Equilibrium& other_equm)
 {
 	*this = *(EquilibriumTrans *) &other_equm;
 
-	 labshareY.clear();
-	 labshareN.clear();
-	 labfracY.clear();
-	 labfracN.clear();
-	 labor_occ.clear();
-	 wage_occ.clear();
-	 netwagegrid.clear();
+	labshareY.clear();
+	labshareN.clear();
+	labfracY.clear();
+	labfracN.clear();
+	labor_occ.clear();
+	wage_occ.clear();
+	netwagegrid.clear();
 }
 
 void EquilibriumTrans::compute_factors()

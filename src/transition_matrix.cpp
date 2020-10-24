@@ -3,22 +3,21 @@
 #include <model.h>
 #include <bellman.h>
 #include <upwinding.h>
-#include <equilibrium.h>
 #include <hank_eigen_dense.h>
 #include <hank_eigen_sparse.h>
 #include <hank_macros.h>
 
 SparseMatContainer construct_transition_matrix(const Parameters& p, const Model& model, double ra,
-	double illprice, const Upwinding::Policies& policies, int iy, bool kfe) {
+	double illprice, double illpricedot, const Upwinding::Policies& policies, int iy, bool kfe) {
 
 	double d, s, acost, areturn, val, val1, val2;
 	int iab;
 	Bellman::Drifts drifts;
 
 	auto agridvec = as_eigen_map<const ArrayXr>(model.agrid);
-	VectorXr adriftvec = (ra + p.perfectAnnuityMarkets * p.deathrate) * agridvec;
+	VectorXr adriftvec = (ra - illpricedot / illprice + p.perfectAnnuityMarkets * p.deathrate) * agridvec;
 
-	triplet_list Aentries;
+	std::vector<EigenTriplet> Aentries;
 	Aentries.reserve(5 * p.na * p.nb);
 
 	for (int ia=0; ia<p.na; ++ia) {
@@ -35,13 +34,13 @@ SparseMatContainer construct_transition_matrix(const Parameters& p, const Model&
 			// Matrix entries, ia-1
 			if ( (ia > 0) & (drifts.aB != 0.0) ) {
 				val = -drifts.aB / model.dagrid[ia-1];
-				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia-1, ib, na, p.nb), val));
+				Aentries.push_back(EigenTriplet(iab, TO_INDEX_1D(ia-1, ib, na, p.nb), val));
 			}
 
 			// Matrix entries, ib-1
 			if ( (ib > 0) & (drifts.bB != 0.0) ) {
 				val = -drifts.bB / model.dbgrid[ib-1];
-				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia, ib-1, na, p.nb), val));
+				Aentries.push_back(EigenTriplet(iab, TO_INDEX_1D(ia, ib-1, na, p.nb), val));
 			}
 
 			// Matrix entries, diagonal
@@ -60,29 +59,29 @@ SparseMatContainer construct_transition_matrix(const Parameters& p, const Model&
 				val2 = drifts.bB / model.dbgrid[ib-1] - drifts.bF / model.dbgrid[ib];
 
 			if ( val1 + val2 != 0 )
-				Aentries.push_back(triplet_type(iab, iab, val1 + val2));
+				Aentries.push_back(EigenTriplet(iab, iab, val1 + val2));
 
 			// Matrix entries, ia+1
 			if ( (ia < p.na - 1 ) & (drifts.aF != 0.0) ) {
 				val = drifts.aF / model.dagrid[ia];
-				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia+1, ib, na, p.nb), val));
+				Aentries.push_back(EigenTriplet(iab, TO_INDEX_1D(ia+1, ib, na, p.nb), val));
 			}
 			
 			// Matrix entries, ib+1
 			if ( (ib < p.nb - 1) & (drifts.bF != 0.0) ) {
 				val = drifts.bF /  model.dbgrid[ib];
-				Aentries.push_back(triplet_type(iab, TO_INDEX_1D(ia, ib+1, na, p.nb), val));
+				Aentries.push_back(EigenTriplet(iab, TO_INDEX_1D(ia, ib+1, na, p.nb), val));
 			}
 		}
 	}
 
 	SparseXd A = SparseXd(p.na * p.nb, p.na * p.nb);
 	A.setFromTriplets(Aentries.begin(), Aentries.end());
-	return SparseMatContainer(A);
+	return SparseMatContainer(std::move(A));
 }
 
 SparseMatContainer get_kfe_transition_matrix(const Parameters& p, const Model& model, double ra,
-	double illprice, const Upwinding::Policies& policies, int iy) {
+	double illprice, double illpricedot, const Upwinding::Policies& policies, int iy) {
 	bool kfe = true;
-	return construct_transition_matrix(p, model, ra, illprice, policies, iy, kfe);
+	return construct_transition_matrix(p, model, ra, illprice, illpricedot, policies, iy, kfe);
 }

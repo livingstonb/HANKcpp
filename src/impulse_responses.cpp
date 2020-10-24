@@ -123,7 +123,6 @@ void IRF::compute()
 }
 
 void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type *fvec) {
-	trans_equm[0].print();
 	make_transition_guesses(x);
 	solve_trans_equilibrium(trans_equm, p, initial_equm, *final_equm_ptr, deltatransvec.data());
 

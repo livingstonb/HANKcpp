@@ -1,6 +1,7 @@
 #include <bellman.h>
 #include <parameters.h>
 #include <model.h>
+#include <transition_matrix.h>
 #include <upwinding.h>
 #include <equilibrium.h>
 #include <hank_numerics.h>
@@ -8,7 +9,6 @@
 
 #include <hank_eigen_dense.h>
 #include <hank_eigen_sparse.h>
-#include <transition_matrix.h>
 
 #include <functional>
 #include <algorithm>
@@ -304,7 +304,6 @@ void HJB::update_value_fn(const Equilibrium& ss, const Upwinding::Policies& poli
 	SparseXd ldiagmat, sparseI = speye(p.na * p.nb);
 
 	for ( int iy=0; iy<model.ny; ++iy ) {
-		triplet_list Aentries;
 		ycol = model.prodmarkovscale * model.matrices->ymarkovoff.row(iy);
 
 		for (int ia=0; ia<p.na; ++ia) {
@@ -319,7 +318,7 @@ void HJB::update_value_fn(const Equilibrium& ss, const Upwinding::Policies& poli
 			}
 		}
 
-		SparseMatContainer Acont = construct_transition_matrix(p, model, ss.ra, ss.illprice, policies, iy, kfe);
+		SparseMatContainer Acont = construct_transition_matrix(p, model, ss.ra, ss.illprice, ss.illpricedot, policies, iy, kfe);
 		SparseXd& A = Acont.get();
 
 		// Construct B matrix = I + delta * (rho * I - A)
