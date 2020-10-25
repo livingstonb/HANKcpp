@@ -12,6 +12,16 @@
 #include <adjustment_costs.h>
 
 namespace {
+	void make_asset_grids(Model* model, const Parameters& p);
+
+	void make_occupation_grids(Model* model, const Parameters& p);
+
+	void create_income_process(Model* model, const Parameters& p);
+
+	void create_combined_variables(Model* model, const Parameters& p);
+
+	void check_nbl(double bgrid0, const Parameters& p);
+
 	void fix_rounding(MatrixXr& mat);
 
 	std::vector<hank_float_type> compute_grid_deltas(
@@ -31,10 +41,10 @@ namespace {
 Model::Model(const Parameters& p_) : p(p_) {
 	matrices.reset(new ModelMatrices);
 
-	make_asset_grids(p);
-	make_occupation_grids(p);
-	create_income_process(p);
-	create_combined_variables(p);
+	make_asset_grids(this, p);
+	make_occupation_grids(this, p);
+	create_income_process(this, p);
+	create_combined_variables(this, p);
 
 	nocc = p.nocc;
 	naby = p.nb * p.na * nocc * nprod;
@@ -43,7 +53,7 @@ Model::Model(const Parameters& p_) : p(p_) {
 
 	assertions();
 
-	check_nbl(p);
+	check_nbl(bgrid[0], p);
 
 	double adjcost1max = 1.0e30;
 
@@ -58,150 +68,6 @@ Model::Model(const Parameters& p_) : p(p_) {
 
 	if ( global_hank_options->print_diagnostics )
 		print_values();
-}
-
-void Model::make_asset_grids(const Parameters& p) {
-	// Liquid asset
-	bgrid.resize(p.nb);
-	if ( !p.borrowing ) {
-		powerSpacedGrid(p.bmin, p.bmax, p.bcurv, bgrid);
-	}
-	else {
-		std::vector<hank_float_type> bgridpos(p.nb_pos);
-		powerSpacedGrid(0.0, p.bmax, p.bcurv, bgridpos);
-
-		double nbl = -p.lumptransfer / (p.rborr + p.perfectAnnuityMarkets * p.deathrate);
-		double abl = fmax(nbl + p.cmin, p.blim);
-
-		int nn = static_cast<int>(floor(p.nb_neg / 2.0) + 1);
-		std::vector<hank_float_type> bgridneg(nn);
-		powerSpacedGrid(abl, (abl+bgridpos[0])/2.0, p.bcurv_neg, bgridneg);
-
-		std::copy(bgridneg.begin(), bgridneg.end(), bgrid.begin());
-		std::copy(bgridpos.begin(), bgridpos.end(), bgrid.begin() + p.nb_neg);
-
-		for (int i=nn; i<p.nb_neg; ++i)
-			bgrid[i] = bgrid[p.nb_neg] - (bgrid[p.nb_neg-i] - bgrid[0]);
-	}
-	
-	for (int ib=0; ib<p.nb-1; ++ib)
-		dbgrid.push_back(bgrid[ib+1] - bgrid[ib]);
-
-	bdelta = compute_grid_deltas(bgrid, dbgrid);
-
-	// Illiquid asset
-	agrid.resize(p.na);
-	if ( p.oneAssetNoCapital ) {
-		std::fill(agrid.begin(), agrid.end(), 0);
-		std::fill(dagrid.begin(), dagrid.end(), 1);
-		std::fill(adelta.begin(), adelta.end(), 1);
-	}
-	else {
-		powerSpacedGrid(p.amin, p.amax, p.acurv, agrid);
-		adjustPowerSpacedGrid(agrid);
-
-		for (int ia=0; ia<p.na-1; ++ia)
-			dagrid.push_back(agrid[ia+1]-agrid[ia]);
-
-		adelta = compute_grid_deltas(agrid, dagrid);
-	}
-
-	abdelta.resize(p.nab);
-	for (int ia=0; ia<p.na; ++ia)
-		for (int ib=0; ib<p.nb; ++ib)
-			abdelta[TO_INDEX_1D(ia, ib, p.na, p.nb)] = adelta[ia] * bdelta[ib];
-}
-
-void Model::make_occupation_grids(const Parameters& p) {
-	// Occupation types
-	if ( p.nocc == 1 ) {
-		occYsharegrid = std::vector<hank_float_type>({1});
-		occNsharegrid = std::vector<hank_float_type>({1});
-		occdist = std::vector<hank_float_type>({1});
-	}
-	else if ( p.nocc == 4 ) {
-		occYsharegrid = std::vector<hank_float_type>({0.325, 0.275, 0.225, 0.175});
-		occNsharegrid = std::vector<hank_float_type>({0.1, 0.15, 0.25, 0.5});
-		occdist = std::vector<hank_float_type>({0.25, 0.25, 0.25, 0.25});
-	}
-	else {
-		std::cerr << "Invalid number of occupation points\n";
-		throw 0;
-	}
-	nocc = p.nocc;
-}
-
-void Model::create_income_process(const Parameters& p) {
-
-	std::string grid_loc = "../input/" + p.income_dir + "/ygrid_combined.txt";
-	logprodgrid = HankUtilities::read_matrix(grid_loc);
-
-	std::string dist_loc = "../input/" + p.income_dir + "/ydist_combined.txt";
-	proddist = HankUtilities::read_matrix(dist_loc);
-
-	std::string markov_loc = "../input/" + p.income_dir + "/ymarkov_combined.txt";
-
-	if ( p.adjustProdGridFrisch )
-		for (auto& el : logprodgrid)
-			el /= (1.0 + p.adjFrischGridFrac * p.frisch);
-
-	int k = proddist.size();
-	matrices->prodmarkov = vector2eigenm(HankUtilities::read_matrix(markov_loc), k, k);
-	fix_rounding(matrices->prodmarkov);
-
-	for (auto el : logprodgrid)
-		prodgrid.push_back(exp(el));
-
-	nprod = prodgrid.size();
-
-	// Normalize mean productivity
-	double lmean = EigenFunctions::dot(prodgrid, proddist);
-
-	for (auto& el : prodgrid)
-		el *= p.meanlabeff / lmean;
-}
-
-void Model::create_combined_variables(const Parameters& p) {
-	ny = nprod * nocc;
-
-	matrices->ymarkov = MatrixXr::Zero(ny, ny);
-	matrices->ymarkovdiag = MatrixXr::Zero(ny, ny);
-	yprodgrid.resize(ny);
-	yoccgrid.resize(ny);
-	ydist.resize(ny);
-
-	int iy = 0;
-	for (int io=0; io<nocc; ++io) {
-		for (int ip=0; ip<nprod; ++ip) {
-			yprodgrid[iy] = prodgrid[ip];
-			ydist[iy] = proddist[ip] * occdist[io];
-			// yoccgrid[iy] = occgrid[iy];
-
-			for (int ip2=0; ip2<nprod; ++ip2) {
-				matrices->ymarkov(iy, ip2 + nprod * io) = matrices->prodmarkov(ip, ip2);
-			}
-
-			++iy;
-		}
-	}
-
-	for (int iy=0; iy<ny; ++iy)
-		matrices->ymarkovdiag(iy,iy) = matrices->ymarkov(iy,iy);
-	
-	matrices->ymarkovoff = matrices->ymarkov - matrices->ymarkovdiag;
-	profsharegrid = yprodgrid;
-	for (auto& el : profsharegrid)
-		el /= p.meanlabeff;
-}
-
-void Model::check_nbl(const Parameters& p) const {
-	if ( p.borrowing ) {
-		double nbl = -p.lumptransfer / (p.rborr + p.perfectAnnuityMarkets * p.deathrate);
-
-		if (bgrid[0] < nbl) {
-			throw "Natural borrowing limit violated";
-		}
-	}
 }
 
 std::vector<hank_float_type> Model::get_rb_effective(hank_float_type rb, hank_float_type rborr) const {
@@ -302,6 +168,149 @@ void Model::assertions() const {
 }
 
 namespace {
+	void make_asset_grids(Model* model, const Parameters& p) {
+		// Liquid asset
+		model->bgrid.resize(p.nb);
+		if ( !p.borrowing ) {
+			powerSpacedGrid(p.bmin, p.bmax, p.bcurv, model->bgrid);
+		}
+		else {
+			std::vector<hank_float_type> bgridpos(p.nb_pos);
+			powerSpacedGrid(0.0, p.bmax, p.bcurv, bgridpos);
+
+			double nbl = -p.lumptransfer / (p.rborr + p.perfectAnnuityMarkets * p.deathrate);
+			double abl = fmax(nbl + p.cmin, p.blim);
+
+			int nn = static_cast<int>(floor(p.nb_neg / 2.0) + 1);
+			std::vector<hank_float_type> bgridneg(nn);
+			powerSpacedGrid(abl, (abl+bgridpos[0])/2.0, p.bcurv_neg, bgridneg);
+
+			std::copy(bgridneg.begin(), bgridneg.end(), model->bgrid.begin());
+			std::copy(bgridpos.begin(), bgridpos.end(), model->bgrid.begin() + p.nb_neg);
+
+			for (int i=nn; i<p.nb_neg; ++i)
+				model->bgrid[i] = model->bgrid[p.nb_neg] - (model->bgrid[p.nb_neg-i] - model->bgrid[0]);
+		}
+		
+		for (int ib=0; ib<p.nb-1; ++ib)
+			model->dbgrid.push_back(model->bgrid[ib+1] - model->bgrid[ib]);
+
+		model->bdelta = compute_grid_deltas(model->bgrid, model->dbgrid);
+
+		// Illiquid asset
+		model->agrid.resize(p.na);
+		if ( p.oneAssetNoCapital ) {
+			std::fill(model->agrid.begin(), model->agrid.end(), 0);
+			std::fill(model->dagrid.begin(), model->dagrid.end(), 1);
+			std::fill(model->adelta.begin(), model->adelta.end(), 1);
+		}
+		else {
+			powerSpacedGrid(p.amin, p.amax, p.acurv, model->agrid);
+			adjustPowerSpacedGrid(model->agrid);
+
+			for (int ia=0; ia<p.na-1; ++ia)
+				model->dagrid.push_back(model->agrid[ia+1] - model->agrid[ia]);
+
+			model->adelta = compute_grid_deltas(model->agrid, model->dagrid);
+		}
+
+		model->abdelta.resize(p.nab);
+		for (int ia=0; ia<p.na; ++ia)
+			for (int ib=0; ib<p.nb; ++ib)
+				model->abdelta[TO_INDEX_1D(ia, ib, p.na, p.nb)] = model->adelta[ia] * model->bdelta[ib];
+	}
+
+	void make_occupation_grids(Model* model, const Parameters& p) {
+		// Occupation types
+		if ( p.nocc == 1 ) {
+			model->occYsharegrid = std::vector<hank_float_type>({1});
+			model->occNsharegrid = std::vector<hank_float_type>({1});
+			model->occdist = std::vector<hank_float_type>({1});
+		}
+		else if ( p.nocc == 4 ) {
+			model->occYsharegrid = std::vector<hank_float_type>({0.325, 0.275, 0.225, 0.175});
+			model->occNsharegrid = std::vector<hank_float_type>({0.1, 0.15, 0.25, 0.5});
+			model->occdist = std::vector<hank_float_type>({0.25, 0.25, 0.25, 0.25});
+		}
+		else {
+			std::cerr << "Invalid number of occupation points\n";
+			throw 0;
+		}
+		model->nocc = p.nocc;
+	}
+
+	void create_income_process(Model* model, const Parameters& p) {
+		std::string grid_loc = "../input/" + p.income_dir + "/ygrid_combined.txt";
+		model->logprodgrid = HankUtilities::read_matrix(grid_loc);
+
+		std::string dist_loc = "../input/" + p.income_dir + "/ydist_combined.txt";
+		model->proddist = HankUtilities::read_matrix(dist_loc);
+
+		std::string markov_loc = "../input/" + p.income_dir + "/ymarkov_combined.txt";
+
+		if ( p.adjustProdGridFrisch )
+			for (auto& el : model->logprodgrid)
+				el /= (1.0 + p.adjFrischGridFrac * p.frisch);
+
+		int k = model->proddist.size();
+		model->matrices->prodmarkov = vector2eigenm(HankUtilities::read_matrix(markov_loc), k, k);
+		fix_rounding(model->matrices->prodmarkov);
+
+		for (auto el : model->logprodgrid)
+			model->prodgrid.push_back(exp(el));
+
+		model->nprod = model->prodgrid.size();
+
+		// Normalize mean productivity
+		double lmean = EigenFunctions::dot(model->prodgrid, model->proddist);
+
+		for (auto& el : model->prodgrid)
+			el *= p.meanlabeff / lmean;
+	}
+
+	void create_combined_variables(Model* model, const Parameters& p) {
+		model->ny = model->nprod * p.nocc;
+
+		model->matrices->ymarkov = MatrixXr::Zero(model->ny, model->ny);
+		model->matrices->ymarkovdiag = MatrixXr::Zero(model->ny, model->ny);
+		model->yprodgrid.resize(model->ny);
+		model->yoccgrid.resize(model->ny);
+		model->ydist.resize(model->ny);
+
+		int iy = 0;
+		for (int io=0; io<p.nocc; ++io) {
+			for (int ip=0; ip<model->nprod; ++ip) {
+				model->yprodgrid[iy] = model->prodgrid[ip];
+				model->ydist[iy] = model->proddist[ip] * model->occdist[io];
+				// yoccgrid[iy] = occgrid[iy];
+
+				for (int ip2=0; ip2<model->nprod; ++ip2) {
+					model->matrices->ymarkov(iy, ip2 + model->nprod * io) = model->matrices->prodmarkov(ip, ip2);
+				}
+
+				++iy;
+			}
+		}
+
+		for (int iy=0; iy<model->ny; ++iy)
+			model->matrices->ymarkovdiag(iy,iy) = model->matrices->ymarkov(iy,iy);
+		
+		model->matrices->ymarkovoff = model->matrices->ymarkov - model->matrices->ymarkovdiag;
+		model->profsharegrid = model->yprodgrid;
+		for (auto& el : model->profsharegrid)
+			el /= p.meanlabeff;
+	}
+
+	void check_nbl(double bgrid0, const Parameters& p) {
+		if ( p.borrowing ) {
+			double nbl = -p.lumptransfer / (p.rborr + p.perfectAnnuityMarkets * p.deathrate);
+
+			if (bgrid0 < nbl) {
+				throw "Natural borrowing limit violated";
+			}
+		}
+	}
+
 	void fix_rounding(MatrixXr& mat) {
 		for (int i=0; i<mat.rows(); ++i) {
 			double rowsum = mat.row(i).sum();
