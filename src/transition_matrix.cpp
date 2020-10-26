@@ -8,12 +8,23 @@
 #include <hank_macros.h>
 #include <adjustment_costs.h>
 
+namespace {
+	struct Drifts {
+		Drifts() {}
+
+		Drifts(double s, double d, double areturn, double acost, bool kfe, double illprice);
+
+		double aB, aF, bB, bF;
+	};
+}
+
 SparseMatContainer construct_transition_matrix(const Parameters& p, const Model& model, double ra,
-	double illprice, double illpricedot, const Upwinding::Policies& policies, int iy, bool kfe) {
+	double illprice, double illpricedot, const Upwinding::Policies& policies, int iy, bool kfe)
+{
 
 	double d, s, acost, areturn, val, val1, val2;
 	int iab;
-	Bellman::Drifts drifts;
+	Drifts drifts;
 
 	auto agridvec = as_eigen_map<const ArrayXr>(model.agrid);
 	VectorXr adriftvec = (ra - illpricedot / illprice + p.perfectAnnuityMarkets * p.deathrate) * agridvec;
@@ -30,7 +41,7 @@ SparseMatContainer construct_transition_matrix(const Parameters& p, const Model&
 			areturn = adriftvec(ia);
 
 			// Compute drifts
-			drifts = Bellman::Drifts(s, d, areturn, acost, kfe, illprice);
+			drifts = Drifts(s, d, areturn, acost, kfe, illprice);
 
 			// Matrix entries, ia-1
 			if ( (ia > 0) & (drifts.aB != 0.0) ) {
@@ -85,4 +96,22 @@ SparseMatContainer get_kfe_transition_matrix(const Parameters& p, const Model& m
 	double illprice, double illpricedot, const Upwinding::Policies& policies, int iy) {
 	bool kfe = true;
 	return construct_transition_matrix(p, model, ra, illprice, illpricedot, policies, iy, kfe);
+}
+
+namespace {
+	Drifts::Drifts(double s, double d, double areturn, double acost, bool kfe, double illprice)
+	{
+		if ( kfe ) {
+			aB = fmin(d / illprice + areturn, 0.0);
+			aF = fmax(d / illprice + areturn, 0.0);
+			bB = fmin(s - d - acost, 0.0);
+			bF = fmax(s - d - acost, 0.0);
+		}
+		else {
+			aB = fmin(d / illprice, 0.0) + fmin(areturn, 0.0);
+			aF = fmax(d / illprice, 0.0) + fmax(areturn, 0.0);
+			bB = fmin(-d - acost, 0) + fmin(s, 0.0);
+			bF = fmax(-d - acost, 0) + fmax(s, 0.0);
+		}
+	}
 }

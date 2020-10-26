@@ -13,25 +13,12 @@ class Equilibrium;
 
 class Parameters;
 
-class SparseMatContainer;
-
 // Container for value function derivatives
 struct ValueFnDerivatives {
 	static const int StationaryPtOrLimit = -999.9;
 
 	double VaF, VaB, VbF, VbB;
 };
-
-namespace Bellman {
-	class Drifts {
-		public:
-			Drifts() {}
-
-			Drifts(double s, double d, double areturn, double acost, bool kfe, double illprice);
-
-			double aB, aF, bB, bF;
-	};
-}
 
 // Class for solving the HJB
 class HJB {
