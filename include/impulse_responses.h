@@ -26,6 +26,13 @@ class TransShock {
 int final_steady_state_obj_fn(void* solver_args_voidptr, int n, const hank_float_type *x, hank_float_type *fvec, int /* iflag */ );
 
 class IRF {
+	private:
+		const Parameters& p;
+
+		const Model& model;
+
+		const EquilibriumInitial& initial_equm;
+
 	public:
 		IRF(const Parameters& p_, const Model& model_, const EquilibriumInitial& iss_);
 
@@ -74,12 +81,6 @@ class IRF {
 		std::vector<EquilibriumTrans> trans_equm;
 
 		std::shared_ptr<EquilibriumFinal> final_equm_ptr = nullptr;
-
-		const Parameters& p;
-
-		const Model& model;
-
-		const EquilibriumInitial& initial_equm;
 };
 
 using SolverArgsIRF = UniquePtrContainer<const Parameters, const Model, const EquilibriumInitial, EquilibriumFinal, const IRF>;
