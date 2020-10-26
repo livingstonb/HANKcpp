@@ -19,6 +19,8 @@
 using namespace std::placeholders;
 
 namespace {
+	std::vector<hank_float_type> construct_cum_delta_trans_vector(double deltatranstot, double deltatransmin, int Ttrans);
+
 	std::vector<hank_float_type> get_AR1_path_logs(int T, double x0, double eps, double rho, const std::vector<hank_float_type>& deltas, int nback);
 
 	std::vector<hank_float_type> get_AR1_path_levels(int T, double x0, double eps, double rho, const std::vector<hank_float_type>& deltas, int nback);
@@ -65,23 +67,12 @@ void IRF::setup() {
 		trans_equm.push_back(EquilibriumBase(initial_equm));
 	}
 
-	construct_delta_trans_vectors();
-	set_shock_paths();
-}
-
-void IRF::construct_delta_trans_vectors()
-{
-	double lb = (Ttrans + 1) * (deltatranstot - Ttrans * deltatransmin) / (Ttrans * (deltatranstot - deltatransmin));
-	double la = (Ttrans + 1) * deltatransmin - deltatransmin * lb;
-
-	for (int it=0; it<Ttrans; ++it) {
-		double lit = static_cast<double>(it) / (Ttrans + 1);
-		cumdeltatrans.push_back(la * lit / (1.0 - lb * lit));
-	}
-
+	cumdeltatrans = construct_cum_delta_trans_vector(deltatranstot, deltatransmin, Ttrans);
 	deltatransvec.push_back(cumdeltatrans[0]);
 	for (int it=1; it<Ttrans; ++it)
 		deltatransvec.push_back(cumdeltatrans[it] - cumdeltatrans[it-1]);
+
+	set_shock_paths();
 }
 
 void IRF::compute()
@@ -367,6 +358,20 @@ int final_steady_state_obj_fn(void* solver_args_voidptr, int /* n */, const real
 }
 
 namespace {
+	std::vector<hank_float_type> construct_cum_delta_trans_vector(double deltatranstot, double deltatransmin, int Ttrans)
+	{
+		double lb = (Ttrans + 1) * (deltatranstot - Ttrans * deltatransmin) / (Ttrans * (deltatranstot - deltatransmin));
+		double la = (Ttrans + 1) * deltatransmin - deltatransmin * lb;
+		std::vector<hank_float_type> cumdeltatrans(Ttrans);
+
+		for (int it=0; it<Ttrans; ++it) {
+			double lit = static_cast<double>(it) / (Ttrans + 1);
+			cumdeltatrans[it] = la * lit / (1.0 - lb * lit);
+		}
+
+		return cumdeltatrans;
+	}
+
 	std::vector<hank_float_type> get_AR1_path_logs(int T, double x0, double eps, double rho, const std::vector<hank_float_type>& deltas, int nback) {
 		std::vector<hank_float_type> y(T);
 		double rho_it;

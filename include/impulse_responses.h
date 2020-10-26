@@ -33,8 +33,6 @@ class IRF {
 
 		void setup();
 
-		void construct_delta_trans_vectors();
-
 		void compute();
 
 		void transition_fcn(int n, const hank_float_type *x, hank_float_type *z);
