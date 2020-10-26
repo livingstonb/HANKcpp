@@ -72,7 +72,8 @@ Model::Model(const Parameters& p_) : p(p_) {
 		print_values();
 }
 
-std::vector<hank_float_type> Model::get_rb_effective(hank_float_type rb, hank_float_type rborr) const {
+std::vector<hank_float_type> Model::get_rb_effective(hank_float_type rb, hank_float_type rborr) const
+{
 	std::vector<hank_float_type> rb_effective;
 	rb_effective.reserve(p.nb);
 	for (auto el : bgrid) {
@@ -122,13 +123,15 @@ hank_float_type Model::capadjcost1inv(hank_float_type x) const {
 	return HankFunctions::capadjcost1inv(x, p.capadjcost, p.depreciation);
 }
 
-double Model::util1BC(double h, double riskaver, double chi, double bdrift, double netwage, double wagescale) const {
+double Model::util1BC(double h, double riskaver, double chi, double bdrift, double netwage, double wagescale) const
+{
 	double c = bdrift + h * netwage;
 	assert( c > 0 );
 	return labdisutil1(h, chi) - util1(c, riskaver) * netwage * p.labwedge / wagescale;
 }
 
-void Model::print_values() const {
+void Model::print_values() const
+{
 	HankUtilities::horzline();
 	std::cout << "COMPUTED VALUES, MODEL OBJECT:\n";
 	print_value("nocc", nocc);
@@ -146,7 +149,8 @@ void Model::print_values() const {
 	HankUtilities::horzline();
 }
 
-void Model::assertions() const {
+void Model::assertions() const
+{
 	if ( abs(1.0 - EigenFunctions::sum(proddist)) > 1.0e-7 ) {
 		std::cerr << "Proddist does not sum to one\n";
 		throw 0;
@@ -170,7 +174,8 @@ void Model::assertions() const {
 }
 
 namespace {
-	void make_asset_grids(Model* model, const Parameters& p) {
+	void make_asset_grids(Model* model, const Parameters& p)
+	{
 		// Liquid asset
 		model->bgrid.resize(p.nb);
 		if ( !p.borrowing ) {
@@ -222,7 +227,8 @@ namespace {
 				model->abdelta[TO_INDEX_1D(ia, ib, p.na, p.nb)] = model->adelta[ia] * model->bdelta[ib];
 	}
 
-	void make_occupation_grids(Model* model, const Parameters& p) {
+	void make_occupation_grids(Model* model, const Parameters& p)
+	{
 		// Occupation types
 		if ( p.nocc == 1 ) {
 			model->occYsharegrid = std::vector<hank_float_type>({1});
@@ -241,7 +247,8 @@ namespace {
 		model->nocc = p.nocc;
 	}
 
-	void create_income_process(Model* model, const Parameters& p) {
+	void create_income_process(Model* model, const Parameters& p)
+	{
 		std::string grid_loc = "../input/" + p.income_dir + "/ygrid_combined.txt";
 		model->logprodgrid = HankUtilities::read_matrix(grid_loc);
 
@@ -270,7 +277,8 @@ namespace {
 			el *= p.meanlabeff / lmean;
 	}
 
-	void create_combined_variables(Model* model, const Parameters& p) {
+	void create_combined_variables(Model* model, const Parameters& p)
+	{
 		model->ny = model->nprod * p.nocc;
 
 		model->matrices->ymarkov = MatrixXr::Zero(model->ny, model->ny);
@@ -303,7 +311,8 @@ namespace {
 			el /= p.meanlabeff;
 	}
 
-	void check_nbl(double bgrid0, const Parameters& p) {
+	void check_nbl(double bgrid0, const Parameters& p)
+	{
 		if ( p.borrowing ) {
 			double nbl = -p.lumptransfer / (p.rborr + p.perfectAnnuityMarkets * p.deathrate);
 
@@ -313,7 +322,8 @@ namespace {
 		}
 	}
 
-	void fix_rounding(MatrixXr& mat) {
+	void fix_rounding(MatrixXr& mat)
+	{
 		for (int i=0; i<mat.rows(); ++i) {
 			double rowsum = mat.row(i).sum();
 			mat(i,i) -= rowsum;
@@ -336,7 +346,8 @@ namespace {
 		return deltas;
 	}
 
-	void powerSpacedGrid(double low, double high, double curv, std::vector<hank_float_type>& grid) {
+	void powerSpacedGrid(double low, double high, double curv, std::vector<hank_float_type>& grid)
+	{
 		int n = grid.size();
 		HankNumerics::linspace(0.0, 1.0, n, grid);
 
@@ -344,24 +355,28 @@ namespace {
 			grid[i] = low + (high - low) * pow(grid[i], 1.0 / curv);
 	}
 
-	void adjustPowerSpacedGrid(std::vector<hank_float_type>& grid) {
+	void adjustPowerSpacedGrid(std::vector<hank_float_type>& grid)
+	{
 		if (grid.size() > 10)
 			for (int i=0; i<9; ++i)
 				grid[i] = i * grid[9] / (10.0 - 1.0);
 	}
 
-	void print_value(const std::string& pname, double value, bool insert_endline) {
+	void print_value(const std::string& pname, double value, bool insert_endline)
+	{
 		std::cout << "  " << pname << " = " << value;
 
 		if ( insert_endline )
 			std::cout << '\n';
 	}
 
-	void print_value(const std::string& pname, double value) {
+	void print_value(const std::string& pname, double value)
+	{
 		print_value(pname, value, true);
 	}
 
-	void check_adjcosts(const Parameters& p, const std::shared_ptr<AdjustmentCosts>& adjcosts) {
+	void check_adjcosts(const Parameters& p, const std::shared_ptr<AdjustmentCosts>& adjcosts)
+	{
 		assert( p.kappa_w_fc == adjcosts->kappa_w_fc );
 		assert( p.kappa_d_fc == adjcosts->kappa_d_fc );
 

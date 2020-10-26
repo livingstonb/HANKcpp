@@ -18,7 +18,8 @@ namespace Upwinding {
 }
 
 // Class for distribution statistics
-class DistributionStatistics {
+class DistributionStatistics
+{
 
 	class DistStruct;
 
@@ -28,7 +29,8 @@ class DistributionStatistics {
 		DistributionStatistics(const Parameters& p, const Model& model,
 			const Upwinding::Policies& policies, const StationaryDist& sdist);
 
-		DistributionStatistics& operator=(const DistributionStatistics* other_stats) {
+		DistributionStatistics& operator=(const DistributionStatistics* other_stats)
+		{
 			*this = other_stats;
 			return *this;
 		}

@@ -8,7 +8,8 @@
 
 namespace HankNumerics {
 
-double rtsec(std::function<double(double)> fn, double x1, double x2, double facc) {
+double rtsec(std::function<double(double)> fn, double x1, double x2, double facc)
+{
 	const int maxit = 20;
 	double lrtsec, z1, z2;
 	double dx, f, fl, xl, ltemp;
@@ -52,7 +53,8 @@ double rtsec(std::function<double(double)> fn, double x1, double x2, double facc
 	throw 0;
 }
 
-double lininterp1(int n, const hank_float_type *x, const hank_float_type *y, double xi) {
+double lininterp1(int n, const hank_float_type *x, const hank_float_type *y, double xi)
+{
 	hank_float_type xL, xH, yL, yH, maxel;
 	int locL = -1;
 
@@ -81,7 +83,9 @@ double lininterp1(int n, const hank_float_type *x, const hank_float_type *y, dou
 		return yL  + ((xi - xL) / (xH - xL)) * (yH - yL);
 }
 
-void jacobian_square(const broyden_fn_type& fn, int n, const hank_float_type *x, hank_float_type *f, hank_float_type *fjac, double step) {
+void jacobian_square(const broyden_fn_type& fn, int n, const hank_float_type *x,
+	hank_float_type *f, hank_float_type *fjac, double step)
+{
 	HankUtilities::fillarr(fjac, 0.0, n, n);
 
 	hank_float_type* xforjac = new hank_float_type[n];

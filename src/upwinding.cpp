@@ -2,7 +2,8 @@
 
 namespace Upwinding {
 
-void Policies::update_c(int ia, int ib, int iy, const ConUpwind& uwF, const ConUpwind& uwB, const ConUpwind& uw0) {
+void Policies::update_c(int ia, int ib, int iy, const ConUpwind& uwF, const ConUpwind& uwB, const ConUpwind& uw0)
+{
 	bool not_backward = (!uwB.valid) | (uwF.Hc >= uwB.Hc);
 	bool not_forward = (!uwF.valid) | (uwB.Hc >= uwF.Hc);
 	bool forward_better_than_nothing = uwF.Hc >= uw0.Hc;
@@ -22,7 +23,8 @@ void Policies::update_c(int ia, int ib, int iy, const ConUpwind& uwF, const ConU
 }
 
 void Policies::update_d(int ia, int ib, int iy, const DepositUpwind& uFB,
-	const DepositUpwind& uBF, const DepositUpwind& uBB) {
+	const DepositUpwind& uBF, const DepositUpwind& uBB)
+{
 	bool chooseFB = uFB.valid & uFB.at_least_as_good_as(uBF) & uFB.at_least_as_good_as(uBB);
 	bool chooseBF = uBF.valid & uBF.at_least_as_good_as(uFB) & uBF.at_least_as_good_as(uBB);
 	bool chooseBB = uBB.valid & uBB.at_least_as_good_as(uBF) & uBB.at_least_as_good_as(uFB);

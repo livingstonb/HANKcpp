@@ -11,7 +11,8 @@ namespace {
 	double compute_ss_capital_output_ratio(const Parameters& p, double price_W);
 }
 
-void Parameters::setup(const Options& opts) {
+void Parameters::setup(const Options& opts)
+{
 
 	if ( opts.fast ) {
 		nb_pos = 10;
@@ -62,7 +63,8 @@ void Parameters::setup(const Options& opts) {
 
 void Parameters::update() {
 	rborr = rb + borrwedge;
-	if ( make_profit_correction & (alpha_N == alpha_Y) ) {
+	if ( make_profit_correction & (alpha_N == alpha_Y) )
+	{
 		profdistfracA = alpha_N;
 		profdistfracB = 0;
 		profdistfracW = 1.0 - alpha_N;
@@ -129,11 +131,13 @@ namespace HANK {
 
 namespace {
 
-	double quadratic_formula(double a, double b, double c) {
+	double quadratic_formula(double a, double b, double c)
+	{
 		return (-b + sqrt(pow(b, 2.0) - 4.0 * a * c)) / (2.0 * a);
 	}
 
-	double compute_ss_capital_output_ratio(const Parameters& p, double price_W) {
+	double compute_ss_capital_output_ratio(const Parameters& p, double price_W)
+	{
 		double la, lb, lc;
 
 		la = -p.depreciation;

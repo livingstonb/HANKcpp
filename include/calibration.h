@@ -17,7 +17,8 @@ class CalibrationArgs;
 
 using deviation_fn_type = std::function<double(const CalibrationArgs&)>;
 
-class SSCalibrator {
+class SSCalibrator
+{
 	public:
 		SSCalibrator() {}
 
@@ -62,7 +63,8 @@ class SSCalibrator {
 
 using ObjectPointers = UniquePtrContainer<Parameters, Model, EquilibriumInitial, DistributionStatistics, SSCalibrator>;
 
-class CalibrationArgs {
+class CalibrationArgs
+{
 	public:
 		CalibrationArgs(const ObjectPointers& ptrs)
 			: p(*ptrs.ptr1), model(*ptrs.ptr2), iss(*ptrs.ptr3), stats(*ptrs.ptr4) {}

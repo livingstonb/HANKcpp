@@ -18,7 +18,8 @@ class DistributionStatistics;
 
 class IRF;
 
-inline void check_cminpack_success(int info) {
+inline void check_cminpack_success(int info)
+{
 	std::cout << '\n';
 	HankUtilities::horzline();
 	HankUtilities::horzline();
@@ -50,7 +51,8 @@ inline void check_cminpack_success(int info) {
 
 
 template<typename T>
-void cminpack_hybrd1_wrapper(cminpack_func_nn fcn, T* args, int n, real *x) {
+void cminpack_hybrd1_wrapper(cminpack_func_nn fcn, T* args, int n, real *x)
+{
 	real fvec[n];
 	double tol = 1.0e-9;
 

@@ -27,7 +27,8 @@ namespace {
 
 	vector3dr make_value_guess(const Parameters& p, const Model& model, const Equilibrium& ss, double riskaver);
 
-	struct ValueFnDerivatives {
+	struct ValueFnDerivatives
+	{
 		static const int StationaryPtOrLimit = -999.9;
 
 		double VaF, VaB, VbF, VbB;
@@ -45,7 +46,8 @@ HJB::HJB(const Parameters& p_, const Model& model_, const Equilibrium& ss)
 	V = make_value_guess(p, model, ss, riskaver);
 }
 
-void HJB::iterate(const Equilibrium& ss) {
+void HJB::iterate(const Equilibrium& ss)
+{
 	int ii = 0;
 	double lVdiff = 1.0;
 
@@ -73,7 +75,8 @@ void HJB::iterate(const Equilibrium& ss) {
 		print_variables();
 }
 
-Upwinding::Policies HJB::update_policies(const Equilibrium& ss) {
+Upwinding::Policies HJB::update_policies(const Equilibrium& ss)
+{
 	ValueFnDerivatives derivs;
 	double chi = p.chi;
 
@@ -186,7 +189,8 @@ Upwinding::Policies HJB::update_policies(const Equilibrium& ss) {
 	return policies;
 }
 
-Upwinding::ConUpwind HJB::optimal_consumption_no_laborsupply(double Vb, double bdrift, double netwage) const {
+Upwinding::ConUpwind HJB::optimal_consumption_no_laborsupply(double Vb, double bdrift, double netwage) const
+{
 	Upwinding::ConUpwind upwind;
 	upwind.h = 1.0;
 
@@ -207,7 +211,8 @@ Upwinding::ConUpwind HJB::optimal_consumption_no_laborsupply(double Vb, double b
 	return upwind;
 }
 
-Upwinding::ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const {
+Upwinding::ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const
+{
 	Upwinding::ConUpwind upwind;
 
 	if ( !is_stationary_pt_or_limit(Vb) ) {
@@ -261,7 +266,8 @@ Upwinding::ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift
 	return upwind;
 }
 
-void HJB::update_value_fn(const Equilibrium& ss, const Upwinding::Policies& policies) {
+void HJB::update_value_fn(const Equilibrium& ss, const Upwinding::Policies& policies)
+{
 	VectorXr bvec(p.nb * p.na);
 	VectorXr ycol, vcol(model.ny);
 	int iab;
@@ -313,7 +319,8 @@ void HJB::update_value_fn(const Equilibrium& ss, const Upwinding::Policies& poli
 	}
 }
 
-void HJB::print_variables() const {
+void HJB::print_variables() const
+{
 	std::cout << '\n';
 	HankUtilities::horzline();
 	std::cout << "SELECTED OUTPUT FROM BELLMAN:\n";

@@ -15,34 +15,41 @@
 using namespace std::placeholders;
 
 namespace {
-	double deviation_median_illiq_wealth(const HANKCalibration::CalibrationArgs& args) {
+	double deviation_median_illiq_wealth(const HANKCalibration::CalibrationArgs& args)
+	{
 		return args.stats.a_pctiles[5] / args.p.illiqWealthTarget.value - 1.0;
 	}
 
-	double deviation_mean_liq_wealth(const HANKCalibration::CalibrationArgs& args) {
+	double deviation_mean_liq_wealth(const HANKCalibration::CalibrationArgs& args)
+	{
 		return args.stats.Eb / args.p.liqWealthTarget.value - 1.0;
 	}
 
-	double deviation_median_liq_wealth(const HANKCalibration::CalibrationArgs& args) {
+	double deviation_median_liq_wealth(const HANKCalibration::CalibrationArgs& args)
+	{
 		return args.stats.b_pctiles[5] / args.p.liqWealthTarget.value - 1.0;
 	}
 
-	double illiq_market_clearing(const HANKCalibration::CalibrationArgs& args) {
+	double illiq_market_clearing(const HANKCalibration::CalibrationArgs& args)
+	{
 		return args.stats.Ea / (args.iss.capital + args.iss.equity_A) - 1.0;
 	}
 
-	double labor_market_clearing(const HANKCalibration::CalibrationArgs& args, int io) {
+	double labor_market_clearing(const HANKCalibration::CalibrationArgs& args, int io)
+	{
 		return args.stats.Elabor_occ[io] * args.model.occdist[io] / args.iss.labor_occ[io] - 1.0;
 	}
 
-	double hours_target(const HANKCalibration::CalibrationArgs& args) {
+	double hours_target(const HANKCalibration::CalibrationArgs& args)
+	{
 		return (args.stats.Ehours / args.p.hourtarget - 1.0) / 100.0;
 	}
 }
 
 namespace HANKCalibration {
 
-void SSCalibrator::setup(const Parameters &p) {
+void SSCalibrator::setup(const Parameters &p)
+{
 	// Market clearing conditions
 	obj_functions.push_back(illiq_market_clearing);
 	moment_descriptions.push_back("Capital market clearing\n");
@@ -77,13 +84,15 @@ void SSCalibrator::setup(const Parameters &p) {
 	nmoments = obj_functions.size();
 }
 
-void SSCalibrator::fill_fvec(const CalibrationArgs& args, hank_float_type fvec[]) const {
+void SSCalibrator::fill_fvec(const CalibrationArgs& args, hank_float_type fvec[]) const
+{
 	for (int i=0; i<nmoments; ++i) {
 		fvec[i] = obj_functions[i](args);
 	}
 }
 
-void SSCalibrator::fill_xguess(const Parameters &p, const Model& model, hank_float_type xvec[]) {
+void SSCalibrator::fill_xguess(const Parameters &p, const Model& model, hank_float_type xvec[])
+{
 	int ix = 0;
 
 	// Labor inputs
@@ -132,14 +141,16 @@ void SSCalibrator::fill_xguess(const Parameters &p, const Model& model, hank_flo
 	}
 }
 
-void SSCalibrator::check_size(int ix) const {
+void SSCalibrator::check_size(int ix) const
+{
 	if ( ix >= nmoments ) {
 		std::cerr << "Too many guesses\n";
 		throw 0;
 	}
 }
 
-void SSCalibrator::perform_calibrator_assertions() const {
+void SSCalibrator::perform_calibrator_assertions() const
+{
 	if ( (!calibrateLaborDisutility) & (ix_labor_occ.size() > 0) ) {
 		std::cerr << "Labor disutility calibration off but ix_labor_occ is non-empty";
 		throw 0;
@@ -168,7 +179,8 @@ void SSCalibrator::perform_calibrator_assertions() const {
 	}
 }
 
-void SSCalibrator::update_params(Parameters *p, const hank_float_type *xvec) const {
+void SSCalibrator::update_params(Parameters *p, const hank_float_type *xvec) const
+{
 	if ( ix_rho >= 0 ) {
 		p->rho = exp(xvec[ix_rho]);
 		std::cout << "  rho = " << p->rho << '\n';
@@ -187,7 +199,8 @@ void SSCalibrator::update_params(Parameters *p, const hank_float_type *xvec) con
 	p->update();
 }
 
-void SSCalibrator::update_ss(const Parameters* p, EquilibriumInitial *iss, const hank_float_type *xvec) const {
+void SSCalibrator::update_ss(const Parameters* p, EquilibriumInitial *iss, const hank_float_type *xvec) const
+{
 	for (unsigned int io=0; io<ix_labor_occ.size(); ++io) {
 		iss->labor_occ.push_back(xvec[ix_labor_occ[io]]);
 		std::cout << "  labor_" << io << " = " << xvec[ix_labor_occ[io]] << '\n';
@@ -214,7 +227,8 @@ void SSCalibrator::print_fvec(hank_float_type fvec[]) const {
 	std::cout << "--------------------------\n\n";
 }
 
-int initial_steady_state_obj_fn(void* args_void_ptr, int n, const hank_float_type *x, hank_float_type *fvec, int /* iflag */ ) {
+int initial_steady_state_obj_fn(void* args_void_ptr, int n, const hank_float_type *x, hank_float_type *fvec, int /* iflag */ )
+{
 	std::cout << "\nCalibration parameters updated:\n";
 
 	ObjectPointers& args = *(ObjectPointers *) args_void_ptr;

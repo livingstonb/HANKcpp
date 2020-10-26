@@ -49,7 +49,8 @@ void TransShock::setup() {
 
 IRF::IRF(const Parameters& p_, const Model& model_, const EquilibriumInitial& iss_) : p(p_), model(model_), initial_equm(iss_) {}
 
-void IRF::setup() {
+void IRF::setup()
+{
 	npricetrans = (p.nocc + 2) * Ttrans - 1;
 
 	if ( (p.capadjcost > 0.0) | (p.invadjcost > 0.0) )
@@ -113,7 +114,8 @@ void IRF::compute()
 	}
 }
 
-void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type *fvec) {
+void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type *fvec)
+{
 	make_transition_guesses(x);
 	solve_trans_equilibrium(trans_equm, p, initial_equm, *final_equm_ptr, deltatransvec.data());
 
@@ -156,7 +158,8 @@ void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type 
 	}
 }
 
-void IRF::make_transition_guesses(const hank_float_type *x) {
+void IRF::make_transition_guesses(const hank_float_type *x)
+{
 	// Guesses
 	bool set_rb = (shock.type != ShockType::monetary) | flextransition;
 	bool set_pi = (shock.type == ShockType::monetary) & (!flextransition);
@@ -270,7 +273,8 @@ void IRF::make_transition_guesses(const hank_float_type *x) {
 
 }
 
-void IRF::set_shock_paths() {
+void IRF::set_shock_paths()
+{
 	std::vector<hank_float_type> mpshock(Ttrans);
 	std::vector<hank_float_type> tfp_Y(Ttrans);
 	std::vector<hank_float_type> riskaver(Ttrans);

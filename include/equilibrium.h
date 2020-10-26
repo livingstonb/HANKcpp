@@ -12,7 +12,8 @@ class Model;
 
 class DistributionStatistics;
 
-class EquilibriumBase {
+class EquilibriumBase
+{
 	public:
 		hank_float_type alpha_Y, alpha_N, price_W, drs_Y, drs_N, riskaver, rho;
 
@@ -48,7 +49,8 @@ class EquilibriumBase {
 		std::vector<hank_float_type> occYsharegrid, occNsharegrid, occdist, prodgrid, proddist;
 };
 
-class Equilibrium : public EquilibriumBase {
+class Equilibrium : public EquilibriumBase
+{
 	public:
 		virtual std::map<std::string, hank_float_type> variables_map() const;
 };
@@ -57,7 +59,8 @@ namespace HANK {
 	void print(const Equilibrium& equm);
 }
 
-class EquilibriumInitial : public Equilibrium {
+class EquilibriumInitial : public Equilibrium
+{
 	public:
 		void setup(const Parameters& p, const Model& model);
 
@@ -67,7 +70,8 @@ class EquilibriumInitial : public Equilibrium {
 		void update_with_stats(const DistributionStatisticsType& stats);
 };
 
-class EquilibriumFinal : public Equilibrium {
+class EquilibriumFinal : public Equilibrium
+{
 	public:
 		EquilibriumFinal() {}
 
@@ -76,7 +80,8 @@ class EquilibriumFinal : public Equilibrium {
 		void solve(const Parameters& p, const Equilibrium& initial_equm, const hank_float_type* x);
 };
 
-class EquilibriumTrans : public Equilibrium {
+class EquilibriumTrans : public Equilibrium
+{
 	public:
 		EquilibriumTrans() {}
 
