@@ -35,11 +35,17 @@ namespace
 	void compute_factors(EquilibriumTrans* equm);
 }
 
-void Equilibrium::print() const
-{
-	std::map<std::string, hank_float_type> variables = get_variables_map();
-	for (auto variable : variables)
-		std::cout << variable.first << " = " << variable.second << '\n';
+namespace HANK {
+	void print(const Equilibrium& equm)
+	{
+		std::map<std::string, hank_float_type> variables = equm.get_variables_map();
+
+		HankUtilities::horzline();
+		std::cout << "EQUILIBRIUM VARIABLES:\n";
+		for (auto variable : variables)
+			std::cout << variable.first << " = " << variable.second << '\n';
+		HankUtilities::horzline();
+	}
 }
 
 std::map<std::string, hank_float_type> Equilibrium::get_variables_map() const
@@ -145,14 +151,6 @@ void EquilibriumInitial::solve(const Parameters& p)
 	illshares = capital + equity_A;
 }
 
-void EquilibriumInitial::print() const
-{
-	HankUtilities::horzline();
-	std::cout << "INITIAL EQUILIBRIUM VARIABLES:\n";
-	Equilibrium::print();
-	HankUtilities::horzline();
-}
-
 EquilibriumFinal::EquilibriumFinal(const EquilibriumBase& other_equm)
 {
 	EquilibriumBase* eqbase = (EquilibriumBase *) this;
@@ -209,14 +207,6 @@ void EquilibriumFinal::solve(const Parameters& p, const Equilibrium& initial_equ
 	bond = equity_B - govbond;
 }
 
-void EquilibriumFinal::print() const
-{
-	HankUtilities::horzline();
-	std::cout << "FINAL EQUILIBRIUM VARIABLES:\n";
-	Equilibrium::print();
-	HankUtilities::horzline();
-}
-
 EquilibriumTrans::EquilibriumTrans(const EquilibriumBase& other_equm)
 {
 	EquilibriumBase* eqbase = (EquilibriumBase *) this;
@@ -229,14 +219,6 @@ EquilibriumTrans::EquilibriumTrans(const EquilibriumBase& other_equm)
 	labor_occ.clear();
 	wage_occ.clear();
 	netwagegrid.clear();
-}
-
-void EquilibriumTrans::print() const
-{
-	HankUtilities::horzline();
-	std::cout << "TRANSITION EQUILIBRIUM VARIABLES:\n";
-	Equilibrium::print();
-	HankUtilities::horzline();
 }
 
 std::map<std::string, hank_float_type> EquilibriumTrans::get_variables_map() const
