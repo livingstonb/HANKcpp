@@ -12,7 +12,6 @@
 #include <stationary_dist.h>
 #include <distribution_statistics.h>
 
-#include <hank_eigen_dense.h>
 #include <math.h>
 
 #include <cminpack_wrapper.h>
@@ -20,9 +19,9 @@
 using namespace std::placeholders;
 
 namespace {
-	VectorXr get_AR1_path_logs(int T, double x0, double eps, double rho, const std::vector<hank_float_type>& deltas, int nback);
+	std::vector<hank_float_type> get_AR1_path_logs(int T, double x0, double eps, double rho, const std::vector<hank_float_type>& deltas, int nback);
 
-	VectorXr get_AR1_path_levels(int T, double x0, double eps, double rho, const std::vector<hank_float_type>& deltas, int nback);
+	std::vector<hank_float_type> get_AR1_path_levels(int T, double x0, double eps, double rho, const std::vector<hank_float_type>& deltas, int nback);
 
 	hank_float_type get_firmdiscount(FirmDiscountRateType discount_type, const EquilibriumInitial& initial_equm, const EquilibriumTrans& trans_equm);
 }
@@ -281,9 +280,14 @@ void IRF::make_transition_guesses(const hank_float_type *x) {
 }
 
 void IRF::set_shock_paths() {
-	VectorXr mpshock = VectorXr::Constant(Ttrans, 0);
-	VectorXr tfp_Y = VectorXr::Constant(Ttrans, initial_equm.tfp_Y);
-	VectorXr riskaver = VectorXr::Constant(Ttrans, p.riskaver);
+	std::vector<hank_float_type> mpshock(Ttrans);
+	std::vector<hank_float_type> tfp_Y(Ttrans);
+	std::vector<hank_float_type> riskaver(Ttrans);
+
+	std::fill(mpshock.begin(), mpshock.end(), 0);
+	std::fill(tfp_Y.begin(), tfp_Y.end(), initial_equm.tfp_Y);
+	std::fill(riskaver.begin(), riskaver.end(), p.riskaver);
+
 	hank_float_type initial_mpshock = 0;
 	if ( shock.type == ShockType::tfp_Y )
 		tfp_Y = get_AR1_path_logs(Ttrans, initial_equm.tfp_Y, shock.size, shock.pers, deltatransvec, nendtrans);
@@ -292,7 +296,7 @@ void IRF::set_shock_paths() {
 	}
 	else if ( shock.type == ShockType::riskaver ) {
 		if ( permanentShock )
-			riskaver += VectorXr::Constant(Ttrans, shock.size);
+			std::fill(riskaver.begin(), riskaver.end(), p.riskaver + shock.size);
 		else
 			riskaver = get_AR1_path_levels(Ttrans, p.riskaver, shock.size, shock.pers, deltatransvec, nendtrans);
 	}
@@ -363,34 +367,34 @@ int final_steady_state_obj_fn(void* solver_args_voidptr, int /* n */, const real
 }
 
 namespace {
-	VectorXr get_AR1_path_logs(int T, double x0, double eps, double rho, const std::vector<hank_float_type>& deltas, int nback) {
-		VectorXr y(T);
+	std::vector<hank_float_type> get_AR1_path_logs(int T, double x0, double eps, double rho, const std::vector<hank_float_type>& deltas, int nback) {
+		std::vector<hank_float_type> y(T);
 		double rho_it;
 
-		y(0) = x0 * exp(eps);
+		y[0] = x0 * exp(eps);
 		for (int it=1; it<T-nback; ++it) {
 			rho_it = pow(rho, deltas[it-1]);
-			y(it) = pow(x0, 1.0 - rho_it) * pow(y(it-1), rho_it);
+			y[it] = pow(x0, 1.0 - rho_it) * pow(y[it-1], rho_it);
 		}
 
 		for (int it=T-nback; it<T; ++it)
-			y(it) = x0;
+			y[it] = x0;
 
 		return y;
 	}
 
-	VectorXr get_AR1_path_levels(int T, double x0, double eps, double rho, const std::vector<hank_float_type>& deltas, int nback) {
-		VectorXr y(T);
+	std::vector<hank_float_type> get_AR1_path_levels(int T, double x0, double eps, double rho, const std::vector<hank_float_type>& deltas, int nback) {
+		std::vector<hank_float_type> y(T);
 		double rho_it;
 
-		y(0) = x0 + eps;
+		y[0] = x0 + eps;
 		for (int it=1; it<T-nback; ++it) {
 			rho_it = pow(rho, deltas[it-1]);
-			y(it) = x0 * (1.0 - rho_it) + y(it-1) * rho_it;
+			y[it] = x0 * (1.0 - rho_it) + y[it-1] * rho_it;
 		}
 		
 		for (int it=T-nback; it<T; ++it)
-			y(it) = x0;
+			y[it] = x0;
 
 		return y;
 	}
