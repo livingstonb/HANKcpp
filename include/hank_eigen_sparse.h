@@ -15,10 +15,6 @@ struct SparseMatContainer {
 	SparseXd& get() {return matrix;}
 };
 
-// struct EigenTripletContainer {
-// 	EigenTripletContainer()
-// }
-
 #if HANK_EIGEN_SPARSE_SOLVER == 0
 	#include <Eigen/SparseQR>
 	using sparse_solver = Eigen::SparseQR<SparseXd, Eigen::COLAMDOrdering<int>>;

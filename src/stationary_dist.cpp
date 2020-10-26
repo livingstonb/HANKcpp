@@ -20,10 +20,10 @@ namespace {
 	void check_dist(const MatrixXr& distcheck, const Model& model);
 }
 
-void StationaryDist::compute(const Parameters& p, const Model& model, const Equilibrium& ss, const HJB& hjb) {
+void StationaryDist::compute(const Parameters& p, const Model& model, const Equilibrium& ss, const HJB& hjb)
+{
 	Eigen::Map<const VectorXr> abdeltavec(model.abdelta.data(), model.abdelta.size());
 	VectorXr inv_abdelta = abdeltavec.cwiseInverse();
-	Eigen::MatrixXd lmat = deye(model.ny).cast<double>() + delta * model.matrices->ymarkovoff.cast<double>().transpose();
 	int iabx = TO_INDEX_1D(0, p.nb_neg, p.na, p.nb);
 
 	MatrixXr gmat = make_dist_guess(p, model);
@@ -48,12 +48,13 @@ void StationaryDist::compute(const Parameters& p, const Model& model, const Equi
 
 	}
 
+	Eigen::MatrixXd lmat = deye(model.ny).cast<double>() + delta * model.matrices->ymarkovoff.cast<double>().transpose();
 	double diff = 1.0e10;
 	int ii = 0;
 	while ( (diff > gtol) & (ii < maxiter) ) {
 		for (int iy=0; iy<model.ny; ++iy) {
 			Eigen::VectorXd lgmat = gmat.cast<double>() * Eigen::VectorXd(lmat.row(iy));
-			lgmat(iabx) += delta * p.deathrate * gmat.col(iy).dot(abdeltavec) / model.abdelta[iabx];
+			lgmat(iabx) += delta * p.deathrate * gmat.col(iy).dot(abdeltavec) / abdeltavec[iabx];
 
 			gmat_update.col(iy) = spsolvers[iy].solve(lgmat).cast<hank_float_type>();
 			if ( spsolvers[iy].info() != Eigen::Success )
@@ -84,7 +85,8 @@ void StationaryDist::compute(const Parameters& p, const Model& model, const Equi
 }
 
 namespace {
-	MatrixXr make_dist_guess(const Parameters& p, const Model& model) {
+	MatrixXr make_dist_guess(const Parameters& p, const Model& model)
+	{
 		MatrixXr gmat = MatrixXr::Zero(p.nab, model.ny);
 		Eigen::Map<const VectorXr> abdeltavec(model.abdelta.data(), model.abdelta.size());
 
@@ -106,7 +108,8 @@ namespace {
 		return gmat;
 	}
 
-	void check_progress(double gdiff, int freq, int ii, double gtol) {
+	void check_progress(double gdiff, int freq, int ii, double gtol)
+	{
 		if ( ii == 0 )
 			std::cout << "Beginning iteration" << '\n';
 		else if ( ii % freq == 0)  {
@@ -117,7 +120,8 @@ namespace {
 			std::cout << "Converged after " << ii << " iterations." << '\n';
 	}
 
-	void check_dist(const MatrixXr& distcheck, const Model& model) {
+	void check_dist(const MatrixXr& distcheck, const Model& model)
+	{
 		VectorXr py = distcheck.array().colwise().sum();
 		for (int iy=0; iy<model.ny; ++iy) {
 			assert( abs(py(iy) - model.ydist[iy]) < 1.0e-6 );

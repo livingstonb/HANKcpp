@@ -43,17 +43,6 @@ inline VectorXr to_eigenv(const vector3dr& vec) {
 }
 
 template<typename T>
-VectorXr vector2eigenv(const T& vec)
-{
-	VectorXr out(vec.size());
-
-	for (size_t i=0; i<vec.size(); ++i)
-		out[i] = vec[i];	
-
-	return out;
-}
-
-template<typename T>
 MatrixXr vector2eigenm(const T& vec, int n, int m)
 {
 	MatrixXr out(n, m);
@@ -65,13 +54,6 @@ MatrixXr vector2eigenm(const T& vec, int n, int m)
 			out(i, j) = vec[i*m + j];
 
 	return out;
-}
-
-template<typename T>
-std::vector<double> to_vector(const T& emat) {
-	std::vector<double> vec(emat.size());
-	std::copy(emat.begin(), emat.end(), vec.begin());
-	return vec;
 }
 
 template<typename V>

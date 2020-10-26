@@ -63,8 +63,8 @@ class EquilibriumInitial : public Equilibrium {
 
 		void solve(const Parameters& p);
 
-		template<typename T>
-		void update_with_stats(const T& stats);
+		template<typename DistributionStatisticsType>
+		void update_with_stats(const DistributionStatisticsType& stats);
 };
 
 class EquilibriumFinal : public Equilibrium {

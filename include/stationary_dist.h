@@ -19,8 +19,6 @@ class StationaryDist {
 
 		void compute(const Parameters& p, const Model& model, const Equilibrium& ss, const HJB& hjb);
 
-		void transform();
-
 		vector3dr density;
 
 		int dispfreq = 50;
