@@ -2,7 +2,7 @@
 #define _BELLMAN_H
 
 #include <hank_config.h>
-#include <hank_types.h>
+#include <hank.h>
 #include <upwinding.h>
 #include <math.h>
 

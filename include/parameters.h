@@ -3,7 +3,7 @@
 
 #include <hank_config.h>
 #include <array>
-#include <hank_types.h>
+#include <hank.h>
 #include <string>
 
 class Options;
@@ -27,7 +27,7 @@ class Parameters {
 
 		void update();
 
-		void print_variables() const;
+		std::map<std::string, hank_float_type> variables_map() const;
 
 		bool Borrowing = true;
 
@@ -153,5 +153,9 @@ class Parameters {
 		// number of time periods
 		int Ttransition = 200;
 };
+
+namespace HANK {
+	void print(const Parameters& p);
+}
 
 #endif

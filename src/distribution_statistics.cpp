@@ -1,7 +1,6 @@
 #include <distribution_statistics.h>
 #include <parameters.h>
 #include <model.h>
-#include <bellman.h>
 #include <stationary_dist.h>
 #include <upwinding.h>
 #include <iostream>
@@ -13,17 +12,13 @@
 #include <hank_eigen_dense.h>
 
 namespace {
-	void print_result(const std::string& expr, double val);
-
 	VectorXi sort_by_values(VectorXr& vals, VectorXr& dist);
 }
 
 DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model& model,
-	const HJB& hjb, const StationaryDist& sdist) {
-
+	const Upwinding::Policies& policies, const StationaryDist& sdist)
+{
 	const Parameters& p = p_;
-
-	const Upwinding::Policies& policies = hjb.optimal_decisions;
 
 	MatrixXr nw_aby(p.nab, model.ny);
 	MatrixXr agrid_aby(p.nab, model.ny);
@@ -145,26 +140,33 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 	}
 }
 
+std::map<std::string, hank_float_type> DistributionStatistics::variables_map() const
+{
+	std::map<std::string, hank_float_type> variables;
 
-void DistributionStatistics::print() const {
-	std::cout << '\n' << '\n' << "--------------------------\n" << "Output:\n";
-	print_result("E[h]", Ehours);
-	print_result("E[labor]", Elabor);
-	print_result("E[nw]", Enetworth);
-	print_result("E[a]", Ea);
-	print_result("E[b]", Eb);
-	print_result("Median(a)", a_pctiles[5]);
-	print_result("Median(nw)", nw_pctiles[5]);
-	print_result("Median(b)", b_pctiles[5]);
-	std::cout << "--------------------------\n";
+	variables.insert({"E[h]", Ehours});
+	variables.insert({"E[labor]", Elabor});
+	variables.insert({"E[nw]", Enetworth});
+	variables.insert({"E[a]", Ea});
+	variables.insert({"E[b]", Eb});
+	variables.insert({"Median(a)", a_pctiles[5]});
+	variables.insert({"Median(b)", b_pctiles[5]});
+	variables.insert({"Median(nw)", nw_pctiles[5]});
+
+	return variables;
+}
+
+namespace HANK {
+	void print(const DistributionStatistics& p)
+	{
+		std::map<std::string, hank_float_type> variables = p.variables_map();
+		print(variables, "STATISTICS");
+	}
 }
 
 namespace {
-	void print_result(const std::string& expr, double val) {
-		std::cout << expr << " = " << val << '\n';
-	}
-
-	VectorXi sort_by_values(VectorXr& vals, VectorXr& dist) {
+	VectorXi sort_by_values(VectorXr& vals, VectorXr& dist)
+	{
 		assert(vals.size() == dist.size());
 		std::vector<std::pair<int, double>> zipped(vals.size());
 		VectorXi indices(vals.size());

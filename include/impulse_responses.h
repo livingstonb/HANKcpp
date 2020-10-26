@@ -2,7 +2,7 @@
 #define _IMPULSE_RESPONSES_H
 
 #include <hank_config.h>
-#include <hank_types.h>
+#include <hank.h>
 #include <memory>
 #include <equilibrium.h>
 

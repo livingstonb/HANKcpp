@@ -3,7 +3,7 @@
 
 #include <hank_config.h>
 #include <Eigen/Core>
-#include <hank_types.h>
+#include <hank.h>
 #include <algorithm>
 
 #ifdef HANK_INCLUDE_EIGEN_LU

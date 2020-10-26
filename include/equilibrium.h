@@ -2,7 +2,7 @@
 #define _EQUILIBRIUM_H
 
 #include <hank_config.h>
-#include <hank_types.h>
+#include <hank.h>
 #include <string>
 #include <map>
 
@@ -50,8 +50,12 @@ class EquilibriumBase {
 
 class Equilibrium : public EquilibriumBase {
 	public:
-		virtual std::map<std::string, hank_float_type> get_variables_map() const;
+		virtual std::map<std::string, hank_float_type> variables_map() const;
 };
+
+namespace HANK {
+	void print(const Equilibrium& equm);
+}
 
 class EquilibriumInitial : public Equilibrium {
 	public:
@@ -84,7 +88,7 @@ class EquilibriumTrans : public Equilibrium {
 
 		hank_float_type equity_Adot, equity_Bdot, inv_cap_ratio;
 
-		std::map<std::string, hank_float_type> get_variables_map() const override;
+		std::map<std::string, hank_float_type> variables_map() const override;
 
 		friend void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
 			const Parameters& p, const EquilibriumInitial& initial_equm,

@@ -2,7 +2,7 @@
 #define _SS_DEVIATIONS_H
 
 #include <hank_config.h>
-#include <hank_types.h>
+#include <hank.h>
 #include <parameters.h>
 #include <model.h>
 #include <equilibrium.h>

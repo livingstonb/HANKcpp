@@ -2,7 +2,7 @@
 #define _UPWINDING_H
 
 #include <hank_config.h>
-#include <hank_types.h>
+#include <hank.h>
 
 namespace Upwinding {
 

@@ -127,7 +127,7 @@ void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type 
 		sdist.gtol = 1.0e-9;
 		sdist.compute(model, trans_equm[it], hjb);
 
-		trans_stats.push_back(DistributionStatistics(p, model, hjb, sdist));
+		trans_stats.push_back(DistributionStatistics(p, model, hjb.optimal_decisions, sdist));
 	}
 
 	// Set residuals
@@ -345,7 +345,7 @@ int final_steady_state_obj_fn(void* solver_args_voidptr, int /* n */, const real
 	sdist.gtol = 1.0e-9;
 	sdist.compute(model, final_ss, hjb);
 
-	DistributionStatistics stats(p, model, hjb, sdist);
+	DistributionStatistics stats(p, model, hjb.optimal_decisions, sdist);
 
 	fvec[0] = stats.Ea / (final_ss.capital + final_ss.equity_A) - 1.0;
 

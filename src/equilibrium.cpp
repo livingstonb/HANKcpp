@@ -38,17 +38,12 @@ namespace
 namespace HANK {
 	void print(const Equilibrium& equm)
 	{
-		std::map<std::string, hank_float_type> variables = equm.get_variables_map();
-
-		HankUtilities::horzline();
-		std::cout << "EQUILIBRIUM VARIABLES:\n";
-		for (auto variable : variables)
-			std::cout << variable.first << " = " << variable.second << '\n';
-		HankUtilities::horzline();
+		std::map<std::string, hank_float_type> variables = equm.variables_map();
+		print(variables, "EQUILIBRIUM VARIABLES");
 	}
 }
 
-std::map<std::string, hank_float_type> Equilibrium::get_variables_map() const
+std::map<std::string, hank_float_type> Equilibrium::variables_map() const
 {
 	std::map<std::string, hank_float_type> variables;
 
@@ -221,9 +216,9 @@ EquilibriumTrans::EquilibriumTrans(const EquilibriumBase& other_equm)
 	netwagegrid.clear();
 }
 
-std::map<std::string, hank_float_type> EquilibriumTrans::get_variables_map() const
+std::map<std::string, hank_float_type> EquilibriumTrans::variables_map() const
 {
-	std::map<std::string, hank_float_type> variables = Equilibrium::get_variables_map();
+	std::map<std::string, hank_float_type> variables = Equilibrium::variables_map();
 
 	variables.insert({"mpshock", mpshock});
 	variables.insert({"pricelev", pricelev});

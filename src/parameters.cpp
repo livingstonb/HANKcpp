@@ -73,84 +73,58 @@ void Parameters::update() {
 	target_KY_ratio = compute_ss_capital_output_ratio(*this, price_W);
 
 	if ( global_hank_options->print_diagnostics )
-		print_variables();
+		HANK::print(*this);
 }
 
-void Parameters::print_variables() const {
-	std::cout << '\n';
-	HankUtilities::horzline();
-	std::cout << "PARAMETER VALUES:\n";
+std::map<std::string, hank_float_type> Parameters::variables_map() const
+{
+	std::map<std::string, hank_float_type> variables;
 
-	std::vector<std::string> names;
-	std::vector<double> values;
+	variables.insert({"elast", elast});
+	variables.insert({"frisch", frisch});
+	variables.insert({"riskaver", riskaver});
+	variables.insert({"rho", rho});
+	variables.insert({"drs_Y", drs_Y});
+	variables.insert({"drs_N", drs_N});
+	variables.insert({"alpha_Y", alpha_Y});
+	variables.insert({"alpha_N", alpha_N});
+	variables.insert({"profdistfracA", profdistfracA});
+	variables.insert({"profdistfracB", profdistfracB});
+	variables.insert({"profdistfracL", profdistfracL});
+	variables.insert({"profdistfracW", profdistfracW});
+	variables.insert({"depreciation", depreciation});
+	variables.insert({"kappa_w_fc", kappa_w_fc});
+	variables.insert({"kappa_w0", kappa_w[0]});
+	variables.insert({"kappa_w1", kappa_w[1]});
+	variables.insert({"kappa_w2", kappa_w[2]});
+	variables.insert({"kappa_w3", kappa_w[3]});
+	variables.insert({"kappa_w4", kappa_w[4]});
+	variables.insert({"kappa_d_fc", kappa_d_fc});
+	variables.insert({"kappa_d0", kappa_d[0]});
+	variables.insert({"kappa_d1", kappa_d[1]});
+	variables.insert({"kappa_d2", kappa_d[2]});
+	variables.insert({"kappa_d4", kappa_d[4]});
+	variables.insert({"hourtarget", hourtarget});
+	variables.insert({"deathrate", deathrate});
+	variables.insert({"rb", rb});
+	variables.insert({"rborr", rborr});
+	variables.insert({"chi", chi});
+	variables.insert({"target_KY_ratio", target_KY_ratio});
+	variables.insert({"targetMeanIllGuess", targetMeanIllGuess});
+	variables.insert({"drs_Y", drs_Y});
+	variables.insert({"drs_Y", drs_Y});
+	variables.insert({"drs_Y", drs_Y});
+	variables.insert({"drs_Y", drs_Y});
 
-	names.push_back("elast");
-	values.push_back(elast);
+	return variables;
+}
 
-	names.push_back("frisch");
-	values.push_back(frisch);
-
-	names.push_back("riskaver");
-	values.push_back(riskaver);
-
-	names.push_back("rho");
-	values.push_back(rho);
-
-	names.push_back("drs_Y");
-	values.push_back(drs_Y);
-
-	names.push_back("drs_N");
-	values.push_back(drs_N);
-
-	names.push_back("alpha_Y");
-	values.push_back(alpha_Y);
-
-	names.push_back("alpha_N");
-	values.push_back(alpha_N);
-
-	names.push_back("depreciation");
-	values.push_back(depreciation);
-
-	names.push_back("kappa_w_fc");
-	values.push_back(kappa_w_fc);
-
-	for (int i=0; i<5; ++i) {
-		names.push_back("kappa_w"+std::to_string(i));
-		values.push_back(kappa_w[i]);
+namespace HANK {
+	void print(const Parameters& p)
+	{
+		std::map<std::string, hank_float_type> variables = p.variables_map();
+		print(variables, "PARAMETERS");
 	}
-
-	names.push_back("kappa_d_fc");
-	values.push_back(kappa_d_fc);
-
-	for (int i=0; i<5; ++i) {
-		names.push_back("kappa_d"+std::to_string(i));
-		values.push_back(kappa_d[i]);
-	}
-
-	names.push_back("hourtarget");
-	values.push_back(hourtarget);
-
-	names.push_back("deathrate");
-	values.push_back(deathrate);
-
-	names.push_back("rb");
-	values.push_back(rb);
-
-	names.push_back("rborr");
-	values.push_back(rborr);
-
-	names.push_back("chi");
-	values.push_back(chi);
-
-	names.push_back("target_KY_ratio");
-	values.push_back(target_KY_ratio);
-
-	names.push_back("targetMeanIllGuess");
-	values.push_back(targetMeanIllGuess);
-
-	HankUtilities::print_values(names, values);
-
-	HankUtilities::horzline();
 }
 
 namespace {

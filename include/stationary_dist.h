@@ -2,7 +2,7 @@
 #define _STATIONARY_DIST_H
 
 #include <vector>
-#include <hank_types.h>
+#include <hank.h>
 
 // Forward declarations
 class Model;

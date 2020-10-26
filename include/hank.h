@@ -1,11 +1,12 @@
-#ifndef _HANK_TYPES_H
-#define _HANK_TYPES_H
+#ifndef _HANK_H
+#define _HANK_H
 
 #include <hank_config.h>
 #include <vector>
 #include <iostream>
 #include <memory>
 #include <map>
+#include <string>
 
 #if STACK_LIQ_FIRST == 0
 	#define TO_INDEX_1D(a, b, y, na, nb) ((a) + (na) * (b) + (na) * (nb) * (y))
@@ -47,6 +48,21 @@ namespace HANK {
 
 			std::cout << "----------------------------\n";
 		}
+	}
+
+	inline void horzline() {
+		std::cout << "---------------------------------\n";
+	}
+
+	template<typename T>
+	void print(const std::map<std::string, T>& variables, const std::string& title) {
+		std::cout << '\n';
+		horzline();
+		std::cout << title << ":\n";
+		for (auto variable : variables)
+			std::cout << variable.first << " = " << variable.second << '\n';
+		horzline();
+		std::cout << '\n';
 	}
 }
 

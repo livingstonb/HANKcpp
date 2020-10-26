@@ -4,7 +4,7 @@
 #include <hank_config.h>
 #include <functional>
 #include <array>
-#include <hank_types.h>
+#include <hank.h>
 
 class AdjustmentCosts {
 	public:

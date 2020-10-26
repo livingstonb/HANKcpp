@@ -1,4 +1,4 @@
-#include <hank_types.h>
+#include <hank.h>
 #include <model.h>
 #include <utilities.h>
 #include <hank_numerics.h>

@@ -243,9 +243,9 @@ int initial_steady_state_obj_fn(void* args_void_ptr, int n, const hank_float_typ
 	sdist.gtol = 1.0e-9;
 	sdist.compute(model, iss, hjb);
 
-	args.ptr4.reset(new DistributionStatistics(p, model, hjb, sdist));
+	args.ptr4.reset(new DistributionStatistics(p, model, hjb.optimal_decisions, sdist));
 	const DistributionStatistics& stats = *args.ptr4;
-	stats.print();
+	HANK::print(stats);
 
 	iss.update_with_stats(stats);
 

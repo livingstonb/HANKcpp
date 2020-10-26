@@ -2,7 +2,7 @@
 #include <iostream>
 #include <hank_config.h>
 #include <parameters.h>
-#include <hank_types.h>
+#include <hank.h>
 #include <model.h>
 #include <equilibrium.h>
 #include <bellman.h>
@@ -133,6 +133,7 @@ int main () {
 	const Model& model = *object_ptrs.ptr2;
 
 	if ( options.skip_calibration ) {
+		HANK::print(params);
 		object_ptrs.ptr3.reset(new EquilibriumInitial);
 		EquilibriumInitial& iss = *object_ptrs.ptr3;
 		iss.setup(params, model);
@@ -145,9 +146,9 @@ int main () {
 		sdist.gtol = 1.0e-9;
 		sdist.compute(model, iss, hjb);
 
-		object_ptrs.ptr4.reset(new DistributionStatistics(params, model, hjb, sdist));
+		object_ptrs.ptr4.reset(new DistributionStatistics(params, model, hjb.optimal_decisions, sdist));
 		const DistributionStatistics& stats = *object_ptrs.ptr4;
-		stats.print();
+		HANK::print(stats);
 
 		iss.update_with_stats(stats);
 
