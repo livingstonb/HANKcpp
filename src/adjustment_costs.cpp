@@ -5,6 +5,20 @@
 
 using namespace std::placeholders;
 
+namespace {
+	double cost_fn_exponential(AdjustmentCosts* adjcosts, double d, double a);
+
+	double cost_fn_other(AdjustmentCosts* adjcosts, double d, double a);
+
+	double cost_deriv_exponential(AdjustmentCosts* adjcosts, double d, double a);
+
+	double cost_deriv_other(AdjustmentCosts* adjcosts, double d, double a);
+
+	double cost_deriv_inv_exponential(AdjustmentCosts* adjcosts, double chi, double a);
+
+	double cost_deriv_inv_other(AdjustmentCosts* adjcosts, double chi, double a);
+}
+
 AdjustmentCosts::AdjustmentCosts(AdjustCostFnRatioMode mode_, bool exponential_costs_,
 	double kappa_w_fc_, double kappa_d_fc_, const std::array<double, 5>& kappa_w_,
 	const std::array<double, 5>& kappa_d_, double adjcost1max_, double dmax_)
@@ -28,97 +42,105 @@ AdjustmentCosts::AdjustmentCosts(AdjustCostFnRatioMode mode_, bool exponential_c
 	}
 
 	if ( exponential_costs ) {
-		cost = std::bind(&AdjustmentCosts::cost_fn_exponential, *this, _1, _2);
-		cost1 = std::bind(&AdjustmentCosts::cost_deriv_exponential, *this, _1, _2);
-		cost1inv = std::bind(&AdjustmentCosts::cost_deriv_inv_exponential, *this, _1, _2);
+		cost = std::bind(cost_fn_exponential, this, _1, _2);
+		cost1 = std::bind(cost_deriv_exponential, this, _1, _2);
+		cost1inv = std::bind(cost_deriv_inv_exponential, this, _1, _2);
 	}
 	else {
-		cost = std::bind(&AdjustmentCosts::cost_fn_other, *this, _1, _2);
-		cost1 = std::bind(&AdjustmentCosts::cost_deriv_other, *this, _1, _2);
-		cost1inv = std::bind(&AdjustmentCosts::cost_deriv_inv_other, *this, _1, _2);
+		cost = std::bind(cost_fn_other, this, _1, _2);
+		cost1 = std::bind(cost_deriv_other, this, _1, _2);
+		cost1inv = std::bind(cost_deriv_inv_other, this, _1, _2);
 	}
 }
 
-double AdjustmentCosts::cost_fn_exponential(double d, double a) const {
-	double x = scale_factor(a) * d;
+namespace {
+	double cost_fn_exponential(AdjustmentCosts* adjcosts, double d, double a)
+	{
+		double x = adjcosts->scale_factor(a) * d;
 
-	if ( x == 0 )
-		return 0;
-	else if ( x > 0 )
-		return kappa_d_fc - x + (1.0 / kappa_d[4]) * (exp(kappa_d[4] * x) - 1.0);
-	else
-		return kappa_w_fc - x + (1.0 / kappa_w[4]) * (exp(kappa_w[4] * x) - 1.0);
-}
-
-double AdjustmentCosts::cost_fn_other(double d, double a) const {
-	double scale = scale_factor(a);
-	double fcost, x = scale * d;
-	const double* kappa = NULL;
-
-	if ( x == 0 )
-		return 0;
-	else if ( x > 0 ) {
-		kappa = kappa_d.data();
-		fcost = kappa_d_fc;
+		if ( x == 0 )
+			return 0;
+		else if ( x > 0 )
+			return adjcosts->kappa_d_fc - x + (1.0 / adjcosts->kappa_d[4]) * (exp(adjcosts->kappa_d[4] * x) - 1.0);
+		else
+			return adjcosts->kappa_w_fc - x + (1.0 / adjcosts->kappa_w[4]) * (exp(adjcosts->kappa_w[4] * x) - 1.0);
 	}
-	else {
-		kappa = kappa_w.data();
-		fcost = kappa_w_fc;
+
+	double cost_fn_other(AdjustmentCosts* adjcosts, double d, double a)
+	{
+		double scale = adjcosts->scale_factor(a);
+		double fcost, x = scale * d;
+		const double* kappa = nullptr;
+
+		if ( x == 0 )
+			return 0;
+		else if ( x > 0 ) {
+			kappa = adjcosts->kappa_d.data();
+			fcost = adjcosts->kappa_d_fc;
+		}
+		else {
+			kappa = adjcosts->kappa_w.data();
+			fcost = adjcosts->kappa_w_fc;
+		}
+		return fcost + (kappa[0] * fabs(x) + pow(fabs(x), 1.0 + kappa[2])
+								* pow(kappa[1], -kappa[2]) / (1.0 + kappa[2])) / scale;
 	}
-	return fcost + (kappa[0] * fabs(x) + pow(fabs(x), 1.0 + kappa[2])
-							* pow(kappa[1], -kappa[2]) / (1.0 + kappa[2])) / scale;
-}
 
-double AdjustmentCosts::cost_deriv_exponential(double d, double a) const {
-	double x = scale_factor(a) * d;
+	double cost_deriv_exponential(AdjustmentCosts* adjcosts, double d, double a)
+	{
+		double x = adjcosts->scale_factor(a) * d;
 
-	if ( x == 0 )
-		return 0;
-	else if ( x > 0 )
-		return exp(kappa_d[4] * x) - 1.0;
-	else
-		return exp(kappa_w[4] * x) - 1.0;
-}
+		if ( x == 0 )
+			return 0;
+		else if ( x > 0 )
+			return exp(adjcosts->kappa_d[4] * x) - 1.0;
+		else
+			return exp(adjcosts->kappa_w[4] * x) - 1.0;
+	}
 
-double AdjustmentCosts::cost_deriv_other(double d, double a) const {
-	double x = scale_factor(a) * d;
+	double cost_deriv_other(AdjustmentCosts* adjcosts, double d, double a)
+	{
+		double x = adjcosts->scale_factor(a) * d;
 
-	if ( d == 0 )
-		return 0;
-	else if ( d > 0 )
-		return kappa_d[0] + pow(x / kappa_d[1], kappa_d[2]);
-	else
-		return -kappa_w[0] - pow(-x / kappa_w[1], kappa_w[2]);
-}
+		if ( d == 0 )
+			return 0;
+		else if ( d > 0 )
+			return adjcosts->kappa_d[0] + pow(x / adjcosts->kappa_d[1], adjcosts->kappa_d[2]);
+		else
+			return -adjcosts->kappa_w[0] - pow(-x / adjcosts->kappa_w[1], adjcosts->kappa_w[2]);
+	}
 
-double AdjustmentCosts::cost_deriv_inv_exponential(double chi, double a) const {
-	double scale = scale_factor(a);
-	
-	if ( chi > adjcost1max )
-		return dmax / scale;
-	else if ( chi < -adjcost1max )
-		return -dmax / scale;
+	double cost_deriv_inv_exponential(AdjustmentCosts* adjcosts, double chi, double a)
+	{
+		double scale = adjcosts->scale_factor(a);
+		
+		if ( chi > adjcosts->adjcost1max )
+			return adjcosts->dmax / scale;
+		else if ( chi < -adjcosts->adjcost1max )
+			return -adjcosts->dmax / scale;
 
-	if ( chi == 0 )
-		return 0;
-	else if ( chi > 0 )
-		return (1 / kappa_d[4]) * log(1 + chi) / scale;
-	else
-		return (1 / kappa_w[4]) * log(1 + chi) / scale;
-}
+		if ( chi == 0 )
+			return 0;
+		else if ( chi > 0 )
+			return (1 / adjcosts->kappa_d[4]) * log(1 + chi) / scale;
+		else
+			return (1 / adjcosts->kappa_w[4]) * log(1 + chi) / scale;
+	}
 
-double AdjustmentCosts::cost_deriv_inv_other(double chi, double a) const {
-	double scale = scale_factor(a);
+	double cost_deriv_inv_other(AdjustmentCosts* adjcosts, double chi, double a)
+	{
+		double scale = adjcosts->scale_factor(a);
 
-	if ( chi > adjcost1max )
-		return dmax / scale;
-	else if ( chi < -adjcost1max )
-		return -dmax / scale;
+		if ( chi > adjcosts->adjcost1max )
+			return adjcosts->dmax / scale;
+		else if ( chi < -adjcosts->adjcost1max )
+			return -adjcosts->dmax / scale;
 
-	if ( (chi >= -kappa_w[0]) & (chi <= kappa_d[0]) )
-		return 0;
-	else if ( chi > kappa_d[0] )
-		return kappa_d[1] * pow(chi - kappa_d[0], 1 / kappa_d[2]) / scale;
-	else
-		return -kappa_w[1] * pow(-chi - kappa_w[0], 1 /kappa_w[2]) / scale;
+		if ( (chi >= -adjcosts->kappa_w[0]) & (chi <= adjcosts->kappa_d[0]) )
+			return 0;
+		else if ( chi > adjcosts->kappa_d[0] )
+			return adjcosts->kappa_d[1] * pow(chi - adjcosts->kappa_d[0], 1 / adjcosts->kappa_d[2]) / scale;
+		else
+			return -adjcosts->kappa_w[1] * pow(-chi - adjcosts->kappa_w[0], 1 /adjcosts->kappa_w[2]) / scale;
+	}
 }

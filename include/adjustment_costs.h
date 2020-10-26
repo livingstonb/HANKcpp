@@ -7,19 +7,6 @@
 #include <hank_types.h>
 
 class AdjustmentCosts {
-	private:
-		double cost_fn_exponential(double d, double a) const;
-
-		double cost_fn_other(double d, double a) const;
-
-		double cost_deriv_exponential(double d, double a) const;
-
-		double cost_deriv_other(double d, double a) const;
-
-		double cost_deriv_inv_exponential(double chi, double a) const;
-
-		double cost_deriv_inv_other(double chi, double a) const;
-
 	public:
 		AdjustmentCosts() = default;
 
