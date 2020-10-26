@@ -5,6 +5,8 @@
 #include <hank.h>
 
 // Forward declarations
+class Parameters;
+
 class Model;
 
 class HJB;
@@ -15,7 +17,7 @@ class StationaryDist {
 	public:
 		StationaryDist() {}
 
-		void compute(const Model& model, const Equilibrium& ss, const HJB& hjb);
+		void compute(const Parameters& p, const Model& model, const Equilibrium& ss, const HJB& hjb);
 
 		void transform();
 

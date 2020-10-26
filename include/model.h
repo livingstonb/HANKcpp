@@ -14,8 +14,10 @@ class Parameters;
 
 class AdjustmentCosts;
 
-// Binds the attributes constructed in Model to const references
 class Model {
+	private:
+		const Parameters& p;
+
 	public:
 		Model(const Parameters& p);
 
@@ -60,8 +62,6 @@ class Model {
 		void print_values() const;
 
 		void assertions() const;
-
-		const Parameters& p;
 };
 
 #endif

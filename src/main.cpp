@@ -139,12 +139,12 @@ int main () {
 		iss.setup(params, model);
 		iss.solve(params);
 
-		HJB hjb(model, iss);
+		HJB hjb(params, model, iss);
 		hjb.iterate(iss);
 
 		StationaryDist sdist;
 		sdist.gtol = 1.0e-9;
-		sdist.compute(model, iss, hjb);
+		sdist.compute(params, model, iss, hjb);
 
 		object_ptrs.ptr4.reset(new DistributionStatistics(params, model, hjb.optimal_decisions, sdist));
 		const DistributionStatistics& stats = *object_ptrs.ptr4;

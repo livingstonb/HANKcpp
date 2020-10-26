@@ -27,7 +27,7 @@ class HJB {
 		Upwinding::ConUpwind optimal_consumption_sep_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
 
 	public:
-		HJB(const Model& model_, const Equilibrium& ss);
+		HJB(const Parameters& p_, const Model& model_, const Equilibrium& ss);
 
 		void iterate(const Equilibrium& ss);
 

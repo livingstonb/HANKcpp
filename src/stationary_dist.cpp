@@ -13,22 +13,20 @@
 #include <hank_macros.h>
 
 namespace {
-	MatrixXr make_dist_guess(const Model& model);
+	MatrixXr make_dist_guess(const Parameters& p, const Model& model);
 
 	void check_progress(double vdiff, int freq, int ii, double vtol);
 
 	void check_dist(const MatrixXr& distcheck, const Model& model);
 }
 
-void StationaryDist::compute(const Model& model, const Equilibrium& ss, const HJB& hjb) {
-	const Parameters& p = model.p;
-
+void StationaryDist::compute(const Parameters& p, const Model& model, const Equilibrium& ss, const HJB& hjb) {
 	Eigen::Map<const VectorXr> abdeltavec(model.abdelta.data(), model.abdelta.size());
 	VectorXr inv_abdelta = abdeltavec.cwiseInverse();
 	Eigen::MatrixXd lmat = deye(model.ny).cast<double>() + delta * model.matrices->ymarkovoff.cast<double>().transpose();
 	int iabx = TO_INDEX_1D(0, p.nb_neg, p.na, p.nb);
 
-	MatrixXr gmat = make_dist_guess(model);
+	MatrixXr gmat = make_dist_guess(p, model);
 	MatrixXr gmat_update(p.nab, model.ny);
 
 	std::vector<SparseXd> B(model.ny);
@@ -86,8 +84,7 @@ void StationaryDist::compute(const Model& model, const Equilibrium& ss, const HJ
 }
 
 namespace {
-	MatrixXr make_dist_guess(const Model& model) {
-		const Parameters& p = model.p;
+	MatrixXr make_dist_guess(const Parameters& p, const Model& model) {
 		MatrixXr gmat = MatrixXr::Zero(p.nab, model.ny);
 		Eigen::Map<const VectorXr> abdeltavec(model.abdelta.data(), model.abdelta.size());
 

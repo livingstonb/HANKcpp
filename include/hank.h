@@ -19,6 +19,10 @@ enum class AdjustCostFnRatioMode { none, linear, max };
 namespace HANK {
 	const hank_float_type ValueNotSet = -91912395.1;
 
+	inline void horzline() {
+		std::cout << "----------------------------\n";
+	}
+
 	template<typename T>
 	void print(const std::map<std::string, T>& variables, const std::string& title) {
 		std::cout << '\n';

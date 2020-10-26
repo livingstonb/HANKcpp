@@ -25,7 +25,7 @@ namespace {
 
 	void check_progress(double vdiff, int freq, int ii, double vtol);
 
-	vector3dr make_value_guess(const Model& model, const Equilibrium& ss, double riskaver);
+	vector3dr make_value_guess(const Parameters& p, const Model& model, const Equilibrium& ss, double riskaver);
 
 	struct ValueFnDerivatives {
 		static const int StationaryPtOrLimit = -999.9;
@@ -38,9 +38,11 @@ namespace {
 	Upwinding::DepositUpwind optimal_deposits(const Model& model, double Va, double Vb, double a, double illprice);
 }
 
-HJB::HJB(const Model& model_, const Equilibrium& ss) : model(model_), p(model_.p), V(p.na, p.nb, model.ny), optimal_decisions(model.dims) {
+HJB::HJB(const Parameters& p_, const Model& model_, const Equilibrium& ss)
+	: model(model_), p(p_), V(p.na, p.nb, model.ny), optimal_decisions(model.dims)
+{
 	riskaver = ss.riskaver;
-	V = make_value_guess(model, ss, riskaver);
+	V = make_value_guess(p, model, ss, riskaver);
 }
 
 void HJB::iterate(const Equilibrium& ss) {
@@ -366,10 +368,8 @@ namespace {
 			std::cout << "Converged after " << ii << " iterations." << '\n';
 	}
 
-	vector3dr make_value_guess(const Model& model, const Equilibrium& ss, double riskaver)
+	vector3dr make_value_guess(const Parameters& p, const Model& model, const Equilibrium& ss, double riskaver)
 	{
-		const Parameters& p = model.p;
-
 		vector3dr V(p.na, p.nb, model.ny);
 		double lc, u;
 
