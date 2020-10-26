@@ -19,6 +19,12 @@ class TaylorRule {
 		bool use_feedback_rule = true;
 };
 
+enum class DepositCostMode { custom, symmetric, no_deposit_cost };
+
+enum class GovBCAdjType { spending, lumptax, debt, proptax, ftpl, none, fiscal };
+
+enum class FirmDiscountRateType { rho, rb_iss, ra_iss, rb_trans, ra_trans };
+
 class Parameters {
 	public:
 		Parameters() {}
