@@ -47,6 +47,8 @@ Model::Model(const Parameters& p_) : p(p_) {
 	create_combined_variables(this, p);
 
 	nocc = p.nocc;
+	na = p.na;
+	nb = p.nb;
 	naby = p.nb * p.na * nocc * nprod;
 	ntot = p.nb * p.na * nocc * nprod;
 	dims = std::vector<int>({p.na, p.nb, ny});

@@ -27,6 +27,14 @@ namespace {
 
 	vector3dr make_value_guess(const Model& model, const Equilibrium& ss, double riskaver);
 
+	struct ValueFnDerivatives {
+		static const int StationaryPtOrLimit = -999.9;
+
+		double VaF, VaB, VbF, VbB;
+	};
+
+	ValueFnDerivatives compute_derivatives(const vector3dr& V, const Model& model, double dVamin, double dVbmin, int ia, int ib, int iy);
+
 	Upwinding::DepositUpwind optimal_deposits(const Model& model, double Va, double Vb, double a, double illprice);
 }
 
@@ -99,7 +107,7 @@ Upwinding::Policies HJB::update_policies(const Equilibrium& ss) {
 	for (int ia=0; ia<p.na; ++ia) {
 		for (int ib=0; ib<p.nb; ++ib) {
 			for (int iy=0; iy<model.ny; ++iy) {
-				derivs = compute_derivatives(ia, ib, iy);
+				derivs = compute_derivatives(V, model, dVamin, dVbmin, ia, ib, iy);
 
 				idioscale = 1; // model.yprodgrid(iy);
 
@@ -174,34 +182,6 @@ Upwinding::Policies HJB::update_policies(const Equilibrium& ss) {
 		}
 	}
 	return policies;
-}
-
-ValueFnDerivatives HJB::compute_derivatives(int ia, int ib, int iy) const {
-	ValueFnDerivatives d;
-
-	// Forward derivatives
-	if (ia < p.na - 1) {
-		d.VaF = (V(ia+1,ib,iy) - V(ia,ib,iy)) / model.dagrid[ia];
-		d.VaF = fmax(d.VaF, dVamin);
-	}
-
-	if (ib < p.nb - 1) {
-		d.VbF = (V(ia,ib+1,iy) - V(ia,ib,iy)) / model.dbgrid[ib];
-		d.VbF = fmax(d.VbF, dVbmin);
-	}
-
-	// Backward derivatives
-	if (ia > 0) {
-		d.VaB = (V(ia,ib,iy) - V(ia-1,ib,iy)) / model.dagrid[ia-1];
-		d.VaB = fmax(d.VaB, dVamin);
-	}
-
-	if (ib > 0) {
-		d.VbB = (V(ia,ib,iy) - V(ia,ib-1,iy)) / model.dbgrid[ib-1];
-		d.VbB = fmax(d.VbB, dVbmin);
-	}
-
-	return d;
 }
 
 Upwinding::ConUpwind HJB::optimal_consumption_no_laborsupply(double Vb, double bdrift, double netwage) const {
@@ -369,11 +349,13 @@ void HJB::print_variables() const {
 }
 
 namespace {
-	constexpr bool is_stationary_pt_or_limit(double Vb) {
+	constexpr bool is_stationary_pt_or_limit(double Vb)
+	{
 		return (Vb <= ValueFnDerivatives::StationaryPtOrLimit);
 	}
 
-	void check_progress(double vdiff, int freq, int ii, double vtol) {
+	void check_progress(double vdiff, int freq, int ii, double vtol)
+	{
 		if ( ii == 0 )
 			return;
 		else if ( (ii == 1) | (ii % freq == 0) ) {
@@ -384,7 +366,8 @@ namespace {
 			std::cout << "Converged after " << ii << " iterations." << '\n';
 	}
 
-	vector3dr make_value_guess(const Model& model, const Equilibrium& ss, double riskaver) {
+	vector3dr make_value_guess(const Model& model, const Equilibrium& ss, double riskaver)
+	{
 		const Parameters& p = model.p;
 
 		vector3dr V(p.na, p.nb, model.ny);
@@ -409,7 +392,36 @@ namespace {
 		return V;
 	}
 
-	Upwinding::DepositUpwind optimal_deposits(const Model& model, double Va, double Vb, double a, double illprice) {
+	ValueFnDerivatives compute_derivatives(const vector3dr& V, const Model& model, double dVamin, double dVbmin, int ia, int ib, int iy)
+	{
+		ValueFnDerivatives d;
+
+		if (ia < model.na - 1) {
+			d.VaF = (V(ia+1,ib,iy) - V(ia,ib,iy)) / model.dagrid[ia];
+			d.VaF = fmax(d.VaF, dVamin);
+		}
+
+		if (ib < model.nb - 1) {
+			d.VbF = (V(ia,ib+1,iy) - V(ia,ib,iy)) / model.dbgrid[ib];
+			d.VbF = fmax(d.VbF, dVbmin);
+		}
+
+		// Backward derivatives
+		if (ia > 0) {
+			d.VaB = (V(ia,ib,iy) - V(ia-1,ib,iy)) / model.dagrid[ia-1];
+			d.VaB = fmax(d.VaB, dVamin);
+		}
+
+		if (ib > 0) {
+			d.VbB = (V(ia,ib,iy) - V(ia,ib-1,iy)) / model.dbgrid[ib-1];
+			d.VbB = fmax(d.VbB, dVbmin);
+		}
+		
+		return d;
+	}
+
+	Upwinding::DepositUpwind optimal_deposits(const Model& model, double Va, double Vb, double a, double illprice)
+	{
 		Upwinding::DepositUpwind dupwind;
 		dupwind.d = model.adjcosts->cost1inv(Va / (Vb * illprice) - 1.0, a);
 

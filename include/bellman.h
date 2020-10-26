@@ -13,21 +13,12 @@ class Equilibrium;
 
 class Parameters;
 
-// Container for value function derivatives
-struct ValueFnDerivatives {
-	static const int StationaryPtOrLimit = -999.9;
-
-	double VaF, VaB, VbF, VbB;
-};
-
 // Class for solving the HJB
 class HJB {
 	private:
 		Upwinding::Policies update_policies(const Equilibrium& ss);
 
 		void update_value_fn(const Equilibrium& ss, const Upwinding::Policies& policies);
-
-		ValueFnDerivatives compute_derivatives(int ia, int ib, int iy) const;
 
 		Upwinding::ConUpwind optimal_consumption(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
 
