@@ -40,13 +40,14 @@ namespace {
 }
 
 HJB::HJB(const Parameters& p_, const Model& model_, const Equilibrium& ss)
-	: model(model_), p(p_), V(p.na, p.nb, model.ny), optimal_decisions(model.dims)
+	: model(model_), p(p_), V(p.na, p.nb, model.ny)
 {
 	riskaver = ss.riskaver;
+	optimal_decisions.reset(new Upwinding::Policies(model.dims));
 	V = make_value_guess(p, model, ss, riskaver);
 }
 
-void HJB::iterate(const Equilibrium& ss)
+void HJB::solve(const Equilibrium& ss)
 {
 	int ii = 0;
 	double lVdiff = 1.0;
@@ -69,10 +70,10 @@ void HJB::iterate(const Equilibrium& ss)
 	if ( ii == maxiter )
 		std::cout << "HJB did not converge" << '\n';
 
-	optimal_decisions = policies;
+	*optimal_decisions = policies;
 
-	if ( global_hank_options->print_diagnostics )
-		print_variables();
+	// if ( global_hank_options->print_diagnostics )
+	// 	print_variables();
 }
 
 Upwinding::Policies HJB::update_policies(const Equilibrium& ss)
@@ -107,7 +108,7 @@ Upwinding::Policies HJB::update_policies(const Equilibrium& ss)
 	if ( p.endogLabor )
 		opt_c = std::bind(&HJB::optimal_consumption_sep_labor, this, _1, _2, _3, chi, _4);
 	else
-		opt_c = std::bind(&HJB::optimal_consumption_no_laborsupply, this, _1, _2, _3);
+		opt_c = std::bind(&HJB::optimal_consumption_no_laborsupply, this, _1, _2, _3, _4);
 
 	for (int ia=0; ia<p.na; ++ia) {
 		for (int ib=0; ib<p.nb; ++ib) {
@@ -189,7 +190,7 @@ Upwinding::Policies HJB::update_policies(const Equilibrium& ss)
 	return policies;
 }
 
-Upwinding::ConUpwind HJB::optimal_consumption_no_laborsupply(double Vb, double bdrift, double netwage) const
+Upwinding::ConUpwind HJB::optimal_consumption_no_laborsupply(double Vb, double bdrift, double netwage, double /* idioscale */) const
 {
 	Upwinding::ConUpwind upwind;
 	upwind.h = 1.0;
@@ -319,43 +320,43 @@ void HJB::update_value_fn(const Equilibrium& ss, const Upwinding::Policies& poli
 	}
 }
 
-void HJB::print_variables() const
-{
-	std::cout << '\n';
-	HankUtilities::horzline();
-	std::cout << "SELECTED OUTPUT FROM BELLMAN:\n";
+// void HJB::print_variables() const
+// {
+// 	std::cout << '\n';
+// 	HankUtilities::horzline();
+// 	std::cout << "SELECTED OUTPUT FROM BELLMAN:\n";
 
-	std::vector<std::string> names;
-	std::vector<double> values;
+// 	std::vector<std::string> names;
+// 	std::vector<double> values;
 
-	names.push_back("c(1,1,1)");
-	values.push_back(optimal_decisions.c(1,1,1));
+// 	names.push_back("c(1,1,1)");
+// 	values.push_back(optimal_decisions.c(1,1,1));
 
-	names.push_back("c(1,10,1)");
-	values.push_back(optimal_decisions.c(1,10,1));
+// 	names.push_back("c(1,10,1)");
+// 	values.push_back(optimal_decisions.c(1,10,1));
 
-	names.push_back("c(10,1,1)");
-	values.push_back(optimal_decisions.c(10,1,1));
+// 	names.push_back("c(10,1,1)");
+// 	values.push_back(optimal_decisions.c(10,1,1));
 
-	names.push_back("c(20,20,5)");
-	values.push_back(optimal_decisions.c(20,20,5));
+// 	names.push_back("c(20,20,5)");
+// 	values.push_back(optimal_decisions.c(20,20,5));
 
-	names.push_back("d(1,1,1)");
-	values.push_back(optimal_decisions.d(1,1,1));
+// 	names.push_back("d(1,1,1)");
+// 	values.push_back(optimal_decisions.d(1,1,1));
 
-	names.push_back("d(1,10,1)");
-	values.push_back(optimal_decisions.d(1,10,1));
+// 	names.push_back("d(1,10,1)");
+// 	values.push_back(optimal_decisions.d(1,10,1));
 
-	names.push_back("d(10,1,1)");
-	values.push_back(optimal_decisions.d(10,1,1));
+// 	names.push_back("d(10,1,1)");
+// 	values.push_back(optimal_decisions.d(10,1,1));
 
-	names.push_back("d(20,20,5)");
-	values.push_back(optimal_decisions.d(20,20,5));
+// 	names.push_back("d(20,20,5)");
+// 	values.push_back(optimal_decisions.d(20,20,5));
 
-	HankUtilities::print_values(names, values);
+// 	HankUtilities::print_values(names, values);
 
-	HankUtilities::horzline();
-}
+// 	HankUtilities::horzline();
+// }
 
 namespace {
 	constexpr bool is_stationary_pt_or_limit(double Vb)

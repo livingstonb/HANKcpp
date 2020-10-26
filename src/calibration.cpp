@@ -9,6 +9,7 @@
 #include <bellman.h>
 #include <distribution_statistics.h>
 #include <stationary_dist.h>
+#include <upwinding.h>
 
 #include <assert.h>
 
@@ -251,13 +252,13 @@ int initial_steady_state_obj_fn(void* args_void_ptr, int n, const hank_float_typ
 	iss.solve(p);
 
 	HJB hjb(p, model, iss);
-	hjb.iterate(iss);
+	hjb.solve(iss);
 
 	StationaryDist sdist;
 	sdist.gtol = 1.0e-9;
 	sdist.compute(p, model, iss, hjb);
 
-	args.ptr4.reset(new DistributionStatistics(p, model, hjb.optimal_decisions, sdist));
+	args.ptr4.reset(new DistributionStatistics(p, model, *hjb.optimal_decisions, sdist));
 	const DistributionStatistics& stats = *args.ptr4;
 	HANK::print(stats);
 

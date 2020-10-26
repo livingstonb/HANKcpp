@@ -3,8 +3,8 @@
 
 #include <hank_config.h>
 #include <hank.h>
-#include <upwinding.h>
 #include <math.h>
+#include <memory>
 
 // Forward declarations
 class Model;
@@ -13,6 +13,13 @@ class Equilibrium;
 
 class Parameters;
 
+namespace Upwinding
+{
+	class Policies;
+
+	class ConUpwind;
+}
+
 // Class for solving the HJB
 class HJB {
 	private:
@@ -20,9 +27,7 @@ class HJB {
 
 		void update_value_fn(const Equilibrium& ss, const Upwinding::Policies& policies);
 
-		Upwinding::ConUpwind optimal_consumption(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
-
-		Upwinding::ConUpwind optimal_consumption_no_laborsupply(double Vb, double bdrift, double netwage) const;
+		Upwinding::ConUpwind optimal_consumption_no_laborsupply(double Vb, double bdrift, double netwage, double /* idioscale */) const;
 
 		Upwinding::ConUpwind optimal_consumption_sep_labor(double Vb, double bdrift, double netwage, double chi, double idioscale) const;
 
@@ -33,9 +38,7 @@ class HJB {
 	public:
 		HJB(const Parameters& p_, const Model& model_, const Equilibrium& ss);
 
-		void iterate(const Equilibrium& ss);
-
-		void print_variables() const;
+		void solve(const Equilibrium& ss);
 
 		vector3dr V;
 
@@ -53,7 +56,7 @@ class HJB {
 
 		double riskaver;
 
-		Upwinding::Policies optimal_decisions;
+		std::unique_ptr<Upwinding::Policies> optimal_decisions;
 };
 
 #endif

@@ -11,6 +11,7 @@
 #include <bellman.h>
 #include <stationary_dist.h>
 #include <distribution_statistics.h>
+#include <upwinding.h>
 
 #include <math.h>
 
@@ -123,13 +124,13 @@ void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type 
 	std::vector<DistributionStatistics> trans_stats;
 	for (int it=0; it<Ttrans; ++it) {
 		HJB hjb(p, model, trans_equm[it]);
-		hjb.iterate(trans_equm[it]);
+		hjb.solve(trans_equm[it]);
 
 		StationaryDist sdist;
 		sdist.gtol = 1.0e-9;
 		sdist.compute(p, model, trans_equm[it], hjb);
 
-		trans_stats.push_back(DistributionStatistics(p, model, hjb.optimal_decisions, sdist));
+		trans_stats.push_back(DistributionStatistics(p, model, *hjb.optimal_decisions, sdist));
 	}
 
 	// Set residuals
@@ -343,13 +344,13 @@ int final_steady_state_obj_fn(void* solver_args_voidptr, int /* n */, const real
 	final_ss.solve(p, iss, x);	
 
 	HJB hjb(p, model, final_ss);
-	hjb.iterate(final_ss);
+	hjb.solve(final_ss);
 
 	StationaryDist sdist;
 	sdist.gtol = 1.0e-9;
 	sdist.compute(p, model, final_ss, hjb);
 
-	DistributionStatistics stats(p, model, hjb.optimal_decisions, sdist);
+	DistributionStatistics stats(p, model, *hjb.optimal_decisions, sdist);
 
 	fvec[0] = stats.Ea / (final_ss.capital + final_ss.equity_A) - 1.0;
 

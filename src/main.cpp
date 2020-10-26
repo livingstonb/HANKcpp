@@ -13,6 +13,7 @@
 #include <math.h>
 #include <calibration.h>
 #include <impulse_responses.h>
+#include <upwinding.h>
 #include <memory>
 
 #include <cminpack_wrapper.h>
@@ -140,13 +141,13 @@ int main () {
 		iss.solve(params);
 
 		HJB hjb(params, model, iss);
-		hjb.iterate(iss);
+		hjb.solve(iss);
 
 		StationaryDist sdist;
 		sdist.gtol = 1.0e-9;
 		sdist.compute(params, model, iss, hjb);
 
-		object_ptrs.ptr4.reset(new DistributionStatistics(params, model, hjb.optimal_decisions, sdist));
+		object_ptrs.ptr4.reset(new DistributionStatistics(params, model, *hjb.optimal_decisions, sdist));
 		const DistributionStatistics& stats = *object_ptrs.ptr4;
 		HANK::print(stats);
 
