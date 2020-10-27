@@ -100,12 +100,14 @@ std::map<std::string, hank_float_type> Equilibrium::variables_map() const
 	variables.insert({"govbond", govbond});
 	variables.insert({"govexp", govexp});
 	variables.insert({"capital", capital});
+	variables.insert({"priceadjust", priceadjust});
 
 	return variables;
 }
 
 void EquilibriumInitial::setup(const Parameters& p, const Model& model)
 {
+	priceadjust = 0;
 	set_from_parameters(this, p);
 	set_from_model(this, model);
 }
@@ -221,7 +223,6 @@ std::map<std::string, hank_float_type> EquilibriumTrans::variables_map() const
 
 	variables.insert({"mpshock", mpshock});
 	variables.insert({"pricelev", pricelev});
-	variables.insert({"priceadjust", priceadjust});
 	variables.insert({"capadjust", capadjust});
 	variables.insert({"qdot", qdot});
 	variables.insert({"pidot", pidot});
@@ -402,7 +403,7 @@ namespace
 		equm->netprofit_W = equm->price_W * equm->output * (1.0 - equm->drs_Y);
 		equm->grossprofit_R = (1.0 - equm->price_W) * equm->output / equm->varieties;
 		equm->netprofit_R = equm->varieties * (1.0 - equm->drs_N) * equm->grossprofit_R;
-		equm->profit = equm->netprofit_R + equm->netprofit_W;
+		equm->profit = equm->netprofit_R + equm->netprofit_W - equm->priceadjust;
 	}
 
 	void compute_factor_prices(Equilibrium* equm)

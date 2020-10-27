@@ -33,7 +33,7 @@ class EquilibriumBase
 
 		hank_float_type bond, govbond, labtax, govexp;
 
-		hank_float_type output, varieties, qcapital;
+		hank_float_type output, varieties, qcapital, priceadjust;
 
 		hank_float_type capital = HANK::ValueNotSet;
 
@@ -87,7 +87,7 @@ class EquilibriumTrans : public Equilibrium
 
 		EquilibriumTrans(const EquilibriumBase& other_equm);
 
-		hank_float_type mpshock, pricelev, priceadjust, capadjust, qdot;
+		hank_float_type mpshock, pricelev, capadjust, qdot;
 
 		hank_float_type pidot, logydot, firmdiscount, qinvestment, invadjust;
 
