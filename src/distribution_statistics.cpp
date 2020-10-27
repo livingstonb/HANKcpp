@@ -80,7 +80,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 	int inw;
 	for (int iab=0; iab<p.nab; ++iab) {
 		inw = nw_order(iab);
-		p_nw(iab) = model.abdelta[iab] * gdistmat.row(inw).sum();
+		p_nw(iab) = model.abdelta[inw] * gdistmat.row(inw).sum();
 	}
 	VectorXr pcum_nw = cumsum(p_nw);
 
