@@ -129,9 +129,7 @@ void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type 
 	make_transition_guesses(p, x, this);
 	compute_remaining_variables();
 
-	HANK::print(trans_equm[0]);
 	solve_trans_equilibrium(trans_equm, p, initial_equm, *final_equm_ptr, deltatransvec.data());
-	HANK::print(trans_equm[0]);
 
 	// Solve distribution
 	std::vector<DistributionStatistics> trans_stats;
@@ -447,12 +445,29 @@ namespace {
 
 		DistributionStatistics stats(p, model, *hjb.optimal_decisions, sdist);
 
-		fvec[0] = stats.Ea / (final_ss.capital + final_ss.equity_A) - 1.0;
+		std::vector<std::string> variable_names, equation_names;
+		std::vector<hank_float_type> variable_values;
 
-		for (int io=0; io<p.nocc; ++io)
+		// Function value error
+		fvec[0] = stats.Ea / (final_ss.capital + final_ss.equity_A) - 1.0;
+		equation_names.push_back("Illiquid asset market clearing");
+		variable_values.push_back(stats.Ea);
+		variable_names.push_back("E[a]");
+
+		for (int io=0; io<p.nocc; ++io) {
 			fvec[io+1] = stats.Elabor_occ[io] * model.occdist[io] / final_ss.labor_occ[io] - 1.0;
+			equation_names.push_back("Labor market clearing (" + std::to_string(io) + ")");
+			variable_values.push_back(stats.Elabor_occ[io] * model.occdist[io]);
+			variable_names.push_back("labor_occ_" + std::to_string(io));
+		}
 
 		fvec[p.nocc+1] = stats.Eb / final_ss.equity_B - 1.0;
+		equation_names.push_back("Liquid asset marking clearing");
+		variable_values.push_back(stats.Eb);
+		variable_names.push_back("E[b]");
+
+		OptimStatus optim_status(equation_names, variable_names, fvec, variable_values);
+		HANK::print(optim_status);
 
 		return 0;
 	}

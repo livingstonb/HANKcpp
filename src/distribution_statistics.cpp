@@ -105,10 +105,6 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 			++iy;
 		}
 		Elabor_occ[io] /= pocc;
-
-		std::cout << "pocc = " << pocc << '\n';
-		std::cout << "Elabor_occ0 = \n";
-		HankUtilities::printvec(Elabor_occ);
 	}
 
 	// Percentiles

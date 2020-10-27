@@ -16,6 +16,30 @@
 
 enum class AdjustCostFnRatioMode { none, linear, max };
 
+class OptimStatus
+{
+	public:
+		OptimStatus(const std::vector<std::string>& equation_names_,
+			const std::vector<std::string>& variable_names_,
+			const hank_float_type* deviations_,
+			const std::vector<hank_float_type> variable_values_)
+		{
+			equation_names = equation_names_;
+			variable_names = variable_names_;
+			variable_values = variable_values_;
+
+			n = equation_names.size();
+			for (int i=0; i<n; ++i)
+				deviations.push_back(deviations_[i]);
+		}
+
+		std::vector<std::string> equation_names, variable_names;
+
+		std::vector<hank_float_type> deviations, variable_values;
+
+		int n;
+};
+
 namespace HANK {
 	const hank_float_type ValueNotSet = -91912395.1;
 
@@ -39,6 +63,23 @@ namespace HANK {
 		for (auto x : vec) {
 			std::cout << x << '\n';
 		}
+	}
+
+	inline void print(const OptimStatus& optim_status)
+	{
+		std::cout << '\n';
+		horzline();
+		std::cout << "OPTIMIZATION RESULTS:\n";
+
+		for (int i=0; i<optim_status.n; ++i) {
+			std::cout << optim_status.variable_names[i] << " = " << optim_status.variable_values[i];
+			std::cout << ", ";
+			std::cout << optim_status.equation_names[i] << ": " << optim_status.deviations[i];
+			std::cout << '\n';
+		}
+
+		horzline();
+		std::cout << '\n';
 	}
 }
 
