@@ -38,10 +38,6 @@ class SSCalibrator
 
 		int nmoments;
 
-		void check_size(int ix) const;
-
-		void perform_calibrator_assertions() const;
-
 		bool calibrateLaborDisutility = true;
 
 		bool calibrateRb = true;

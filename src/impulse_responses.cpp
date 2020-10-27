@@ -5,13 +5,13 @@
 #include <equilibrium.h>
 #include <iostream>
 #include <functional>
-#include <algorithm>
 #include <hank_numerics.h>
 #include <bellman.h>
 #include <stationary_dist.h>
 #include <distribution_statistics.h>
 #include <upwinding.h>
 #include <assert.h>
+#include <model_functions.h>
 
 #include <math.h>
 

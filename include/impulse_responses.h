@@ -10,9 +10,14 @@ class Parameters;
 
 class Model;
 
+class IRF;
+
 enum class ShockType { tfp_Y, monetary, riskaver, none };
 
 class TransShock {
+	private:
+		void setup();
+
 	public:
 		ShockType type = ShockType::none;
 
@@ -20,7 +25,7 @@ class TransShock {
 
 		hank_float_type pers = HANK::ValueNotSet;
 
-		void setup();
+		friend class IRF;
 };
 
 class IRF {
@@ -31,6 +36,14 @@ class IRF {
 
 		const EquilibriumInitial& initial_equm;
 
+		void transition_fcn(int n, const hank_float_type *x, hank_float_type *z);
+
+		void compute_remaining_variables();
+
+		void set_shock_paths();
+
+		void find_final_steady_state();
+
 	public:
 		IRF(const Parameters& p_, const Model& model_, const EquilibriumInitial& iss_);
 
@@ -39,14 +52,6 @@ class IRF {
 		void setup();
 
 		void compute();
-
-		void transition_fcn(int n, const hank_float_type *x, hank_float_type *z);
-
-		void compute_remaining_variables();
-
-		void set_shock_paths();
-
-		void find_final_steady_state();
 
 		SolverType solver = SolverType::broyden;
 

@@ -15,39 +15,25 @@
 
 using namespace std::placeholders;
 
+using namespace HANKCalibration;
+
 namespace {
-	double deviation_median_illiq_wealth(const HANKCalibration::CalibrationArgs& args)
-	{
-		return args.stats.a_pctiles[5] / args.p.illiqWealthTarget.value - 1.0;
-	}
+	void check_size(int nmoments, int ix);
 
-	double deviation_mean_liq_wealth(const HANKCalibration::CalibrationArgs& args)
-	{
-		return args.stats.Eb / args.p.liqWealthTarget.value - 1.0;
-	}
+	void perform_calibrator_assertions(const SSCalibrator* cal);
 
-	double deviation_median_liq_wealth(const HANKCalibration::CalibrationArgs& args)
-	{
-		return args.stats.b_pctiles[5] / args.p.liqWealthTarget.value - 1.0;
-	}
+	double deviation_median_illiq_wealth(const CalibrationArgs& args);
 
-	double illiq_market_clearing(const HANKCalibration::CalibrationArgs& args)
-	{
-		return args.stats.Ea / (args.iss.capital + args.iss.equity_A) - 1.0;
-	}
+	double deviation_mean_liq_wealth(const CalibrationArgs& args);
 
-	double labor_market_clearing(const HANKCalibration::CalibrationArgs& args, int io)
-	{
-		return args.stats.Elabor_occ[io] * args.model.occdist[io] / args.iss.labor_occ[io] - 1.0;
-	}
+	double deviation_median_liq_wealth(const CalibrationArgs& args);
 
-	double hours_target(const HANKCalibration::CalibrationArgs& args)
-	{
-		return (args.stats.Ehours / args.p.hourtarget - 1.0) / 100.0;
-	}
+	double illiq_market_clearing(const CalibrationArgs& args);
+
+	double labor_market_clearing(const CalibrationArgs& args, int io);
+
+	double hours_target(const CalibrationArgs& args);
 }
-
-namespace HANKCalibration {
 
 void SSCalibrator::setup(const Parameters &p)
 {
@@ -83,6 +69,8 @@ void SSCalibrator::setup(const Parameters &p)
 
 	// Set number of moments
 	nmoments = obj_functions.size();
+
+	perform_calibrator_assertions(this);
 }
 
 void SSCalibrator::fill_fvec(const CalibrationArgs& args, hank_float_type fvec[]) const
@@ -105,7 +93,7 @@ void SSCalibrator::fill_xguess(const Parameters &p, const Model& model, hank_flo
 
 	// Discount rate
 	if ( calibrateDiscountRate ) {
-		check_size(ix);
+		check_size(nmoments, ix);
 		xvec[ix] = log(p.rho);
 		ix_rho = ix;
 		++ix;
@@ -113,7 +101,7 @@ void SSCalibrator::fill_xguess(const Parameters &p, const Model& model, hank_flo
 
 	// Liquid returns
 	if ( calibrateRb ) {
-		check_size(ix);
+		check_size(nmoments, ix);
 		xvec[ix] = log(p.rb);
 		ix_rb = ix;
 		++ix;
@@ -121,7 +109,7 @@ void SSCalibrator::fill_xguess(const Parameters &p, const Model& model, hank_flo
 
 	// Labor disutility
 	if ( calibrateLaborDisutility ) {
-		check_size(ix);
+		check_size(nmoments, ix);
 		xvec[ix] = p.chi;
 		ix_chi = ix;
 		++ix;
@@ -138,44 +126,6 @@ void SSCalibrator::fill_xguess(const Parameters &p, const Model& model, hank_flo
 	}
 	else if ( ix > nmoments ) {
 		std::cerr << "Too many moments\n";
-		throw 0;
-	}
-}
-
-void SSCalibrator::check_size(int ix) const
-{
-	if ( ix >= nmoments ) {
-		std::cerr << "Too many guesses\n";
-		throw 0;
-	}
-}
-
-void SSCalibrator::perform_calibrator_assertions() const
-{
-	if ( (!calibrateLaborDisutility) & (ix_labor_occ.size() > 0) ) {
-		std::cerr << "Labor disutility calibration off but ix_labor_occ is non-empty";
-		throw 0;
-	}
-	else if ( calibrateLaborDisutility & (ix_labor_occ.size() == 0) ) {
-		std::cerr << "Labor disutility calibration on but ix_labor_occ is empty";
-		throw 0;
-	}
-
-	if ( (!calibrateRb) & (ix_rb >= 0) ) {
-		std::cerr << "Rb calibration off but ix_rb is non-negative";
-		throw 0;
-	}
-	else if ( calibrateRb & (ix_rb < 0) ) {
-		std::cerr << "Rb calibration on but ix_rb is negative";
-		throw 0;
-	}
-
-	if ( (!calibrateDiscountRate) & (ix_rho >= 0) ) {
-		std::cerr << "Discount rate calibration off but ix_rho is non-negative";
-		throw 0;
-	}
-	else if ( calibrateDiscountRate & (ix_rho < 0) ) {
-		std::cerr << "Discount rate calibration on but ix_rho is negative";
 		throw 0;
 	}
 }
@@ -228,7 +178,7 @@ void SSCalibrator::print_fvec(hank_float_type fvec[]) const {
 	std::cout << "--------------------------\n\n";
 }
 
-int initial_steady_state_obj_fn(void* args_void_ptr, int n, const hank_float_type *x, hank_float_type *fvec, int /* iflag */ )
+int HANKCalibration::initial_steady_state_obj_fn(void* args_void_ptr, int n, const hank_float_type *x, hank_float_type *fvec, int /* iflag */ )
 {
 	std::cout << "\nCalibration parameters updated:\n";
 
@@ -271,4 +221,72 @@ int initial_steady_state_obj_fn(void* args_void_ptr, int n, const hank_float_typ
 	return 0;
 }
 
+namespace {
+	void check_size(int nmoments, int ix)
+	{
+		if ( ix >= nmoments ) {
+			std::cerr << "Too many guesses\n";
+			throw 0;
+		}
+	}
+
+	void perform_calibrator_assertions(const SSCalibrator* cal)
+	{
+		if ( (!cal->calibrateLaborDisutility) & (cal->ix_labor_occ.size() > 0) ) {
+			std::cerr << "Labor disutility calibration off but ix_labor_occ is non-empty";
+			throw 0;
+		}
+		else if ( cal->calibrateLaborDisutility & (cal->ix_labor_occ.size() == 0) ) {
+			std::cerr << "Labor disutility calibration on but ix_labor_occ is empty";
+			throw 0;
+		}
+
+		if ( (!cal->calibrateRb) & (cal->ix_rb >= 0) ) {
+			std::cerr << "Rb calibration off but ix_rb is non-negative";
+			throw 0;
+		}
+		else if ( cal->calibrateRb & (cal->ix_rb < 0) ) {
+			std::cerr << "Rb calibration on but ix_rb is negative";
+			throw 0;
+		}
+
+		if ( (!cal->calibrateDiscountRate) & (cal->ix_rho >= 0) ) {
+			std::cerr << "Discount rate calibration off but ix_rho is non-negative";
+			throw 0;
+		}
+		else if ( cal->calibrateDiscountRate & (cal->ix_rho < 0) ) {
+			std::cerr << "Discount rate calibration on but ix_rho is negative";
+			throw 0;
+		}
+	}
+
+	double deviation_median_illiq_wealth(const CalibrationArgs& args)
+	{
+		return args.stats.a_pctiles[5] / args.p.illiqWealthTarget.value - 1.0;
+	}
+
+	double deviation_mean_liq_wealth(const CalibrationArgs& args)
+	{
+		return args.stats.Eb / args.p.liqWealthTarget.value - 1.0;
+	}
+
+	double deviation_median_liq_wealth(const CalibrationArgs& args)
+	{
+		return args.stats.b_pctiles[5] / args.p.liqWealthTarget.value - 1.0;
+	}
+
+	double illiq_market_clearing(const CalibrationArgs& args)
+	{
+		return args.stats.Ea / (args.iss.capital + args.iss.equity_A) - 1.0;
+	}
+
+	double labor_market_clearing(const CalibrationArgs& args, int io)
+	{
+		return args.stats.Elabor_occ[io] * args.model.occdist[io] / args.iss.labor_occ[io] - 1.0;
+	}
+
+	double hours_target(const CalibrationArgs& args)
+	{
+		return (args.stats.Ehours / args.p.hourtarget - 1.0) / 100.0;
+	}
 }
