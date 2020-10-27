@@ -75,6 +75,8 @@ void IRF::setup()
 		deltatransvec.push_back(cumdeltatrans[it] - cumdeltatrans[it-1]);
 
 	set_shock_paths();
+
+	HANK::print(trans_equm[0]);
 }
 
 void IRF::compute()
@@ -118,7 +120,10 @@ void IRF::compute()
 void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type *fvec)
 {
 	make_transition_guesses(x);
+
+	HANK::print(trans_equm[0]);
 	solve_trans_equilibrium(trans_equm, p, initial_equm, *final_equm_ptr, deltatransvec.data());
+	HANK::print(trans_equm[0]);
 
 	// Solve distribution
 	std::vector<DistributionStatistics> trans_stats;
@@ -187,7 +192,7 @@ void IRF::make_transition_guesses(const hank_float_type *x)
 		double ygap = log(trans_equm[it].output / initial_equm.output);
 		if ( p.taylor.use_feedback_rule ) {
 			if ( set_rb ) {
-				trans_equm[it].rnom = (initial_equm.rnom - p.taylor.coeff_pi * trans_equm[it].pi
+				trans_equm[it].rnom = (initial_equm.rnom - p.taylor.coeff_pi * trans_equm[it].rb
 					+ p.taylor.coeff_y * ygap + trans_equm[it].mpshock) / (1.0 - p.taylor.coeff_pi);
 			}
 			else if ( set_pi ) {
