@@ -308,7 +308,7 @@ void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
 			linv[it] = linv[it-1] / (1.0 - deltatransvec[it] * trans_equms[it-1].qinvestment / p.invadjcost);
 
 		trans_equms[T-1].inv_cap_ratio = HankFunctions::capadjcost1inv(trans_equms[T-1].qcapital - 1.0, p.capadjcost, p.depreciation);
-		for (int it=0; it<T; ++it)
+		for (int it=0; it<T-1; ++it)
 			trans_equms[it].inv_cap_ratio = linv[it] / trans_equms[it].capital;
 	}
 
