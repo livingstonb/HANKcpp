@@ -211,7 +211,6 @@ EquilibriumTrans::EquilibriumTrans(const EquilibriumBase& other_equm)
 	labshareN.clear();
 	labfracY.clear();
 	labfracN.clear();
-	labor_occ.clear();
 	wage_occ.clear();
 	netwagegrid.clear();
 }
