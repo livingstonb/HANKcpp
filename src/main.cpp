@@ -75,7 +75,10 @@ void set_to_fortran_params(Parameters& p) {
 	p.drs_N = 0.310344827586207;
 	p.alpha_N = 0.3333333333333;
 	p.alpha_Y = 0.3333333333333;
+
 	// p.invadjcost = 0.1;
+	// p.solveFlexPriceTransition = true;
+	// p.solveStickyPriceTransition = false;
 }
 
 void set_to_fortran_params(HANKCalibration::SSCalibrator& cal) {

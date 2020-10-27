@@ -33,6 +33,13 @@ namespace HANK {
 		horzline();
 		std::cout << '\n';
 	}
+
+	template<typename T>
+	void print(const std::vector<T>& vec) {
+		for (auto x : vec) {
+			std::cout << x << '\n';
+		}
+	}
 }
 
 using model_vector_type = std::vector<hank_float_type>;

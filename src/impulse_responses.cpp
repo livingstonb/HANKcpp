@@ -71,18 +71,10 @@ void IRF::setup()
 	flextransition = p.solveFlexPriceTransition;
 	stickytransition = p.solveStickyPriceTransition;
 
-	for (int it=0; it<Ttrans; ++it) {
-		trans_equm.push_back(EquilibriumBase(initial_equm));
-	}
-
 	cumdeltatrans = construct_cum_delta_trans_vector(deltatranstot, deltatransmin, Ttrans);
 	deltatransvec.push_back(cumdeltatrans[0]);
 	for (int it=1; it<Ttrans; ++it)
 		deltatransvec.push_back(cumdeltatrans[it] - cumdeltatrans[it-1]);
-
-	set_shock_paths();
-
-	HANK::print(trans_equm[0]);
 }
 
 void IRF::compute()
@@ -94,6 +86,10 @@ void IRF::compute()
 		find_final_steady_state();
 	}
 
+	for (int it=0; it<Ttrans; ++it)
+		trans_equm.push_back(EquilibriumBase(initial_equm));
+	set_shock_paths();
+
 	// Guess log deviations from steady state
 	std::vector<hank_float_type> xguess(npricetrans);
 	std::fill(xguess.begin(), xguess.end(), 0);
@@ -103,6 +99,7 @@ void IRF::compute()
 			xguess[it] = log(fmax(p.capadjcost, 1.0) * trans_equm[it].tfp_Y / initial_equm.tfp_Y);
 		}
 	}
+	trans_equm.clear();
 
 	if ( solver == SolverType::broyden ) {
 		std::function<void(int, const hank_float_type*, hank_float_type*)>
@@ -125,6 +122,10 @@ void IRF::compute()
 
 void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type *fvec)
 {
+	for (int it=0; it<Ttrans; ++it)
+		trans_equm.push_back(EquilibriumBase(initial_equm));
+	set_shock_paths();
+
 	make_transition_guesses(p, x, this);
 	compute_remaining_variables();
 
@@ -313,7 +314,7 @@ namespace {
 		std::vector<hank_float_type> cumdeltatrans(Ttrans);
 
 		for (int it=0; it<Ttrans; ++it) {
-			double lit = static_cast<double>(it) / (Ttrans + 1);
+			double lit = static_cast<double>(it + 1) / (Ttrans + 1);
 			cumdeltatrans[it] = la * lit / (1.0 - lb * lit);
 		}
 
