@@ -9,7 +9,6 @@
 #include <stationary_dist.h>
 #include <distribution_statistics.h>
 #include <adjustment_costs.h>
-#include <utilities.h>
 #include <math.h>
 #include <calibration.h>
 #include <impulse_responses.h>

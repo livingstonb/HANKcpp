@@ -14,7 +14,8 @@ class Parameters;
 
 class AdjustmentCosts;
 
-class Model {
+class Model
+{
 	private:
 		const Parameters& p;
 
@@ -59,9 +60,11 @@ class Model {
 
 		hank_float_type capadjcost(hank_float_type x) const;
 
-		void print_values() const;
-
 		void assertions() const;
 };
+
+namespace HANK {
+	void print(const Model& model);
+}
 
 #endif

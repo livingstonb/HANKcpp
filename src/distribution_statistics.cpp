@@ -6,7 +6,6 @@
 #include <iostream>
 #include <algorithm>
 #include <hank_numerics.h>
-#include <utilities.h>
 
 #include <hank_macros.h>
 #include <hank_eigen_dense.h>

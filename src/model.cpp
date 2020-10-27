@@ -1,15 +1,15 @@
 #include <hank.h>
 #include <model.h>
-#include <utilities.h>
 #include <hank_numerics.h>
-#include <functions.h>
-#include <cmath>
-#include <boost/algorithm/string.hpp>
+#include <model_functions.h>
+#include <math.h>
+// #include <boost/algorithm/string.hpp>
 #include <assert.h>
 #include <hank_macros.h>
 #include <hank_eigen_dense.h>
 #include <parameters.h>
 #include <adjustment_costs.h>
+#include <fstream>
 
 namespace {
 	void make_asset_grids(Model* model, const Parameters& p);
@@ -36,6 +36,10 @@ namespace {
 	void print_value(const std::string& pname, double value);
 
 	void check_adjcosts(const Parameters& p, const std::shared_ptr<AdjustmentCosts>& adjcosts);
+
+	std::vector<hank_float_type> read_matrix(const std::string& file_loc);
+
+	std::size_t find_multiple(const std::string& line, int pos);
 }
 
 Model::Model(const Parameters& p_) : p(p_) {
@@ -69,7 +73,7 @@ Model::Model(const Parameters& p_) : p(p_) {
 	check_adjcosts(p, adjcosts);
 
 	if ( global_hank_options->print_diagnostics )
-		print_values();
+		HANK::print(*this);
 }
 
 std::vector<hank_float_type> Model::get_rb_effective(hank_float_type rb, hank_float_type rborr) const
@@ -87,40 +91,40 @@ std::vector<hank_float_type> Model::get_rb_effective(hank_float_type rb, hank_fl
 }
 
 hank_float_type Model::util(hank_float_type c, hank_float_type riskaver) const {
-	return HankFunctions::utility(c, p.prefshock, riskaver);
+	return ModelFunctions::utility(c, p.prefshock, riskaver);
 }
 
 hank_float_type Model::util1(hank_float_type c, hank_float_type riskaver) const {
-	return HankFunctions::utility1(c, p.prefshock, riskaver);
+	return ModelFunctions::utility1(c, p.prefshock, riskaver);
 }
 
 hank_float_type Model::util1inv(hank_float_type u, hank_float_type riskaver) const {
-	return HankFunctions::utility1inv(u, p.prefshock, riskaver);
+	return ModelFunctions::utility1inv(u, p.prefshock, riskaver);
 }
 
 hank_float_type Model::labdisutil(hank_float_type h, hank_float_type chi) const {
-	return HankFunctions::labor_disutility(h, p.frisch, chi);
+	return ModelFunctions::labor_disutility(h, p.frisch, chi);
 }
 
 hank_float_type Model::labdisutil1(hank_float_type h, hank_float_type chi) const {
-	return HankFunctions::labor_disutility1(h, p.frisch, chi);
+	return ModelFunctions::labor_disutility1(h, p.frisch, chi);
 }
 
 hank_float_type Model::labdisutil1inv(hank_float_type du, hank_float_type chi) const {
-	return HankFunctions::labor_disutility1inv(du, p.frisch, chi);
+	return ModelFunctions::labor_disutility1inv(du, p.frisch, chi);
 }
 
 hank_float_type Model::capadjcost(hank_float_type x) const {
-	return HankFunctions::capadjcost(x, p.capadjcost, p.depreciation);
+	return ModelFunctions::capadjcost(x, p.capadjcost, p.depreciation);
 }
 
 hank_float_type Model::capadjcost1(hank_float_type x) const {
-	return HankFunctions::capadjcost1(x, p.capadjcost, p.depreciation);
+	return ModelFunctions::capadjcost1(x, p.capadjcost, p.depreciation);
 }
 
 
 hank_float_type Model::capadjcost1inv(hank_float_type x) const {
-	return HankFunctions::capadjcost1inv(x, p.capadjcost, p.depreciation);
+	return ModelFunctions::capadjcost1inv(x, p.capadjcost, p.depreciation);
 }
 
 double Model::util1BC(double h, double riskaver, double chi, double bdrift, double netwage, double wagescale) const
@@ -128,25 +132,6 @@ double Model::util1BC(double h, double riskaver, double chi, double bdrift, doub
 	double c = bdrift + h * netwage;
 	assert( c > 0 );
 	return labdisutil1(h, chi) - util1(c, riskaver) * netwage * p.labwedge / wagescale;
-}
-
-void Model::print_values() const
-{
-	HankUtilities::horzline();
-	std::cout << "COMPUTED VALUES, MODEL OBJECT:\n";
-	print_value("nocc", nocc);
-	print_value("nprod", nprod);
-	print_value("ny", ny);
-
-	for (int io=0; io<nprod; ++io)
-		print_value("prodgrid[io]", prodgrid[io]);
-
-	for (int io=0; io<nprod; ++io)
-		print_value("proddist[io]", proddist[io]);
-
-	print_value("E[prod]", EigenFunctions::dot(prodgrid, proddist));
-	
-	HankUtilities::horzline();
 }
 
 void Model::assertions() const
@@ -170,6 +155,27 @@ void Model::assertions() const
 	if ( rowsums.abs().maxCoeff() > 1.0e-7 ) {
 		std::cerr << "Markov ytrans matrix rows do not sum to zero\n";
 		throw 0;
+	}
+}
+
+namespace HANK {
+	void print(const Model& model)
+	{
+		HANK::horzline();
+		std::cout << "COMPUTED VALUES, MODEL OBJECT:\n";
+		print_value("nocc", model.nocc);
+		print_value("nprod", model.nprod);
+		print_value("ny", model.ny);
+
+		for (int io=0; io<model.nprod; ++io)
+			print_value("prodgrid[io]", model.prodgrid[io]);
+
+		for (int io=0; io<model.nprod; ++io)
+			print_value("proddist[io]", model.proddist[io]);
+
+		print_value("E[prod]", EigenFunctions::dot(model.prodgrid, model.proddist));
+		
+		HANK::horzline();
 	}
 }
 
@@ -250,10 +256,10 @@ namespace {
 	void create_income_process(Model* model, const Parameters& p)
 	{
 		std::string grid_loc = "../input/" + p.income_dir + "/ygrid_combined.txt";
-		model->logprodgrid = HankUtilities::read_matrix(grid_loc);
+		model->logprodgrid = read_matrix(grid_loc);
 
 		std::string dist_loc = "../input/" + p.income_dir + "/ydist_combined.txt";
-		model->proddist = HankUtilities::read_matrix(dist_loc);
+		model->proddist = read_matrix(dist_loc);
 
 		std::string markov_loc = "../input/" + p.income_dir + "/ymarkov_combined.txt";
 
@@ -262,7 +268,7 @@ namespace {
 				el /= (1.0 + p.adjFrischGridFrac * p.frisch);
 
 		int k = model->proddist.size();
-		model->matrices->prodmarkov = vector2eigenm(HankUtilities::read_matrix(markov_loc), k, k);
+		model->matrices->prodmarkov = vector2eigenm(read_matrix(markov_loc), k, k);
 		fix_rounding(model->matrices->prodmarkov);
 
 		for (auto el : model->logprodgrid)
@@ -384,5 +390,53 @@ namespace {
 			assert( p.kappa_w[i] == adjcosts->kappa_w[i] );
 			assert( p.kappa_d[i] == adjcosts->kappa_d[i] );
 		}
+	}
+
+	std::vector<hank_float_type> read_matrix(const std::string& file_loc)
+	{
+		std::string line, word;
+		std::ifstream yfile;
+		std::size_t current, previous;
+		yfile.open(file_loc.data(), std::ios::in);
+
+		std::vector<hank_float_type> out;
+
+		while ( getline(yfile, line) ) {
+			previous = 0;
+	    	current = find_multiple(line, 0);
+	    	if (current != std::string::npos) {
+		    	while (current != std::string::npos) {
+		    		if (current > 0) {
+			    		word = line.substr(previous, current - previous);
+			    		out.push_back(std::stod(word));
+				    }
+
+				    previous = current + 1;
+			    	current = find_multiple(line, previous);
+			    }
+
+			    word = line.substr(previous, current - previous);
+			    out.push_back(std::stod(word));
+			}
+			else {
+				out.push_back(std::stod(line));
+			}
+		}
+		yfile.close();
+
+		return out;
+	}
+
+	std::size_t find_multiple(const std::string& line, int pos)
+	{
+		std::size_t t1, t2;
+
+		t1 = line.find("  ", pos);
+		t2 = line.find(" -", pos);
+
+		if ((t1 < t2) & (t1 != std::string::npos))
+			return t1;
+		else
+			return t2;
 	}
 }

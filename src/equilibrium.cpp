@@ -3,8 +3,7 @@
 #include <algorithm>
 #include <math.h>
 #include <assert.h>
-#include <utilities.h>
-#include <functions.h>
+#include <model_functions.h>
 #include <model.h>
 
 namespace
@@ -271,7 +270,7 @@ void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
 			trans_equms[it].qinvestment = 0;
 			trans_equms[it].invadjust = 0;
 
-			trans_equms[it].inv_cap_ratio = HankFunctions::capadjcost1inv(
+			trans_equms[it].inv_cap_ratio = ModelFunctions::capadjcost1inv(
 				trans_equms[it].qcapital - 1.0, p.capadjcost, p.depreciation);
 
 			if (it < T - 1)
@@ -279,7 +278,7 @@ void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
 			else
 				trans_equms[it].qdot = 0;
 
-			trans_equms[it].capadjust = HankFunctions::capadjcost1(trans_equms[it].inv_cap_ratio, p.capadjcost, p.depreciation);
+			trans_equms[it].capadjust = ModelFunctions::capadjcost1(trans_equms[it].inv_cap_ratio, p.capadjcost, p.depreciation);
 			trans_equms[it].ra =
 				(trans_equms[it].rcapital + trans_equms[it].inv_cap_ratio * trans_equms[it].capadjust - trans_equms[it].capadjust + trans_equms[it].qdot)
 				/ trans_equms[it].qcapital - p.depreciation;
@@ -307,7 +306,7 @@ void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
 		for (int it=1; it<T; ++it)
 			linv[it] = linv[it-1] / (1.0 - deltatransvec[it] * trans_equms[it-1].qinvestment / p.invadjcost);
 
-		trans_equms[T-1].inv_cap_ratio = HankFunctions::capadjcost1inv(trans_equms[T-1].qcapital - 1.0, p.capadjcost, p.depreciation);
+		trans_equms[T-1].inv_cap_ratio = ModelFunctions::capadjcost1inv(trans_equms[T-1].qcapital - 1.0, p.capadjcost, p.depreciation);
 		for (int it=0; it<T-1; ++it)
 			trans_equms[it].inv_cap_ratio = linv[it] / trans_equms[it].capital;
 	}

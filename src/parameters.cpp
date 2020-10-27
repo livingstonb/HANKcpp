@@ -3,7 +3,6 @@
 #include <vector>
 #include <math.h>
 #include <string>
-#include <utilities.h>
 
 namespace {
 	double quadratic_formula(double a, double b, double c);

@@ -25,6 +25,22 @@ enum class GovBCAdjType { spending, lumptax, debt, proptax, ftpl, none, fiscal }
 
 enum class FirmDiscountRateType { rho, rb_iss, ra_iss, rb_trans, ra_trans };
 
+class WealthTarget
+{
+	public:
+		enum class Type { mean, median, none };
+
+		WealthTarget(WealthTarget::Type type_, double value_) : type(type_), value(value_) {}
+
+		Type type;
+
+		double value;
+
+		bool is_mean() const {return (type == Type::mean);}
+
+		bool is_median() const {return (type == Type::median);}
+};
+
 class Parameters {
 	public:
 		Parameters() {}

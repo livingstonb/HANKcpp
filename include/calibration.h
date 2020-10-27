@@ -61,7 +61,7 @@ class SSCalibrator
 		int ix_capital = -1;
 };
 
-using ObjectPointers = UniquePtrContainer<Parameters, Model, EquilibriumInitial, DistributionStatistics, SSCalibrator>;
+using ObjectPointers = HANK::UniquePtrContainer<Parameters, Model, EquilibriumInitial, DistributionStatistics, SSCalibrator>;
 
 class CalibrationArgs
 {

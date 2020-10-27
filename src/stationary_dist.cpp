@@ -8,7 +8,7 @@
 #include <transition_matrix.h>
 #include <iostream>
 #include <assert.h>
-#include <cmath>
+#include <math.h>
 
 #include <hank_macros.h>
 

@@ -5,7 +5,6 @@
 #include <upwinding.h>
 #include <equilibrium.h>
 #include <hank_numerics.h>
-#include <utilities.h>
 #include <adjustment_costs.h>
 
 #include <hank_eigen_dense.h>

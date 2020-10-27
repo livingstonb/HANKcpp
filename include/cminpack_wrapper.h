@@ -6,8 +6,6 @@
 #include <cminpack.h>
 #include <cminpackP.h>
 
-#include <utilities.h>
-
 class Parameters;
 
 class Model;
@@ -21,9 +19,9 @@ class IRF;
 inline void check_cminpack_success(int info)
 {
 	std::cout << '\n';
-	HankUtilities::horzline();
-	HankUtilities::horzline();
-	HankUtilities::horzline();
+	HANK::horzline();
+	HANK::horzline();
+	HANK::horzline();
 	if ( info == 0 ) {
 		std::cout << "improper hybrd1 input parameters\n";
 		throw 0;
@@ -43,9 +41,9 @@ inline void check_cminpack_success(int info)
 		std::cout << "hybrd1 not making good progress\n";
 		throw 0;
 	}
-	HankUtilities::horzline();
-	HankUtilities::horzline();
-	HankUtilities::horzline();
+	HANK::horzline();
+	HANK::horzline();
+	HANK::horzline();
 	std::cout << '\n';
 }
 

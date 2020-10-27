@@ -5,13 +5,13 @@
 #include <equilibrium.h>
 #include <iostream>
 #include <functional>
-#include <utilities.h>
 #include <algorithm>
 #include <hank_numerics.h>
 #include <bellman.h>
 #include <stationary_dist.h>
 #include <distribution_statistics.h>
 #include <upwinding.h>
+#include <assert.h>
 
 #include <math.h>
 
@@ -19,7 +19,7 @@
 
 using namespace std::placeholders;
 
-using SolverArgsIRF = UniquePtrContainer<const Parameters, const Model, const EquilibriumInitial, EquilibriumFinal, const IRF>;
+using SolverArgsIRF = HANK::UniquePtrContainer<const Parameters, const Model, const EquilibriumInitial, EquilibriumFinal, const IRF>;
 
 namespace {
 	std::vector<hank_float_type> construct_cum_delta_trans_vector(double deltatranstot, double deltatransmin, int Ttrans);
@@ -218,7 +218,7 @@ void IRF::compute_remaining_variables()
 		if ( flextransition )
 			trans_equm[it].priceadjust = 0.0;
 		else
-			trans_equm[it].priceadjust = (p.priceadjcost / 2.0) * pow(trans_equm[it].pi, 2) * trans_equm[it].output;
+			trans_equm[it].priceadjust = ModelFunctions::priceadjcost(trans_equm[it].pi, trans_equm[it].output, p.priceadjcost);
 	}
 
 	// Inflation and output growth
@@ -253,13 +253,12 @@ void IRF::compute_remaining_variables()
 
 void IRF::set_shock_paths()
 {
-	std::vector<hank_float_type> mpshock(Ttrans);
-	std::vector<hank_float_type> tfp_Y(Ttrans);
-	std::vector<hank_float_type> riskaver(Ttrans);
-
-	std::fill(mpshock.begin(), mpshock.end(), 0);
-	std::fill(tfp_Y.begin(), tfp_Y.end(), initial_equm.tfp_Y);
-	std::fill(riskaver.begin(), riskaver.end(), p.riskaver);
+	std::vector<hank_float_type> mpshock, tfp_Y, riskaver;
+	for (int it=0; it<Ttrans; ++it) {
+		mpshock.push_back(0);
+		tfp_Y.push_back(initial_equm.tfp_Y);
+		riskaver.push_back(p.riskaver);
+	}
 
 	hank_float_type initial_mpshock = 0;
 	if ( shock.type == ShockType::tfp_Y )
@@ -466,7 +465,7 @@ namespace {
 		variable_values.push_back(stats.Eb);
 		variable_names.push_back("E[b]");
 
-		OptimStatus optim_status(equation_names, variable_names, fvec, variable_values);
+		HANK::OptimStatus optim_status(equation_names, variable_names, fvec, variable_values);
 		HANK::print(optim_status);
 
 		return 0;

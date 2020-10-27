@@ -12,9 +12,9 @@ MKLINCLUDES=-I$(MKLR)/include -DMKL_ILP64 -m64 -I/media/hdd/lib/intel/mkl/includ
 SSFLAGS=
 SSINCLUDES=-I/media/hdd/lib/SuiteSparse/include 
 CFLAGS=-O3 -pg -c -W -Wall -g3 -I$(INCLUDEDIR)
-SOURCES=parameters model adjustment_costs utilities hank_numerics upwinding bellman \
+SOURCES=parameters model adjustment_costs hank_numerics upwinding bellman \
 	transition_matrix stationary_dist distribution_statistics calibration equilibrium \
-	impulse_responses
+	impulse_responses hank
 SOURCES:=$(addsuffix .cpp, $(SOURCES))
 MAIN=main.cpp
 MAIN:=$(MAIN:.cpp=.o)
