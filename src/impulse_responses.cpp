@@ -150,7 +150,6 @@ void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type 
 		hjb.update(trans_equm[it]);
 		trans_equm[it].V = hjb.V;
 		trans_equm[it].policies = *hjb.optimal_decisions;
-		std::cout << "t = " << it << '\n';
 	}
 
 	// Solve distribution forward
@@ -430,18 +429,19 @@ namespace {
 		}
 
 		// Guess for rb or pi
-		for (int it=0; it<Ttrans; ++it) {
-			if ( guess_rb & (it == Ttrans - 1) )
-				trans_equm[it].rb = final_equm.rb;
-			else if ( guess_rb )
+		for (int it=0; it<Ttrans-1; ++it) {
+			if ( guess_rb )
 				trans_equm[it].rb += x[ix];
-			else if ( guess_pi & (it == Ttrans - 1) )
-				trans_equm[it].pi = final_equm.pi;
 			else if ( guess_pi )
 				trans_equm[it].pi += x[ix];
 
 			++ix;
 		}
+
+		if ( guess_rb )
+			trans_equm[Ttrans-1].rb = final_equm.rb;
+		else if ( guess_pi )
+			trans_equm[Ttrans-1].pi = final_equm.pi;
 
 		// Guess for occupation-specific labor
 		for (int it=0; it<Ttrans; ++it) {

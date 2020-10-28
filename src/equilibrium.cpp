@@ -152,13 +152,13 @@ EquilibriumFinal::EquilibriumFinal(const EquilibriumBase& other_equm)
 	EquilibriumBase* eqbase = (EquilibriumBase *) this;
 	*eqbase = other_equm;
 
-	labshareY.clear();
-	labshareN.clear();
-	labfracY.clear();
-	labfracN.clear();
-	labor_occ.clear();
-	wage_occ.clear();
-	netwagegrid.clear();
+	// labshareY.clear();
+	// labshareN.clear();
+	// labfracY.clear();
+	// labfracN.clear();
+	// labor_occ.clear();
+	// wage_occ.clear();
+	// netwagegrid.clear();
 }
 
 void EquilibriumFinal::solve(const Parameters& p, const Equilibrium& initial_equm, const hank_float_type* x)
@@ -208,12 +208,12 @@ EquilibriumTrans::EquilibriumTrans(const EquilibriumBase& other_equm)
 	EquilibriumBase* eqbase = (EquilibriumBase *) this;
 	*eqbase = other_equm;
 
-	labshareY.clear();
-	labshareN.clear();
-	labfracY.clear();
-	labfracN.clear();
-	wage_occ.clear();
-	netwagegrid.clear();
+	// labshareY.clear();
+	// labshareN.clear();
+	// labfracY.clear();
+	// labfracN.clear();
+	// wage_occ.clear();
+	// netwagegrid.clear();
 }
 
 std::map<std::string, hank_float_type> EquilibriumTrans::variables_map() const

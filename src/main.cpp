@@ -94,8 +94,8 @@ void compute_irfs(const HANKCalibration::ObjectPointers& object_ptrs) {
 	IRF irf(p, model, iss);
 	irf.shock.type = ShockType::tfp_Y;
 	irf.permanentShock = false;
-	irf.Ttrans = 5;
-	irf.nendtrans = 2;
+	// irf.Ttrans = 5;
+	// irf.nendtrans = 2;
 
 	irf.setup();
 
