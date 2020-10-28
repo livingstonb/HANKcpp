@@ -12,7 +12,7 @@ MKLINCLUDES=-I$(MKLR)/include -DMKL_ILP64 -m64 -I/media/hdd/lib/intel/mkl/includ
 SSFLAGS=
 SSINCLUDES=-I/media/hdd/lib/SuiteSparse/include 
 CFLAGS=-O3 -pg -c -W -Wall -g3 -I$(INCLUDEDIR)
-SOURCES=parameters model adjustment_costs hank_numerics upwinding bellman \
+SOURCES=parameters model adjustment_costs hank_numerics upwinding bellman hank_numerics_cminpack \
 	transition_matrix stationary_dist distribution_statistics calibration equilibrium \
 	impulse_responses hank
 SOURCES:=$(addsuffix .cpp, $(SOURCES))
@@ -41,15 +41,15 @@ $(EXECUTABLE): $(MAIN) $(OBJECTS)
 
 $(SPARSEOBJS): MKLFLAGS=$(MKLINCLUDES) $(SSINCLUDES)
 
-$(MAIN): XINCLUDES:=$(CMINPACKDIR)
+$(MAIN): XINCLUDES:=
 
-impulse_responses.o: XINCLUDES:=-I$(CMINPACKDIR)
+hank_numerics_cminpack.o: XINCLUDES:=-I$(CMINPACKDIR)
 
 %.o:
 	$(CC) $(CFLAGS) $(XINCLUDES) $(MKLFLAGS) $(SOURCEDIR)/$*.cpp -o $@ #-fopenmp
 
 $(MAIN): %.o: $(SOURCEDIR)/%.cpp
-	$(CC) $(CFLAGS) -I$(XINCLUDES) $< -o $@ #-fopenmp
+	$(CC) $(CFLAGS) $< -o $@ #-fopenmp
 
 clean:
 	rm *.o

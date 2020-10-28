@@ -10,6 +10,7 @@
 #include <distribution_statistics.h>
 #include <stationary_dist.h>
 #include <upwinding.h>
+#include <hank_numerics_cminpack.h>
 
 #include <assert.h>
 
@@ -212,9 +213,7 @@ int HANKCalibration::initial_steady_state_obj_fn(void* args_void_ptr, int n, con
 	const DistributionStatistics& stats = *args.ptr4;
 	HANK::print(stats);
 
-	iss.update_with_stats(stats);
-	iss.V = hjb.V;
-	iss.policies = *hjb.optimal_decisions;
+	iss.update_after_solving(stats, hjb);
 
 	CalibrationArgs cal_args(args);
 	cal.fill_fvec(cal_args, fvec);

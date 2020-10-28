@@ -75,8 +75,8 @@ class EquilibriumInitial : public Equilibrium
 
 		void solve(const Parameters& p);
 
-		template<typename DistributionStatisticsType>
-		void update_with_stats(const DistributionStatisticsType& stats);
+		template<typename DistributionStatisticsType, typename HJBType>
+		void update_after_solving(const DistributionStatisticsType& stats, const HJBType& hjb);
 };
 
 class EquilibriumFinal : public Equilibrium
@@ -111,13 +111,16 @@ class EquilibriumTrans : public Equilibrium
 			const EquilibriumFinal& final_equm, const hank_float_type* deltatransvec);
 };
 
-template<typename DistributionStatisticsType>
-void EquilibriumInitial::update_with_stats(const DistributionStatisticsType& stats)
+template<typename DistributionStatisticsType, typename HJBType>
+void EquilibriumInitial::update_after_solving(const DistributionStatisticsType& stats, const HJBType& hjb)
 {
 	bond = stats.Eb;
 	govbond = equity_B - bond;
 	govexp = taxrev + rb * govbond;
 	density = stats.density;
+
+	V = hjb.V;
+	policies = *hjb.optimal_decisions;
 }
 
 namespace HANK {

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <functional>
 #include <hank_numerics.h>
+#include <hank_numerics_cminpack.h>
 #include <bellman.h>
 #include <stationary_dist.h>
 #include <distribution_statistics.h>
@@ -14,8 +15,6 @@
 #include <model_functions.h>
 
 #include <math.h>
-
-#include <cminpack_wrapper.h>
 
 using namespace std::placeholders;
 
@@ -32,7 +31,7 @@ namespace {
 
 	void make_transition_guesses(const Parameters& p, const hank_float_type* x, IRF* irf);
 
-	int final_steady_state_obj_fn(void* solver_args_voidptr, int /* n */, const real *x, real *fvec, int /* iflag */ );
+	int final_steady_state_obj_fn(void* solver_args_voidptr, int /* n */, const hank_float_type *x, hank_float_type *fvec, int /* iflag */ );
 }
 
 void TransShock::setup() {
@@ -344,7 +343,7 @@ void IRF::find_final_steady_state()
 	args.ptr3.reset(&initial_equm);
 	args.ptr5.reset(this);
 
-	cminpack_hybrd1_wrapper(final_steady_state_obj_fn, &args, n, x.data());
+	HankNumerics::cminpack_hybrd1_wrapper(final_steady_state_obj_fn, (void*) &args, n, x.data());
 
 	final_equm_ptr = std::move(args.ptr4);
 }
@@ -466,7 +465,7 @@ namespace {
 		}
 	}
 
-	int final_steady_state_obj_fn(void* solver_args_voidptr, int /* n */, const real *x, real *fvec, int /* iflag */ )
+	int final_steady_state_obj_fn(void* solver_args_voidptr, int /* n */, const hank_float_type *x, hank_float_type *fvec, int /* iflag */ )
 	{
 		SolverArgsIRF& solver_args = *(SolverArgsIRF *) solver_args_voidptr;
 		const Parameters& p = *(solver_args.ptr1);

@@ -137,8 +137,6 @@ void broyden_backstep(const broyden_fn_type& fn, int n, hank_float_type* x,
 	MatrixXr fjacinv = fjacmap.inverse();
 
 	ArrayXr ld, lgradf;
-	MatrixXr ltemp1(n, 1);
-	MatrixXr ltemp2(1, n);
 	double fnorm0, fmaxerr0, lstep, lgradfld;
 	for (int it=0; it<maxit; ++it) {
 		// Newton direction
@@ -215,12 +213,15 @@ void broyden_backstep(const broyden_fn_type& fn, int n, hank_float_type* x,
 		else {
 			// Update estimate of inverse jacobian
 			ArrayXr lu = fjacinv * (fvecmap - fvec0).matrix();
-			ltemp1.col(0) = lstep * ld - lu;
-			ltemp2.row(0) = (lstep * ld) * fjacinv.array();
-			fjacinv += ltemp1 * ltemp2;
+			MatrixXr ltemp1 = lstep * ld - lu;
+			MatrixXr ltemp2 = (lstep * ld).matrix() * fjacinv;
+			hank_float_type ld_lu_dot = (lstep * ld).matrix().dot(lu.matrix());
+			fjacinv += ltemp1 * ltemp2 / ld_lu_dot;
 		}
 	}
 }
+
+typedef int(*hank_cminpack_hybrd1_func_type)(void *p, int n, const hank_float_type* x, hank_float_type* fvec, int iflag);
 
 
 // MatrixXr invert_matrix(const MatrixXr& matrix, int n, int& errorflag)
@@ -311,3 +312,4 @@ void broyden_backstep(const broyden_fn_type& fn, int n, hank_float_type* x,
 // }
 
 }
+

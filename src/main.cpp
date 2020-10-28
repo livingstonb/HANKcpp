@@ -14,8 +14,7 @@
 #include <impulse_responses.h>
 #include <upwinding.h>
 #include <memory>
-
-#include <cminpack_wrapper.h>
+#include <hank_numerics_cminpack.h>
 
 const Options *global_hank_options = NULL;
 
@@ -156,9 +155,7 @@ int main () {
 		const DistributionStatistics& stats = *object_ptrs.ptr4;
 		HANK::print(stats);
 
-		iss.update_with_stats(stats);
-		iss.V = hjb.V;
-		iss.policies = *hjb.optimal_decisions;
+		iss.update_after_solving(stats, hjb);
 
 		compute_irfs(object_ptrs);
 	}
@@ -174,7 +171,7 @@ int main () {
 		hank_float_type x[n];
 		cal.fill_xguess(params, model, x);
 
-		cminpack_hybrd1_wrapper(HANKCalibration::initial_steady_state_obj_fn, &object_ptrs, n, x);
+		HankNumerics::cminpack_hybrd1_wrapper(HANKCalibration::initial_steady_state_obj_fn, (void*) &object_ptrs, n, x);
 		compute_irfs(object_ptrs);
 	}
 

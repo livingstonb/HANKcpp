@@ -15,7 +15,11 @@ namespace HANKCalibration {
 
 class CalibrationArgs;
 
+class SSCalibrator;
+
 using deviation_fn_type = std::function<double(const CalibrationArgs&)>;
+
+using ObjectPointers = HANK::UniquePtrContainer<Parameters, Model, EquilibriumInitial, DistributionStatistics, SSCalibrator>;
 
 class SSCalibrator
 {
@@ -56,8 +60,6 @@ class SSCalibrator
 
 		int ix_capital = -1;
 };
-
-using ObjectPointers = HANK::UniquePtrContainer<Parameters, Model, EquilibriumInitial, DistributionStatistics, SSCalibrator>;
 
 class CalibrationArgs
 {
