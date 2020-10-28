@@ -43,24 +43,18 @@ namespace HANK {
 		std::cout << '\n';
 	}
 
-	void print(const OptimStatus& optim_status)
+	void OptimNorm::print() const
 	{
-		optim_status.print();
+		std::cout << "\titeration " << iter << ", ";
+		std::cout << "norm = " << norm << '\n';
 	}
 
 	void print(const HankBase* hank_obj)
 	{	
-		print(hank_obj->variables_map(), hank_obj->title());
-	}
-
-	void print(const OptimNorm& optim_norm)
-	{
-		std::cout << '\n';
-		horzline();
-		std::cout << "OPTIMIZATION RESULTS:\n";
-		std::cout << "norm = " << optim_norm.norm << '\n';
-		horzline();
-		std::cout << '\n';
+		if ( hank_obj->override_print() )
+			hank_obj->print();
+		else
+			print(hank_obj->variables_map(), hank_obj->title());
 	}
 
 	void horzline()

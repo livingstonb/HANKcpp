@@ -22,10 +22,14 @@ class HankBase
 		virtual std::map<std::string, hank_float_type> variables_map() const;
 
 		virtual std::string title() const;
+
+		virtual void print() const {};
+
+		virtual bool override_print() const {return false;}
 };
 
 namespace HANK {
-	class OptimStatus
+	class OptimStatus : public HankBase
 	{
 		public:
 			OptimStatus(const std::vector<std::string>& equation_names_,
@@ -33,7 +37,9 @@ namespace HANK {
 				const hank_float_type* deviations_,
 				const std::vector<hank_float_type> variable_values_);
 
-			void print() const;
+			void print() const override;
+
+			bool override_print() const override {return true;}
 
 			std::vector<std::string> equation_names, variable_names;
 
@@ -42,16 +48,19 @@ namespace HANK {
 			int n;
 	};
 
-	struct OptimNorm
+	class OptimNorm : public HankBase
 	{
-		OptimNorm(double norm_) : norm(norm_) {}
+		public:
+			OptimNorm(double norm_, int iter_) : norm(norm_), iter(iter_) {}
 
-		double norm;
+			void print() const override;
+
+			bool override_print() const override {return true;}
+
+			double norm;
+
+			int iter;
 	};
-
-	void print(const OptimStatus& optim_status);
-
-	void print(const OptimNorm& optim_norm);
 
 	const hank_float_type ValueNotSet = -91912395.1;
 
@@ -62,7 +71,7 @@ namespace HANK {
 	{
 		std::cout << "\n\t";
 		horzline();
-		std::cout << '\n' << title << ":\n\t";
+		std::cout << '\t' << title << ":\n\t";
 		for (auto variable : variables)
 			std::cout << variable.first << " = " << variable.second << "\n\t";
 		horzline();

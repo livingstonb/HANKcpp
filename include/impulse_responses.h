@@ -44,6 +44,8 @@ class IRF {
 
 		void find_final_steady_state();
 
+		int iter = 0;
+
 	public:
 		IRF(const Parameters& p_, const Model& model_, const EquilibriumInitial& iss_);
 
