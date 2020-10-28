@@ -117,14 +117,14 @@ void broyden_backstep(const broyden_fn_type& fn, int n, hank_float_type* x,
 	bool recomputeJacobian = true;
 	int nbs, maxbs = 5;
 	double alpha = 1.0e-4;
-	int lastitforjac = 0;
+	int lastitforjac = -1;
 	double lstepmin = 1.0e-7;
 	// int errorflag = 0;
 
-	ArrayXr fvec0 = Eigen::Map<ArrayXr>(fvec, n);
 	Eigen::Map<ArrayXr> fvecmap(fvec, n);
-	ArrayXr x0 = Eigen::Map<ArrayXr>(x, n);
+	ArrayXr fvec0 = fvecmap;
 	Eigen::Map<ArrayXr> xmap(x, n);
+	ArrayXr x0 = xmap;
 	Eigen::Map<MatrixXr> fjacmap(fjac, n, n);
 
 	double fnorm = 0.5 * fvec0.pow(2).sum();
@@ -163,7 +163,7 @@ void broyden_backstep(const broyden_fn_type& fn, int n, hank_float_type* x,
 		lgradfld = lgradf.matrix().dot(lstep * ld.matrix());
 		if ( fnorm > fnorm0 + alpha * lgradfld ) {
 			++nbs;
-			lstep = lgradfld / (2.0 * (fnorm - fnorm0 - lgradfld));
+			lstep = -lgradfld / (2.0 * (fnorm - fnorm0 - lgradfld));
 			xmap = x0 + lstep * ld;
 			fn(n, x, fvec);
 			fnorm = 0.5 * fvecmap.pow(2).sum();
@@ -172,11 +172,11 @@ void broyden_backstep(const broyden_fn_type& fn, int n, hank_float_type* x,
 
 		// Subsequent backsteps: use half steps
 		for (int ibs=1; ibs<maxbs; ++ibs) {
-			if ( fnorm > fnorm0 + alpha + lgradfld ) {
+			if ( fnorm > fnorm0 + alpha * lgradfld ) {
 				++nbs;
-				if ( nbs < maxbs )
+				if ( nbs < maxbs + 1 )
 					lstep *= 0.5;
-				else if ( nbs == maxbs )
+				else
 					lstep = fmin(lstepmin, 0.1 * lstep);
 
 				xmap = x0 + lstep * ld;
@@ -186,7 +186,10 @@ void broyden_backstep(const broyden_fn_type& fn, int n, hank_float_type* x,
 			}
 		}
 
-		if ( (nbs == maxbs) & (fnorm >= fnorm0) ) {
+		if ( fmaxerr <= ftol )
+			return;
+
+		if ( (nbs == maxbs + 1) & (fnorm >= fnorm0) ) {
 			xmap = x0;
 			fvecmap = fvec0;
 
@@ -195,10 +198,10 @@ void broyden_backstep(const broyden_fn_type& fn, int n, hank_float_type* x,
 				return;
 			}
 			else {
-				if ( it == lastitforjac ) {
+				if ( it == lastitforjac + 1 ) {
 					if ( it == 0 )
 						std::cerr << "Broyden: not a descent direction\n";
-					else if ( it > 1 )
+					else
 						std::cerr << "Broyden: backstep did not work even after re-computing Jacobian\n";
 
 					std::cerr << "Final:  L2 norm: " << sqrt(fnorm0) << ", max err: " << fmaxerr0 << "\n";

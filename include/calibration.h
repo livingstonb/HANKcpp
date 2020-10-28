@@ -28,7 +28,7 @@ class SSCalibrator
 
 		void setup(const Parameters &p);
 
-		std::vector<deviation_fn_type> obj_functions;
+		std::vector<deviation_fn_type> obj_functions, variable_values;
 
 		void fill_fvec(const CalibrationArgs& args, hank_float_type fvec[]) const;
 
@@ -40,7 +40,9 @@ class SSCalibrator
 
 		void print_fvec(hank_float_type fvec[]) const;
 
-		int nmoments;
+		int nmoments, iter = 0;
+
+		bool printDetailed = true;
 
 		bool calibrateLaborDisutility = true;
 
@@ -48,7 +50,7 @@ class SSCalibrator
 
 		bool calibrateDiscountRate = true;
 
-		std::vector<std::string> moment_descriptions;
+		std::vector<std::string> moment_descriptions, variable_names;
 
 		std::vector<int> ix_labor_occ;
 

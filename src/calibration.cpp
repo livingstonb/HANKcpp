@@ -3,6 +3,7 @@
 #include <string>
 #include <math.h>
 #include <hank_config.h>
+#include <hank.h>
 
 #include <parameters.h>
 #include <model.h>
@@ -25,47 +26,73 @@ namespace {
 
 	double deviation_median_illiq_wealth(const CalibrationArgs& args);
 
+	double value_median_illiq_wealth(const CalibrationArgs& args);
+
 	double deviation_mean_liq_wealth(const CalibrationArgs& args);
+
+	double value_mean_liq_wealth(const CalibrationArgs& args);
 
 	double deviation_median_liq_wealth(const CalibrationArgs& args);
 
+	double value_median_liq_wealth(const CalibrationArgs& args);
+
 	double illiq_market_clearing(const CalibrationArgs& args);
+
+	double value_mean_illiq_wealth(const CalibrationArgs& args);
 
 	double labor_market_clearing(const CalibrationArgs& args, int io);
 
+	double value_labor(const CalibrationArgs& args, int io);
+
 	double hours_target(const CalibrationArgs& args);
+
+	double value_hours(const CalibrationArgs& args);
 }
 
 void SSCalibrator::setup(const Parameters &p)
 {
 	// Market clearing conditions
 	obj_functions.push_back(illiq_market_clearing);
-	moment_descriptions.push_back("Capital market clearing\n");
+	moment_descriptions.push_back("Capital market clearing");
+	variable_names.push_back("E[a]");
+	variable_values.push_back(value_mean_illiq_wealth);
 
 	for (int io=0; io<p.nocc; ++io) {
 		deviation_fn_type labclearing_io = std::bind(labor_market_clearing, _1, io);
 		obj_functions.push_back(labclearing_io);
-		moment_descriptions.push_back("Labor market clearing, occ_" + std::to_string(io) + "\n");
+		moment_descriptions.push_back("Labor market clearing, occ_" + std::to_string(io) + "");
+		variable_names.push_back("E[labor_" + std::to_string(io) + "]");
+
+		deviation_fn_type labclearing_val_io = std::bind(value_labor, _1, io);
+		variable_values.push_back(labclearing_val_io);
 	}
 
 	if ( p.illiqWealthTarget.is_median() ) {
 		obj_functions.push_back(deviation_median_illiq_wealth);
-		moment_descriptions.push_back("Median illiq wealth\n");
+		moment_descriptions.push_back("Median illiq wealth");
+		variable_names.push_back("Median(a)");
+		variable_values.push_back(value_median_illiq_wealth);
 	}
 
 	if ( p.liqWealthTarget.is_mean() ) {
 		obj_functions.push_back(deviation_mean_liq_wealth);
-		moment_descriptions.push_back("Mean liq wealth\n");
+		moment_descriptions.push_back("Mean liq wealth");
+		variable_names.push_back("E[b]");
+		variable_values.push_back(value_mean_liq_wealth);
 	}
 	else if ( p.liqWealthTarget.is_median() ) {
 		obj_functions.push_back(deviation_median_liq_wealth);
-		moment_descriptions.push_back("Median liq wealth\n");
+		moment_descriptions.push_back("Median liq wealth");
+		variable_names.push_back("Median(b)");
+		variable_values.push_back(value_median_liq_wealth);
 	}
 
 	// Hours target
 	if ( calibrateLaborDisutility ) {
 		obj_functions.push_back(hours_target);
-		moment_descriptions.push_back("Hours worked\n");
+		moment_descriptions.push_back("Hours worked");
+		variable_names.push_back("E[hours");
+		variable_values.push_back(value_hours);
 	}
 
 	// Set number of moments
@@ -166,7 +193,7 @@ void SSCalibrator::update_ss(const Parameters* p, EquilibriumInitial *iss, const
 		iss->capital = p->target_KY_ratio;
 }
 
-void SSCalibrator::print_fvec(hank_float_type fvec[]) const {
+void SSCalibrator::print_fvec(hank_float_type* fvec) const {
 	hank_float_type norm = 0;
 	for (unsigned int im=0; im<moment_descriptions.size(); ++im) {
 		std::cout << moment_descriptions[im];
@@ -217,7 +244,22 @@ int HANKCalibration::initial_steady_state_obj_fn(void* args_void_ptr, int n, con
 
 	CalibrationArgs cal_args(args);
 	cal.fill_fvec(cal_args, fvec);
-	cal.print_fvec(fvec);
+	// cal.print_fvec(fvec);
+
+	std::vector<hank_float_type> variable_values;
+	for (int i=0; i<n; ++i)
+		variable_values.push_back(cal.variable_values[i](cal_args));
+
+	if ( cal.printDetailed ) {
+		HANK::OptimStatus optim_status(cal.moment_descriptions, cal.variable_names, fvec, variable_values, cal.iter);
+		HANK::print(&optim_status);
+	}
+	else {
+		HANK::OptimNorm optim_norm(fvec, n, cal.iter);
+		HANK::print(&optim_norm);
+	}
+
+	++cal.iter;
 
 	return 0;
 }
@@ -266,9 +308,19 @@ namespace {
 		return args.stats.a_pctiles[5] / args.p.illiqWealthTarget.value - 1.0;
 	}
 
+	double value_median_illiq_wealth(const CalibrationArgs& args)
+	{
+		return args.stats.a_pctiles[5];
+	}
+
 	double deviation_mean_liq_wealth(const CalibrationArgs& args)
 	{
 		return args.stats.Eb / args.p.liqWealthTarget.value - 1.0;
+	}
+
+	double value_mean_liq_wealth(const CalibrationArgs& args)
+	{
+		return args.stats.Eb;
 	}
 
 	double deviation_median_liq_wealth(const CalibrationArgs& args)
@@ -276,9 +328,19 @@ namespace {
 		return args.stats.b_pctiles[5] / args.p.liqWealthTarget.value - 1.0;
 	}
 
+	double value_median_liq_wealth(const CalibrationArgs& args)
+	{
+		return args.stats.b_pctiles[5];
+	}
+
 	double illiq_market_clearing(const CalibrationArgs& args)
 	{
 		return args.stats.Ea / (args.iss.capital + args.iss.equity_A) - 1.0;
+	}
+
+	double value_mean_illiq_wealth(const CalibrationArgs& args)
+	{
+		return args.stats.Ea;
 	}
 
 	double labor_market_clearing(const CalibrationArgs& args, int io)
@@ -286,8 +348,18 @@ namespace {
 		return args.stats.Elabor_occ[io] * args.model.occdist[io] / args.iss.labor_occ[io] - 1.0;
 	}
 
+	double value_labor(const CalibrationArgs& args, int io)
+	{
+		return args.stats.Elabor_occ[io];
+	}
+
 	double hours_target(const CalibrationArgs& args)
 	{
 		return (args.stats.Ehours / args.p.hourtarget - 1.0) / 100.0;
+	}
+
+	double value_hours(const CalibrationArgs& args)
+	{
+		return args.stats.Ehours;
 	}
 }

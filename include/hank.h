@@ -35,7 +35,8 @@ namespace HANK {
 			OptimStatus(const std::vector<std::string>& equation_names_,
 				const std::vector<std::string>& variable_names_,
 				const hank_float_type* deviations_,
-				const std::vector<hank_float_type> variable_values_);
+				const std::vector<hank_float_type>& variable_values_,
+				int iter_);
 
 			void print() const override;
 
@@ -45,13 +46,17 @@ namespace HANK {
 
 			std::vector<hank_float_type> deviations, variable_values;
 
-			int n;
+			int n, iter;
+
+			double norm;
 	};
 
 	class OptimNorm : public HankBase
 	{
 		public:
 			OptimNorm(double norm_, int iter_) : norm(norm_), iter(iter_) {}
+
+			OptimNorm(const hank_float_type* x, int n, int iter_);
 
 			void print() const override;
 
@@ -120,17 +125,6 @@ namespace HANK {
 
 			std::shared_ptr<T5> ptr5 = nullptr;
 	};
-
-	template<typename T>
-	T norm(const T* arr, int n)
-	{
-		T normval = 0;
-		for (int i=0; i<n; ++i)
-			normval += pow(arr[i], 2);
-
-		normval = sqrt(normval);
-		return normval;
-	}
 }
 
 enum class AdjustCostFnRatioMode { none, linear, max };

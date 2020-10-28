@@ -100,7 +100,7 @@ int main () {
 	Options options; 
 	options.fast = false;
 	options.print_diagnostics = false;
-	options.skip_calibration = true;
+	options.skip_calibration = false;
 
 	global_hank_options = &options;
 
@@ -166,6 +166,9 @@ int main () {
 		hank_float_type x[n];
 		cal.fill_xguess(params, model, x);
 
+		HANK::horzline();
+		std::cout << "FINDING INITIAL STEADY STATE\n";
+		std::cout << " # Beginning hybrd1 iteration\n";
 		HankNumerics::cminpack_hybrd1_wrapper(HANKCalibration::initial_steady_state_obj_fn, (void*) &object_ptrs, n, x);
 		compute_irfs(object_ptrs);
 	}
