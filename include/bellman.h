@@ -11,6 +11,8 @@ class Model;
 
 class Equilibrium;
 
+class EquilibriumTrans;
+
 class Parameters;
 
 namespace Upwinding
@@ -36,9 +38,13 @@ class HJB {
 		const Parameters& p;
 
 	public:
+		HJB(const Parameters& p_, const Model& model_, const vector3dr& V);
+	
 		HJB(const Parameters& p_, const Model& model_, const Equilibrium& ss);
 
-		void solve(const Equilibrium& ss);
+		void iterate(const Equilibrium& ss);
+
+		void update(const EquilibriumTrans& equm);
 
 		vector3dr V;
 

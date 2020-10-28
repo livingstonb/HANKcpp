@@ -173,7 +173,7 @@ class Parameters {
 		double targetMeanIllGuess = 512183;
 
 		// number of time periods
-		int Ttransition = 200;
+		// int Ttransition = 200;
 };
 
 namespace HANK {

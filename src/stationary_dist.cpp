@@ -3,7 +3,7 @@
 #include <hank_eigen_sparse.h>
 #include <model.h>
 #include <equilibrium.h>
-#include <bellman.h>
+#include <upwinding.h>
 #include <parameters.h>
 #include <transition_matrix.h>
 #include <iostream>
@@ -20,8 +20,13 @@ namespace {
 	void check_dist(const MatrixXr& distcheck, const Model& model);
 }
 
-void StationaryDist::compute(const Parameters& p, const Model& model, const Equilibrium& ss, const HJB& hjb)
+void StationaryDist::compute(const Parameters& p, const Model& model, const Equilibrium& equm, const Upwinding::Policies& policies)
 {
+	if ( equm.is_transition_equilibrium() ) {
+		dispfreq = 0;
+		delta = equm.tdelta;
+	}
+
 	Eigen::Map<const VectorXr> abdeltavec(model.abdelta.data(), model.abdelta.size());
 	VectorXr inv_abdelta = abdeltavec.cwiseInverse();
 	int iabx = TO_INDEX_1D(0, p.nb_neg, p.na, p.nb);
@@ -31,9 +36,13 @@ void StationaryDist::compute(const Parameters& p, const Model& model, const Equi
 
 	std::vector<SparseXd> B(model.ny);
 	std::vector<sparse_solver> spsolvers(model.ny);
+
+	if ( dispfreq > 0 )
+		std::cout << "Beginning KFE iteration..." << '\n';
+
 	for (int iy=0; iy<model.ny; ++iy) {
-		SparseMatContainer Acont = get_kfe_transition_matrix(p, model, ss.ra, ss.illprice, ss.illpricedot,
-			*hjb.optimal_decisions, iy);
+		SparseMatContainer Acont = get_kfe_transition_matrix(p, model, equm.ra, equm.illprice, equm.illpricedot,
+			policies, iy);
 		SparseXd& A = Acont.get();
 
 		// Adjust A' matrix for non-linearly spaced grids
@@ -49,9 +58,8 @@ void StationaryDist::compute(const Parameters& p, const Model& model, const Equi
 	}
 
 	Eigen::MatrixXd lmat = deye(model.ny).cast<double>() + delta * model.matrices->ymarkovoff.cast<double>().transpose();
-	double diff = 1.0e10;
-	int ii = 0;
-	while ( (diff > gtol) & (ii < maxiter) ) {
+
+	if ( equm.is_transition_equilibrium() ) {
 		for (int iy=0; iy<model.ny; ++iy) {
 			Eigen::VectorXd lgmat = gmat.cast<double>() * Eigen::VectorXd(lmat.row(iy));
 			lgmat(iabx) += delta * p.deathrate * gmat.col(iy).dot(abdeltavec) / abdeltavec[iabx];
@@ -61,14 +69,35 @@ void StationaryDist::compute(const Parameters& p, const Model& model, const Equi
 				throw "Sparse solver failure";
 		}
 
-		diff = (gmat - gmat_update).cwiseAbs().maxCoeff();
-		check_progress(diff, dispfreq, ii, gtol);
 		gmat = gmat_update;
-		++ii;
 	}
+	else {
+		double diff = 1.0e10;
+		int ii = 0;
+		while ( (diff > gtol) & (ii < maxiter) ) {
+			for (int iy=0; iy<model.ny; ++iy) {
+				Eigen::VectorXd lgmat = gmat.cast<double>() * Eigen::VectorXd(lmat.row(iy));
+				lgmat(iabx) += delta * p.deathrate * gmat.col(iy).dot(abdeltavec) / abdeltavec[iabx];
 
-	if ( ii == maxiter )
-		std::cout << "KFE did not converge" << '\n';
+				gmat_update.col(iy) = spsolvers[iy].solve(lgmat).cast<hank_float_type>();
+				if ( spsolvers[iy].info() != Eigen::Success )
+					throw "Sparse solver failure";
+			}
+
+			diff = (gmat - gmat_update).cwiseAbs().maxCoeff();
+
+			if ( dispfreq > 0 )
+				check_progress(diff, dispfreq, ii, gtol);
+
+			gmat = gmat_update;
+			++ii;
+		}
+
+		if ( ii == maxiter ) {
+			std::cout << "KFE did not converge" << '\n';
+			throw 0;
+		}
+	}
 	gmat = gmat.array().max(0.0);
 
 	double pmass = (gmat.array().colwise() * abdeltavec.array()).matrix().sum();
@@ -111,7 +140,7 @@ namespace {
 	void check_progress(double gdiff, int freq, int ii, double gtol)
 	{
 		if ( ii == 0 )
-			std::cout << "Beginning iteration" << '\n';
+			return;
 		else if ( ii % freq == 0)  {
 			std::cout << "Iteration " << ii << ", diff = " << gdiff << '\n';
 		}

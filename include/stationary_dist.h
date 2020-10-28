@@ -9,15 +9,17 @@ class Parameters;
 
 class Model;
 
-class HJB;
-
 class Equilibrium;
+
+namespace Upwinding { class Policies; }
 
 class StationaryDist {
 	public:
 		StationaryDist() {}
 
-		void compute(const Parameters& p, const Model& model, const Equilibrium& ss, const HJB& hjb);
+		StationaryDist(const vector3dr& density0) : density(density0) {}
+
+		void compute(const Parameters& p, const Model& model, const Equilibrium& ss, const Upwinding::Policies& policies);
 
 		vector3dr density;
 

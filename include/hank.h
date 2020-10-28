@@ -97,6 +97,21 @@ class StdVector3d {
 			vector.resize(n);
 		}
 
+		StdVector3d<T>& operator=(const StdVector3d<T>& other_vec)
+		{
+			for (int i=0; i<3; ++i)
+				shape[i] = other_vec.shape[i];
+
+			vector = other_vec.vector;
+
+			return *this;
+		}
+
+		StdVector3d(const StdVector3d<T>& other_vec)
+		{
+			*this = other_vec;
+		}
+
 		operator std::vector<T>() const {return vector;}
 
 		int shape[3];

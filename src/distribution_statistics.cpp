@@ -19,6 +19,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 {
 	const Parameters& p = p_;
 
+	density = sdist.density;
 	MatrixXr nw_aby(p.nab, model.ny);
 	MatrixXr agrid_aby(p.nab, model.ny);
 	MatrixXr bgrid_aby(p.nab, model.ny);

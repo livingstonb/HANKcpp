@@ -38,21 +38,32 @@ namespace {
 	Upwinding::DepositUpwind optimal_deposits(const Model& model, double Va, double Vb, double a, double illprice);
 }
 
-HJB::HJB(const Parameters& p_, const Model& model_, const Equilibrium& ss)
-	: model(model_), p(p_), V(p.na, p.nb, model.ny)
+HJB::HJB(const Parameters& p_, const Model& model_, const vector3dr& V_)
+	: model(model_), p(p_), V(V_)
 {
-	riskaver = ss.riskaver;
 	optimal_decisions.reset(new Upwinding::Policies(model.dims));
-	V = make_value_guess(p, model, ss, riskaver);
+	dispfreq = 0;
 }
 
-void HJB::solve(const Equilibrium& ss)
+HJB::HJB(const Parameters& p_, const Model& model_, const Equilibrium& equm)
+	: model(model_), p(p_), V(p.na, p.nb, model.ny)
+{
+	riskaver = equm.riskaver;
+	optimal_decisions.reset(new Upwinding::Policies(model.dims));
+	V = make_value_guess(p, model, equm, riskaver);
+}
+
+void HJB::iterate(const Equilibrium& ss)
 {
 	int ii = 0;
 	double lVdiff = 1.0;
 
 	VectorXr lastV = as_eigen<VectorXr>(V);
 	Upwinding::Policies policies(model.dims);
+
+	if ( dispfreq > 0 )
+		std::cout << "Beginning HJB iteration..." << '\n';
+
 	while ( (ii < maxiter) & (lVdiff > vtol) ) {
 		policies = update_policies(ss);
 		update_value_fn(ss, policies);
@@ -61,7 +72,8 @@ void HJB::solve(const Equilibrium& ss)
 		lVdiff = (lastV - newV).lpNorm<Eigen::Infinity>();
 		lastV = as_eigen<VectorXr>(V);
 
-		check_progress(lVdiff, dispfreq, ii, vtol);
+		if ( dispfreq > 0 )
+			check_progress(lVdiff, dispfreq, ii, vtol);
 
 		++ii;
 	}
@@ -73,6 +85,13 @@ void HJB::solve(const Equilibrium& ss)
 
 	// if ( global_hank_options->print_diagnostics )
 	// 	print_variables();
+}
+
+void HJB::update(const EquilibriumTrans& equm)
+{
+	delta = equm.tdelta;
+	*optimal_decisions = update_policies(equm);
+	update_value_fn(equm, *optimal_decisions);
 }
 
 Upwinding::Policies HJB::update_policies(const Equilibrium& ss)

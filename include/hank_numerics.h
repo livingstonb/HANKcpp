@@ -19,7 +19,7 @@ void linspace(double x, double y, int n, T& cont) {
 using broyden_fn_type = std::function<void(int, const hank_float_type*, hank_float_type*)>;
 
 void jacobian_square(const broyden_fn_type& fn, int n, const hank_float_type *x,
-	hank_float_type *z, hank_float_type *fjac, double step);
+	const hank_float_type *z, hank_float_type *fjac, double step);
 
 void broyden_backstep(const broyden_fn_type& fn, int n, hank_float_type* x,
 	hank_float_type* fvec, hank_float_type* fjac, int maxit, double ftol);

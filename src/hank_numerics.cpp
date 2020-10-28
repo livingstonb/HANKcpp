@@ -83,7 +83,7 @@ double lininterp1(int n, const hank_float_type *x, const hank_float_type *y, dou
 }
 
 void jacobian_square(const broyden_fn_type& fn, int n, const hank_float_type *x,
-	hank_float_type *f, hank_float_type *fjac, double step)
+	const hank_float_type *f, hank_float_type *fjac, double step)
 {
 	for (int i=0; i<n; ++i)
 		for (int j=0; j<n; ++j)

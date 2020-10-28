@@ -94,6 +94,8 @@ void compute_irfs(const HANKCalibration::ObjectPointers& object_ptrs) {
 	IRF irf(p, model, iss);
 	irf.shock.type = ShockType::tfp_Y;
 	irf.permanentShock = false;
+	irf.Ttrans = 5;
+	irf.nendtrans = 2;
 
 	irf.setup();
 
@@ -144,17 +146,18 @@ int main () {
 		iss.solve(params);
 
 		HJB hjb(params, model, iss);
-		hjb.solve(iss);
+		hjb.iterate(iss);
 
 		StationaryDist sdist;
 		sdist.gtol = 1.0e-9;
-		sdist.compute(params, model, iss, hjb);
+		sdist.compute(params, model, iss, *hjb.optimal_decisions);
 
 		object_ptrs.ptr4.reset(new DistributionStatistics(params, model, *hjb.optimal_decisions, sdist));
 		const DistributionStatistics& stats = *object_ptrs.ptr4;
 		HANK::print(stats);
 
 		iss.update_with_stats(stats);
+		iss.V = hjb.V;
 
 		compute_irfs(object_ptrs);
 	}

@@ -101,6 +101,10 @@ void IRF::compute()
 	}
 	trans_equm.clear();
 
+	std::cout << '\n';
+	HANK::horzline();
+	std::cout << "FINDING TRANSITION EQUILIBRIUM\n\n";
+
 	if ( solver == SolverType::broyden ) {
 		std::function<void(int, const hank_float_type*, hank_float_type*)>
 			obj_fn = std::bind(&IRF::transition_fcn, this, _1, _2, _3);
@@ -108,11 +112,16 @@ void IRF::compute()
 		std::vector<hank_float_type> z(npricetrans);
 		std::fill(z.begin(), z.end(), 0);
 
+		std::cout << " - Computing objective function at initial guess\n";
 		obj_fn(npricetrans, xguess.data(), z.data());
 
 		double jacstepprice = 1.0e-6;
 		hank_float_type fjac[npricetrans * npricetrans];
+
+		std::cout << " - Computing jacobian\n";
 		HankNumerics::jacobian_square(obj_fn, npricetrans, xguess.data(), z.data(), fjac, jacstepprice);
+
+		std::cout << " - Beginning optimization with Broyden Backstep routine\n";
 	}
 	else {
 		std::cerr << "Must select Broyden solver\n";
@@ -122,8 +131,12 @@ void IRF::compute()
 
 void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type *fvec)
 {
-	for (int it=0; it<Ttrans; ++it)
+	trans_equm.clear();
+	for (int it=0; it<Ttrans; ++it) {
 		trans_equm.push_back(EquilibriumBase(initial_equm));
+		trans_equm[it].tdelta = deltatransvec[it];
+	}
+
 	set_shock_paths();
 
 	make_transition_guesses(p, x, this);
@@ -131,43 +144,69 @@ void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type 
 
 	solve_trans_equilibrium(trans_equm, p, initial_equm, *final_equm_ptr, deltatransvec.data());
 
-	// Solve distribution
+	// Solve policies backward
+	HJB hjb(p, model, final_equm_ptr->V);
+	for (int it=Ttrans-1; it>=0; --it) {
+		hjb.update(trans_equm[it]);
+		trans_equm[it].V = hjb.V;
+		trans_equm[it].policies = *hjb.optimal_decisions;
+	}
+
+	// Solve distribution forward
 	std::vector<DistributionStatistics> trans_stats;
+	StationaryDist sdist(initial_equm.density);
 	for (int it=0; it<Ttrans; ++it) {
-		HJB hjb(p, model, trans_equm[it]);
-		hjb.solve(trans_equm[it]);
-
-		StationaryDist sdist;
 		sdist.gtol = 1.0e-9;
-		sdist.compute(p, model, trans_equm[it], hjb);
+		sdist.compute(p, model, trans_equm[it], trans_equm[it].policies);
 
-		trans_stats.push_back(DistributionStatistics(p, model, *hjb.optimal_decisions, sdist));
+		trans_stats.push_back(DistributionStatistics(p, model, trans_equm[it].policies, sdist));
 	}
 
 	// Set residuals
 	int ix = 0;
+	std::vector<std::string> equation_names, variable_names;
+	std::vector<hank_float_type> variable_values;
+
 	fvec[ix] = trans_equm[0].capital / initial_equm.capital - 1.0;
+	equation_names.push_back("Capital market clearing");
+	variable_names.push_back("capital");
+	variable_values.push_back(trans_equm[0].capital);
 	++ix;
 
 	for (int it=1; it<Ttrans; ++it) {
 		fvec[ix] = trans_stats[it].Ea / (trans_equm[it].valcapital + trans_equm[it].equity_A) - 1.0;
+		equation_names.push_back("Illiquid asset market clearing (" + std::to_string(it) + ")");
+		variable_names.push_back("E[a]");
+		variable_values.push_back(trans_stats[it].Ea);
 		++ix;
 
 		fvec[ix] = trans_stats[it].Eb / trans_equm[it].bond - 1.0;
+		equation_names.push_back("Liquid asset market clearing (" + std::to_string(it) + ")");
+		variable_names.push_back("E[b]");
+		variable_values.push_back(trans_stats[it].Eb);
 		++ix;
 	}
 
 	for (int it=0; it<Ttrans; ++it) {
 		for (int io=0; io<p.nocc; ++io) {
 			fvec[ix] = trans_stats[it].Elabor_occ[io] * model.occdist[io] / trans_equm[it].labor_occ[io] - 1.0;
+			equation_names.push_back("Labor market clearing (" + std::to_string(it) + "," + std::to_string(io) + ")");
+			variable_names.push_back("E[labor_io]");
+			variable_values.push_back(trans_stats[it].Elabor_occ[io]);
 			++ix;
 		}
 
 		if ( (p.capadjcost > 0) | (p.invadjcost > 0) ) {
 			fvec[ix] = trans_equm[it].inv_cap_ratio / (trans_equm[it].investment / trans_equm[it].capital) - 1.0;
+			equation_names.push_back("Inv-capital market clearing (" + std::to_string(it) + ")");
+			variable_names.push_back("I/K");
+			variable_values.push_back(trans_equm[it].inv_cap_ratio);
 			++ix;
 		}
 	}
+
+	HANK::OptimStatus optim_status(equation_names, variable_names, fvec, variable_values);
+	HANK::print(optim_status);
 }
 
 void IRF::compute_remaining_variables()
@@ -436,11 +475,11 @@ namespace {
 		final_ss.solve(p, iss, x);	
 
 		HJB hjb(p, model, final_ss);
-		hjb.solve(final_ss);
+		hjb.iterate(final_ss);
 
 		StationaryDist sdist;
 		sdist.gtol = 1.0e-9;
-		sdist.compute(p, model, final_ss, hjb);
+		sdist.compute(p, model, final_ss, *hjb.optimal_decisions);
 
 		DistributionStatistics stats(p, model, *hjb.optimal_decisions, sdist);
 

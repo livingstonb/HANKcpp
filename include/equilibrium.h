@@ -5,6 +5,7 @@
 #include <hank.h>
 #include <string>
 #include <map>
+#include <upwinding.h>
 
 class Parameters;
 
@@ -37,11 +38,15 @@ class EquilibriumBase
 
 		hank_float_type capital = HANK::ValueNotSet;
 
+		hank_float_type tdelta = 0;
+
 		std::vector<hank_float_type> labshareY, labshareN, labfracY, labfracN, labor_occ, wage_occ;
 
 		std::vector<hank_float_type> netwagegrid;
 
 		hank_float_type depreciation, capadjcost;
+
+		vector3dr V, density;
 
 		int nocc, nprod;
 
@@ -53,6 +58,8 @@ class Equilibrium : public EquilibriumBase
 {
 	public:
 		virtual std::map<std::string, hank_float_type> variables_map() const;
+
+		virtual bool is_transition_equilibrium() const {return false;}
 };
 
 namespace HANK {
@@ -93,7 +100,11 @@ class EquilibriumTrans : public Equilibrium
 
 		hank_float_type equity_Adot, equity_Bdot, inv_cap_ratio;
 
+		Upwinding::Policies policies;
+
 		std::map<std::string, hank_float_type> variables_map() const override;
+
+		bool is_transition_equilibrium() const override {return true;}
 
 		friend void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
 			const Parameters& p, const EquilibriumInitial& initial_equm,
@@ -106,6 +117,7 @@ void EquilibriumInitial::update_with_stats(const DistributionStatisticsType& sta
 	bond = stats.Eb;
 	govbond = equity_B - bond;
 	govexp = taxrev + rb * govbond;
+	density = stats.density;
 }
 
 namespace HANK {

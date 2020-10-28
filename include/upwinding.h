@@ -24,7 +24,20 @@ struct DepositUpwind {
 
 class Policies {
 	public:
+		Policies() {}
+
 		Policies(const std::vector<int> dims) : c(dims), h(dims), s(dims), d(dims), u(dims) {};
+
+		Policies& operator=(const Policies& policies)
+		{
+			c = policies.c;
+			h = policies.h;
+			s = policies.s;
+			d = policies.d;
+			u = policies.u;
+
+			return *this;
+		}
 
 		vector3dr c, h, s, d, u;
 
