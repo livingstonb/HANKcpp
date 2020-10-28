@@ -214,7 +214,7 @@ void broyden_backstep(const broyden_fn_type& fn, int n, hank_float_type* x,
 			// Update estimate of inverse jacobian
 			ArrayXr lu = fjacinv * (fvecmap - fvec0).matrix();
 			MatrixXr ltemp1 = lstep * ld - lu;
-			MatrixXr ltemp2 = (lstep * ld).matrix() * fjacinv;
+			MatrixXr ltemp2 = (lstep * ld).matrix().transpose() * fjacinv;
 			hank_float_type ld_lu_dot = (lstep * ld).matrix().dot(lu.matrix());
 			fjacinv += ltemp1 * ltemp2 / ld_lu_dot;
 		}
