@@ -3,7 +3,6 @@
 #include <hank_numerics.h>
 #include <model_functions.h>
 #include <math.h>
-// #include <boost/algorithm/string.hpp>
 #include <assert.h>
 #include <hank_macros.h>
 #include <hank_eigen_dense.h>

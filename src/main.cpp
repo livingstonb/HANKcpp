@@ -9,10 +9,8 @@
 #include <stationary_dist.h>
 #include <distribution_statistics.h>
 #include <adjustment_costs.h>
-#include <math.h>
 #include <calibration.h>
 #include <impulse_responses.h>
-#include <upwinding.h>
 #include <memory>
 #include <hank_numerics_cminpack.h>
 
@@ -93,11 +91,8 @@ void compute_irfs(const HANKCalibration::ObjectPointers& object_ptrs) {
 	IRF irf(p, model, iss);
 	irf.shock.type = ShockType::tfp_Y;
 	irf.permanentShock = false;
-	// irf.Ttrans = 5;
-	// irf.nendtrans = 2;
 
 	irf.setup();
-
 	irf.compute();
 }
 
