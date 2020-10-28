@@ -90,6 +90,7 @@ void HJB::iterate(const Equilibrium& ss)
 void HJB::update(const EquilibriumTrans& equm)
 {
 	delta = equm.tdelta;
+	riskaver = equm.riskaver;
 	*optimal_decisions = update_policies(equm);
 	update_value_fn(equm, *optimal_decisions);
 }

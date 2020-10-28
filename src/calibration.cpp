@@ -208,12 +208,13 @@ int HANKCalibration::initial_steady_state_obj_fn(void* args_void_ptr, int n, con
 	sdist.gtol = 1.0e-9;
 	sdist.compute(p, model, iss, *hjb.optimal_decisions);
 
-	args.ptr4.reset(new DistributionStatistics(p, model, *hjb.optimal_decisions, sdist));
+	args.ptr4.reset(new DistributionStatistics(p, model, *hjb.optimal_decisions, sdist.density));
 	const DistributionStatistics& stats = *args.ptr4;
 	HANK::print(stats);
 
 	iss.update_with_stats(stats);
 	iss.V = hjb.V;
+	iss.policies = *hjb.optimal_decisions;
 
 	CalibrationArgs cal_args(args);
 	cal.fill_fvec(cal_args, fvec);

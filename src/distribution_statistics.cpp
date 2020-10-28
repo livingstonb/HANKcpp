@@ -1,7 +1,6 @@
 #include <distribution_statistics.h>
 #include <parameters.h>
 #include <model.h>
-#include <stationary_dist.h>
 #include <upwinding.h>
 #include <iostream>
 #include <algorithm>
@@ -15,11 +14,10 @@ namespace {
 }
 
 DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model& model,
-	const Upwinding::Policies& policies, const StationaryDist& sdist)
+	const Upwinding::Policies& policies, const vector3dr& density_) : density(density_)
 {
 	const Parameters& p = p_;
 
-	density = sdist.density;
 	MatrixXr nw_aby(p.nab, model.ny);
 	MatrixXr agrid_aby(p.nab, model.ny);
 	MatrixXr bgrid_aby(p.nab, model.ny);
@@ -41,7 +39,7 @@ DistributionStatistics::DistributionStatistics(const Parameters& p_, const Model
 	}
 
 	// Distribution
-	ArrayXr gdistvec = as_eigen<ArrayXr>(sdist.density);
+	ArrayXr gdistvec = as_eigen<ArrayXr>(density);
 	MatrixXr gdistmat = Eigen::Map<MatrixXr>(gdistvec.data(), p.nab, model.ny);
 
 	VectorXr abdeltavec = as_eigen<VectorXr>(model.abdelta);

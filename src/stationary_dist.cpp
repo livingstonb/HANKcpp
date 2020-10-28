@@ -31,9 +31,6 @@ void StationaryDist::compute(const Parameters& p, const Model& model, const Equi
 	VectorXr inv_abdelta = abdeltavec.cwiseInverse();
 	int iabx = TO_INDEX_1D(0, p.nb_neg, p.na, p.nb);
 
-	MatrixXr gmat = make_dist_guess(p, model);
-	MatrixXr gmat_update(p.nab, model.ny);
-
 	std::vector<SparseXd> B(model.ny);
 	std::vector<sparse_solver> spsolvers(model.ny);
 
@@ -58,8 +55,14 @@ void StationaryDist::compute(const Parameters& p, const Model& model, const Equi
 	}
 
 	Eigen::MatrixXd lmat = deye(model.ny).cast<double>() + delta * model.matrices->ymarkovoff.cast<double>().transpose();
-
+	MatrixXr gmat(p.nab, model.ny);
+	MatrixXr gmat_update(p.nab, model.ny);
 	if ( equm.is_transition_equilibrium() ) {
+		for (int ia=0; ia<p.na; ++ia)
+			for (int ib=0; ib<p.nb; ++ib)
+				for (int iy=0; iy<model.ny; ++iy)
+					gmat(TO_INDEX_1D(ia, ib, p.na, p.nb), iy) = density(ia, ib, iy);
+
 		for (int iy=0; iy<model.ny; ++iy) {
 			Eigen::VectorXd lgmat = gmat.cast<double>() * Eigen::VectorXd(lmat.row(iy));
 			lgmat(iabx) += delta * p.deathrate * gmat.col(iy).dot(abdeltavec) / abdeltavec[iabx];
@@ -72,6 +75,8 @@ void StationaryDist::compute(const Parameters& p, const Model& model, const Equi
 		gmat = gmat_update;
 	}
 	else {
+		gmat = make_dist_guess(p, model);
+
 		double diff = 1.0e10;
 		int ii = 0;
 		while ( (diff > gtol) & (ii < maxiter) ) {

@@ -146,20 +146,22 @@ void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type 
 
 	// Solve policies backward
 	HJB hjb(p, model, final_equm_ptr->V);
-	for (int it=Ttrans-1; it>=0; --it) {
+	for (int it=Ttrans-2; it>=0; --it) {
 		hjb.update(trans_equm[it]);
 		trans_equm[it].V = hjb.V;
 		trans_equm[it].policies = *hjb.optimal_decisions;
+		std::cout << "t = " << it << '\n';
 	}
 
 	// Solve distribution forward
 	std::vector<DistributionStatistics> trans_stats;
+	trans_stats.push_back(DistributionStatistics(p, model, initial_equm.policies, initial_equm.density));
 	StationaryDist sdist(initial_equm.density);
-	for (int it=0; it<Ttrans; ++it) {
+	for (int it=0; it<Ttrans-1; ++it) {
 		sdist.gtol = 1.0e-9;
 		sdist.compute(p, model, trans_equm[it], trans_equm[it].policies);
 
-		trans_stats.push_back(DistributionStatistics(p, model, trans_equm[it].policies, sdist));
+		trans_stats.push_back(DistributionStatistics(p, model, trans_equm[it].policies, sdist.density));
 	}
 
 	// Set residuals
@@ -481,7 +483,7 @@ namespace {
 		sdist.gtol = 1.0e-9;
 		sdist.compute(p, model, final_ss, *hjb.optimal_decisions);
 
-		DistributionStatistics stats(p, model, *hjb.optimal_decisions, sdist);
+		DistributionStatistics stats(p, model, *hjb.optimal_decisions, sdist.density);
 
 		std::vector<std::string> variable_names, equation_names;
 		std::vector<hank_float_type> variable_values;

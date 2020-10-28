@@ -27,7 +27,7 @@ class DistributionStatistics
 		DistributionStatistics() {}
 
 		DistributionStatistics(const Parameters& p, const Model& model,
-			const Upwinding::Policies& policies, const StationaryDist& sdist);
+			const Upwinding::Policies& policies, const vector3dr& density);
 
 		DistributionStatistics& operator=(const DistributionStatistics* other_stats)
 		{

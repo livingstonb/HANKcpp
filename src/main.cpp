@@ -152,12 +152,13 @@ int main () {
 		sdist.gtol = 1.0e-9;
 		sdist.compute(params, model, iss, *hjb.optimal_decisions);
 
-		object_ptrs.ptr4.reset(new DistributionStatistics(params, model, *hjb.optimal_decisions, sdist));
+		object_ptrs.ptr4.reset(new DistributionStatistics(params, model, *hjb.optimal_decisions, sdist.density));
 		const DistributionStatistics& stats = *object_ptrs.ptr4;
 		HANK::print(stats);
 
 		iss.update_with_stats(stats);
 		iss.V = hjb.V;
+		iss.policies = *hjb.optimal_decisions;
 
 		compute_irfs(object_ptrs);
 	}

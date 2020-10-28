@@ -48,6 +48,8 @@ class EquilibriumBase
 
 		vector3dr V, density;
 
+		Upwinding::Policies policies;
+
 		int nocc, nprod;
 
 		// Variables copied from a Model object
@@ -99,8 +101,6 @@ class EquilibriumTrans : public Equilibrium
 		hank_float_type pidot, logydot, firmdiscount, qinvestment, invadjust;
 
 		hank_float_type equity_Adot, equity_Bdot, inv_cap_ratio;
-
-		Upwinding::Policies policies;
 
 		std::map<std::string, hank_float_type> variables_map() const override;
 
