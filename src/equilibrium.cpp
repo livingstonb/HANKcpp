@@ -34,14 +34,6 @@ namespace
 	void compute_factors(EquilibriumTrans* equm);
 }
 
-namespace HANK {
-	void print(const Equilibrium& equm)
-	{
-		std::map<std::string, hank_float_type> variables = equm.variables_map();
-		print(variables, "EQUILIBRIUM VARIABLES");
-	}
-}
-
 std::map<std::string, hank_float_type> Equilibrium::variables_map() const
 {
 	std::map<std::string, hank_float_type> variables;

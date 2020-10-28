@@ -2,6 +2,7 @@
 #define _MODEL_H
 
 #include <hank_config.h>
+#include <hank.h>
 #include <string>
 #include <vector>
 
@@ -14,7 +15,7 @@ class Parameters;
 
 class AdjustmentCosts;
 
-class Model
+class Model : public HankBase
 {
 	private:
 		const Parameters& p;
@@ -62,9 +63,5 @@ class Model
 
 		void assertions() const;
 };
-
-namespace HANK {
-	void print(const Model& model);
-}
 
 #endif

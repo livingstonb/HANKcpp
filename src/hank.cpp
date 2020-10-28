@@ -1,5 +1,16 @@
 #include <hank.h>
 
+std::map<std::string, hank_float_type> HankBase::variables_map() const
+{
+	return std::map<std::string, hank_float_type>();
+}
+
+std::string HankBase::title() const
+{
+	return "OBJECT VALUES";
+}
+
+
 namespace HANK {
 	OptimStatus::OptimStatus(const std::vector<std::string>& equation_names_,
 		const std::vector<std::string>& variable_names_,
@@ -35,6 +46,11 @@ namespace HANK {
 	void print(const OptimStatus& optim_status)
 	{
 		optim_status.print();
+	}
+
+	void print(const HankBase* hank_obj)
+	{	
+		print(hank_obj->variables_map(), hank_obj->title());
 	}
 
 	void print(const OptimNorm& optim_norm)

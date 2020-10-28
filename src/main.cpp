@@ -100,7 +100,7 @@ int main () {
 	Options options; 
 	options.fast = false;
 	options.print_diagnostics = false;
-	options.skip_calibration = false;
+	options.skip_calibration = true;
 
 	global_hank_options = &options;
 
@@ -133,7 +133,7 @@ int main () {
 	const Model& model = *object_ptrs.ptr2;
 
 	if ( options.skip_calibration ) {
-		HANK::print(params);
+		HANK::print(&params);
 		object_ptrs.ptr3.reset(new EquilibriumInitial);
 		EquilibriumInitial& iss = *object_ptrs.ptr3;
 		iss.setup(params, model);
@@ -148,7 +148,7 @@ int main () {
 
 		object_ptrs.ptr4.reset(new DistributionStatistics(params, model, *hjb.optimal_decisions, sdist.density));
 		const DistributionStatistics& stats = *object_ptrs.ptr4;
-		HANK::print(stats);
+		HANK::print(&stats);
 
 		iss.update_after_solving(stats, hjb);
 

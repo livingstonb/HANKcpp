@@ -25,7 +25,10 @@ SPARSEOBJS:= $(SPARSEOBJS)
 VPATH=%.cpp src
 EXECUTABLE=exec
 
-all: depend $(OBJECTS) $(MAIN) $(EXECUTABLE)
+all: mkdirs depend $(OBJECTS) $(MAIN) $(EXECUTABLE)
+
+mkdirs:
+	mkdir -p output
 
 debug: all
 	gdb -ex run ./exec
@@ -54,4 +57,4 @@ $(MAIN): %.o: $(SOURCEDIR)/%.cpp
 clean:
 	rm *.o
 
-.PHONY: all debug clean depend
+.PHONY: all debug clean depend mkdirs

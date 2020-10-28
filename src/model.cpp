@@ -1,4 +1,3 @@
-#include <hank.h>
 #include <model.h>
 #include <hank_numerics.h>
 #include <model_functions.h>
@@ -72,7 +71,7 @@ Model::Model(const Parameters& p_) : p(p_) {
 	check_adjcosts(p, adjcosts);
 
 	if ( global_hank_options->print_diagnostics )
-		HANK::print(*this);
+		HANK::print(this);
 }
 
 std::vector<hank_float_type> Model::get_rb_effective(hank_float_type rb, hank_float_type rborr) const

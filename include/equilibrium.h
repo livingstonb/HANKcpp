@@ -13,7 +13,7 @@ class Model;
 
 class DistributionStatistics;
 
-class EquilibriumBase
+class EquilibriumBase : public HankBase
 {
 	public:
 		hank_float_type alpha_Y, alpha_N, price_W, drs_Y, drs_N, riskaver, rho;
@@ -59,7 +59,7 @@ class EquilibriumBase
 class Equilibrium : public EquilibriumBase
 {
 	public:
-		virtual std::map<std::string, hank_float_type> variables_map() const;
+		virtual std::map<std::string, hank_float_type> variables_map() const override;
 
 		virtual bool is_transition_equilibrium() const {return false;}
 };
@@ -77,6 +77,8 @@ class EquilibriumInitial : public Equilibrium
 
 		template<typename DistributionStatisticsType, typename HJBType>
 		void update_after_solving(const DistributionStatisticsType& stats, const HJBType& hjb);
+
+		std::string title() const override {return "INITIAL EQUILIBRIUM VARIABLES";}
 };
 
 class EquilibriumFinal : public Equilibrium
@@ -87,6 +89,8 @@ class EquilibriumFinal : public Equilibrium
 		EquilibriumFinal(const EquilibriumBase& other_equm);
 
 		void solve(const Parameters& p, const Equilibrium& initial_equm, const hank_float_type* x);
+
+		std::string title() const override {return "FINAL EQUILIBRIUM VARIABLES";}
 };
 
 class EquilibriumTrans : public Equilibrium
@@ -102,6 +106,8 @@ class EquilibriumTrans : public Equilibrium
 
 		hank_float_type equity_Adot, equity_Bdot, inv_cap_ratio;
 
+		int t = -1;
+
 		std::map<std::string, hank_float_type> variables_map() const override;
 
 		bool is_transition_equilibrium() const override {return true;}
@@ -109,6 +115,8 @@ class EquilibriumTrans : public Equilibrium
 		friend void solve_trans_equilibrium(std::vector<EquilibriumTrans>& trans_equms,
 			const Parameters& p, const EquilibriumInitial& initial_equm,
 			const EquilibriumFinal& final_equm, const hank_float_type* deltatransvec);
+
+		std::string title() const override {return "TRANSITION EQUILIBRIUM VARIABLES (t = " + std::to_string(t) + ")";}
 };
 
 template<typename DistributionStatisticsType, typename HJBType>
@@ -121,10 +129,6 @@ void EquilibriumInitial::update_after_solving(const DistributionStatisticsType& 
 
 	V = hjb.V;
 	policies = *hjb.optimal_decisions;
-}
-
-namespace HANK {
-	void print(const Equilibrium& equm);
 }
 
 #endif

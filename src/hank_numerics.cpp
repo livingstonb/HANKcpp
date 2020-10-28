@@ -7,7 +7,7 @@
 
 namespace HankNumerics {
 
-double rtsec(std::function<double(double)> fn, double x1, double x2, double facc)
+double _rtsec_(std::function<double(double)> fn, double x1, double x2, double facc)
 {
 	const int maxit = 20;
 	double lrtsec, z1, z2;
@@ -220,8 +220,6 @@ void broyden_backstep(const broyden_fn_type& fn, int n, hank_float_type* x,
 		}
 	}
 }
-
-typedef int(*hank_cminpack_hybrd1_func_type)(void *p, int n, const hank_float_type* x, hank_float_type* fvec, int iflag);
 
 
 // MatrixXr invert_matrix(const MatrixXr& matrix, int n, int& errorflag)

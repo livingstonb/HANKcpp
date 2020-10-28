@@ -17,6 +17,9 @@
 // Precision (1 - double, 2 - long double)
 #define HANK_PRECISION 2
 
+// Precision for specific modules
+// using model_float = double;
+
 // --- DO NOT CHANGE ---
 #if HANK_TURN_OFF_EIGEN_DEBUG == 1
 	#define NDEBUG

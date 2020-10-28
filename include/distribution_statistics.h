@@ -18,11 +18,8 @@ namespace Upwinding {
 }
 
 // Class for distribution statistics
-class DistributionStatistics
+class DistributionStatistics : public HankBase
 {
-
-	class DistStruct;
-
 	public:
 		DistributionStatistics() {}
 
@@ -35,7 +32,9 @@ class DistributionStatistics
 			return *this;
 		}
 
-		std::map<std::string, hank_float_type> variables_map() const;
+		std::string title() const override {return "STATISTICS";}
+
+		std::map<std::string, hank_float_type> variables_map() const override;
 
 		vector3dr density;
 
@@ -45,9 +44,5 @@ class DistributionStatistics
 
 		std::vector<double> pctiles = {0.01, 0.02, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.98, 0.99};
 };
-
-namespace HANK {
-	void print(const DistributionStatistics& stats);
-}
 
 #endif

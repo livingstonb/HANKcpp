@@ -85,8 +85,10 @@ void IRF::compute()
 		find_final_steady_state();
 	}
 
-	for (int it=0; it<Ttrans; ++it)
+	for (int it=0; it<Ttrans; ++it) {
 		trans_equm.push_back(EquilibriumBase(initial_equm));
+		trans_equm[it].t = it;
+	}
 	set_shock_paths();
 
 	// Guess log deviations from steady state
@@ -138,6 +140,7 @@ void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type 
 	for (int it=0; it<Ttrans; ++it) {
 		trans_equm.push_back(EquilibriumBase(initial_equm));
 		trans_equm[it].tdelta = deltatransvec[it];
+		trans_equm[it].t = it;
 	}
 
 	set_shock_paths();

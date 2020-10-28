@@ -74,7 +74,7 @@ void Parameters::update() {
 	target_KY_ratio = compute_ss_capital_output_ratio(*this, price_W);
 
 	if ( global_hank_options->print_diagnostics )
-		HANK::print(*this);
+		HANK::print(this);
 }
 
 std::map<std::string, hank_float_type> Parameters::variables_map() const
@@ -118,14 +118,6 @@ std::map<std::string, hank_float_type> Parameters::variables_map() const
 	variables.insert({"drs_Y", drs_Y});
 
 	return variables;
-}
-
-namespace HANK {
-	void print(const Parameters& p)
-	{
-		std::map<std::string, hank_float_type> variables = p.variables_map();
-		print(variables, "PARAMETERS");
-	}
 }
 
 namespace {

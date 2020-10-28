@@ -150,14 +150,6 @@ std::map<std::string, hank_float_type> DistributionStatistics::variables_map() c
 	return variables;
 }
 
-namespace HANK {
-	void print(const DistributionStatistics& p)
-	{
-		std::map<std::string, hank_float_type> variables = p.variables_map();
-		print(variables, "STATISTICS");
-	}
-}
-
 namespace {
 	VectorXi sort_by_values(VectorXr& vals, VectorXr& dist)
 	{

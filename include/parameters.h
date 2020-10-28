@@ -41,7 +41,7 @@ class WealthTarget
 		bool is_median() const {return (type == Type::median);}
 };
 
-class Parameters {
+class Parameters : public HankBase {
 	public:
 		Parameters() {}
 
@@ -49,7 +49,9 @@ class Parameters {
 
 		void update();
 
-		std::map<std::string, hank_float_type> variables_map() const;
+		std::map<std::string, hank_float_type> variables_map() const override;
+
+		std::string title() const override {return "PARAMETER VALUES";}
 
 		bool Borrowing = true;
 
@@ -175,9 +177,5 @@ class Parameters {
 		// number of time periods
 		// int Ttransition = 200;
 };
-
-namespace HANK {
-	void print(const Parameters& p);
-}
 
 #endif

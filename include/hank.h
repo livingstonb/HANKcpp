@@ -4,6 +4,7 @@
 #include <hank_config.h>
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include <memory>
 #include <map>
 #include <string>
@@ -14,6 +15,14 @@
 #elif STACK_LIQ_FIRST == 1
 	#define TO_INDEX_1D_HANK_HEADER(a, b, y, na, nb) ((b) + (nb) * (a) + (nb) * (na) * (y))
 #endif
+
+class HankBase
+{
+	public:
+		virtual std::map<std::string, hank_float_type> variables_map() const;
+
+		virtual std::string title() const;
+};
 
 namespace HANK {
 	class OptimStatus
@@ -51,13 +60,33 @@ namespace HANK {
 	template<typename T>
 	void print(const std::map<std::string, T>& variables, const std::string& title)
 	{
-		std::cout << '\n';
+		std::cout << "\n\t";
 		horzline();
-		std::cout << title << ":\n";
+		std::cout << '\n' << title << ":\n\t";
 		for (auto variable : variables)
-			std::cout << variable.first << " = " << variable.second << '\n';
+			std::cout << variable.first << " = " << variable.second << "\n\t";
 		horzline();
 		std::cout << '\n';
+	}
+
+	void print(const HankBase* hank_obj);
+
+	template<typename T>
+	void write_table(const std::map<std::string, T>& variables, const std::string& fpath,
+		bool append = false)
+	{
+		std::ofstream fobj;
+
+		if ( append )
+			fobj.open(fpath, std::ios_base::app);
+		else
+			fobj.open(fpath);
+
+		for (auto variable : variables)
+			fobj << variable.first << "," << variable.second << '\n';
+		horzline();
+
+		fobj.close();
 	}
 
 	template<typename T>

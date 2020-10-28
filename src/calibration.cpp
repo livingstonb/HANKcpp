@@ -211,7 +211,7 @@ int HANKCalibration::initial_steady_state_obj_fn(void* args_void_ptr, int n, con
 
 	args.ptr4.reset(new DistributionStatistics(p, model, *hjb.optimal_decisions, sdist.density));
 	const DistributionStatistics& stats = *args.ptr4;
-	HANK::print(stats);
+	HANK::print(&stats);
 
 	iss.update_after_solving(stats, hjb);
 

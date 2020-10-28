@@ -245,7 +245,7 @@ Upwinding::ConUpwind HJB::optimal_consumption_sep_labor(double Vb, double bdrift
 		double v1_at_max = model.util1BC(hmax, riskaver, chi, bdrift, netwage, idioscale);
 
 		if ( (v1_at_max > 0) & (v1_at_min < 0) ) {
-			std::function<double(double)> objective = std::bind(
+			auto objective = std::bind(
 				&Model::util1BC, &model, _1, riskaver, chi, bdrift, netwage, idioscale);
 			double facc = 1.0e-8;
 			upwind.h = HankNumerics::rtsec(objective, hmin, hmax, facc);

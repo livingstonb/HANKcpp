@@ -6,7 +6,20 @@
 
 namespace HankNumerics {
 
-double rtsec(std::function<double(double)> fn, double x1, double x2, double facc);
+// Internal functions
+
+double _rtsec_(std::function<double(double)> fn, double x1, double x2, double facc);
+
+// Interface functions
+
+template<typename F, typename T>
+T rtsec(const F& fn, T x1, T x2, double facc)
+{
+	std::function<double(double)> dfn = [&](double x) -> double {
+		return fn((T) x);
+	};
+	return _rtsec_(dfn, (double) x1, (double) x2, facc);
+}
 
 double lininterp1(int n, const hank_float_type *x, const hank_float_type *y, double xi);
 
@@ -23,6 +36,7 @@ void jacobian_square(const broyden_fn_type& fn, int n, const hank_float_type *x,
 
 void broyden_backstep(const broyden_fn_type& fn, int n, hank_float_type* x,
 	hank_float_type* fvec, hank_float_type* fjac, int maxit, double ftol);
+
 
 // MatrixXr invert_matrix(const MatrixXr& matrix, int n, int& errorflag);
 
