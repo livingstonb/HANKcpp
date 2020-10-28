@@ -70,7 +70,7 @@ void SSCalibrator::setup(const Parameters &p)
 	// Set number of moments
 	nmoments = obj_functions.size();
 
-	perform_calibrator_assertions(this);
+	// perform_calibrator_assertions(this);
 }
 
 void SSCalibrator::fill_fvec(const CalibrationArgs& args, hank_float_type fvec[]) const

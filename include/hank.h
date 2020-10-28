@@ -33,7 +33,16 @@ namespace HANK {
 			int n;
 	};
 
+	struct OptimNorm
+	{
+		OptimNorm(double norm_) : norm(norm_) {}
+
+		double norm;
+	};
+
 	void print(const OptimStatus& optim_status);
+
+	void print(const OptimNorm& optim_norm);
 
 	const hank_float_type ValueNotSet = -91912395.1;
 
@@ -73,6 +82,17 @@ namespace HANK {
 
 			std::shared_ptr<T5> ptr5 = nullptr;
 	};
+
+	template<typename T>
+	T norm(const T* arr, int n)
+	{
+		T normval = 0;
+		for (int i=0; i<n; ++i)
+			normval += pow(arr[i], 2);
+
+		normval = sqrt(normval);
+		return normval;
+	}
 }
 
 enum class AdjustCostFnRatioMode { none, linear, max };

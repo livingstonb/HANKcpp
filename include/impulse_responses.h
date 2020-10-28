@@ -69,11 +69,17 @@ class IRF {
 
 		double deltatranstot = 400;
 
+		int maxIterTrans = 2000;
+
+		double tolTransition = 1e-6;
+
 		bool flextransition = false;
 
 		bool stickytransition = true;
 
 		bool permanentShock = false;
+
+		bool computingJacobian = false;
 
 		double min_price_W = 0.05;
 

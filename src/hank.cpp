@@ -37,6 +37,16 @@ namespace HANK {
 		optim_status.print();
 	}
 
+	void print(const OptimNorm& optim_norm)
+	{
+		std::cout << '\n';
+		horzline();
+		std::cout << "OPTIMIZATION RESULTS:\n";
+		std::cout << "norm = " << optim_norm.norm << '\n';
+		horzline();
+		std::cout << '\n';
+	}
+
 	void horzline()
 	{
 		std::cout << "--------------------------------\n";

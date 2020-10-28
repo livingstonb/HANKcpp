@@ -106,7 +106,7 @@ int main () {
 	Options options; 
 	options.fast = false;
 	options.print_diagnostics = false;
-	options.skip_calibration = true;
+	options.skip_calibration = false;
 
 	global_hank_options = &options;
 
@@ -175,6 +175,7 @@ int main () {
 		cal.fill_xguess(params, model, x);
 
 		cminpack_hybrd1_wrapper(HANKCalibration::initial_steady_state_obj_fn, &object_ptrs, n, x);
+		compute_irfs(object_ptrs);
 	}
 
 	// compute_irfs(object_ptrs);

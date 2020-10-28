@@ -119,9 +119,13 @@ void IRF::compute()
 		hank_float_type fjac[npricetrans * npricetrans];
 
 		std::cout << " - Computing jacobian\n";
+		computingJacobian = true;
 		HankNumerics::jacobian_square(obj_fn, npricetrans, xguess.data(), z.data(), fjac, jacstepprice);
+		computingJacobian = false;
 
 		std::cout << " - Beginning optimization with Broyden Backstep routine\n";
+		HankNumerics::broyden_backstep(obj_fn, npricetrans, xguess.data(),
+			z.data(), fjac, maxIterTrans, tolTransition);
 	}
 	else {
 		std::cerr << "Must select Broyden solver\n";
@@ -206,8 +210,10 @@ void IRF::transition_fcn(int /* n */, const hank_float_type *x, hank_float_type 
 		}
 	}
 
-	HANK::OptimStatus optim_status(equation_names, variable_names, fvec, variable_values);
-	HANK::print(optim_status);
+	// HANK::OptimStatus optim_status(equation_names, variable_names, fvec, variable_values);
+	// HANK::print(optim_status);
+	if ( !computingJacobian )
+		HANK::print(HANK::OptimNorm(HANK::norm(fvec, npricetrans)));
 }
 
 void IRF::compute_remaining_variables()
